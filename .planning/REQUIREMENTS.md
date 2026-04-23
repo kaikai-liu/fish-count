@@ -153,22 +153,91 @@ Populated by roadmap creation. Each v1 requirement maps to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| OPS-01..06 | TBD | Pending |
-| ING-01..11 | TBD | Pending |
-| STO-01..05 | TBD | Pending |
-| BRW-01..09 | TBD | Pending |
-| TRP-01..09 | TBD | Pending |
-| BOAT-01..02 | TBD | Pending |
-| TRN-01..03 | TBD | Pending |
-| FCT-01..07 | TBD | Pending |
-| ALT-01..12 | TBD | Pending |
-| POL-01..03 | TBD | Pending |
+| OPS-01 | Phase 0: Ops Guardrails | Pending |
+| OPS-02 | Phase 0: Ops Guardrails | Pending |
+| OPS-03 | Phase 0: Ops Guardrails | Pending |
+| OPS-04 | Phase 0: Ops Guardrails | Pending |
+| OPS-05 | Phase 0: Ops Guardrails | Pending |
+| OPS-06 | Phase 0: Ops Guardrails | Pending |
+| ING-01 | Phase 1: Ingest + Store | Pending |
+| ING-02 | Phase 1: Ingest + Store | Pending |
+| ING-03 | Phase 1: Ingest + Store | Pending |
+| ING-04 | Phase 1: Ingest + Store | Pending |
+| ING-05 | Phase 1: Ingest + Store | Pending |
+| ING-06 | Phase 1: Ingest + Store | Pending |
+| ING-07 | Phase 1: Ingest + Store | Pending |
+| ING-08 | Phase 1: Ingest + Store | Pending |
+| ING-09 | Phase 1: Ingest + Store | Pending |
+| ING-10 | Phase 1: Ingest + Store | Pending |
+| ING-11 | Phase 1: Ingest + Store | Pending |
+| STO-01 | Phase 1: Ingest + Store | Pending |
+| STO-02 | Phase 1: Ingest + Store | Pending |
+| STO-03 | Phase 1: Ingest + Store | Pending |
+| STO-04 | Phase 1: Ingest + Store | Pending |
+| STO-05 | Phase 1: Ingest + Store | Pending |
+| BRW-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-03 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-04 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-05 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-06 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-07 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-08 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-09 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-03 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-04 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-05 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-06 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-07 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-08 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRP-09 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BOAT-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BOAT-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRN-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRN-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| TRN-03 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| FCT-01 | Phase 3: Forecast Layer | Pending |
+| FCT-02 | Phase 3: Forecast Layer | Pending |
+| FCT-03 | Phase 3: Forecast Layer | Pending |
+| FCT-04 | Phase 3: Forecast Layer | Pending |
+| FCT-05 | Phase 3: Forecast Layer | Pending |
+| FCT-06 | Phase 3: Forecast Layer | Pending |
+| FCT-07 | Phase 3: Forecast Layer | Pending |
+| ALT-01 | Phase 4: Email Alerts | Pending |
+| ALT-02 | Phase 4: Email Alerts | Pending |
+| ALT-03 | Phase 4: Email Alerts | Pending |
+| ALT-04 | Phase 4: Email Alerts | Pending |
+| ALT-05 | Phase 4: Email Alerts | Pending |
+| ALT-06 | Phase 4: Email Alerts | Pending |
+| ALT-07 | Phase 4: Email Alerts | Pending |
+| ALT-08 | Phase 4: Email Alerts | Pending |
+| ALT-09 | Phase 4: Email Alerts | Pending |
+| ALT-10 | Phase 4: Email Alerts | Pending |
+| ALT-11 | Phase 4: Email Alerts | Pending |
+| ALT-12 | Phase 4: Email Alerts | Pending |
+| POL-01 | Phase 5: Polish | Pending |
+| POL-02 | Phase 5: Polish | Pending |
+| POL-03 | Phase 5: Polish | Pending |
 
 **Coverage:**
-- v1 requirements: 66 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 66 ⚠️ (to be resolved by roadmapper)
+- v1 requirements: 67 total
+- Mapped to phases: 67 (100%)
+- Unmapped: 0
+
+**Per-Phase Counts:**
+
+| Phase | Requirement Count | IDs |
+|-------|-------------------|-----|
+| Phase 0: Ops Guardrails | 6 | OPS-01..06 |
+| Phase 1: Ingest + Store | 16 | ING-01..11, STO-01..05 |
+| Phase 2: Browse + Trip Picker + Trends | 23 | BRW-01..09, TRP-01..09, BOAT-01..02, TRN-01..03 |
+| Phase 3: Forecast Layer | 7 | FCT-01..07 |
+| Phase 4: Email Alerts | 12 | ALT-01..12 |
+| Phase 5: Polish | 3 | POL-01..03 |
+| **Total** | **67** | |
 
 ---
 *Requirements defined: 2026-04-22*
-*Last updated: 2026-04-22 after initial definition*
+*Last updated: 2026-04-22 after roadmap creation (phase assignments added)*
