@@ -2,7 +2,7 @@
 // Source: 00-RESEARCH.md §Q5 "pino configuration"; §Security Domain redact paths.
 // This replaces the Plan 00 placeholder. The API shape (info/warn/error/child)
 // is preserved so earlier imports (src/lib/db/smoke.ts from Plan 01) keep working.
-import { pino, type Logger } from 'pino';
+import { pino, stdSerializers, type Logger } from 'pino';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -54,8 +54,10 @@ export const logger: Logger = pino({
   timestamp: pino.stdTimeFunctions.isoTime,
 
   // Serialize errors so stack traces survive JSON encoding.
+  // (pino's types only expose stdTimeFunctions on the `pino` namespace,
+  // not stdSerializers — so we import the latter as a named value.)
   serializers: {
-    err: pino.stdSerializers.err,
-    error: pino.stdSerializers.err
+    err: stdSerializers.err,
+    error: stdSerializers.err
   }
 });
