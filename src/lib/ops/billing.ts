@@ -5,7 +5,10 @@
 // NOTE: uses relative import (not `$lib/`) because this module is also consumed by
 // scripts/billing-watcher.ts which runs under `node --experimental-strip-types` in
 // GitHub Actions — the SvelteKit `$lib` alias is not resolved in that context.
-import { today } from '../shared/dates';
+// The `.ts` extension is required because Node 22's ESM loader (with
+// --experimental-strip-types) does NOT auto-resolve extensionless specifiers.
+// SvelteKit/Vite strip the extension at bundle time, so this doesn't affect the app build.
+import { today } from '../shared/dates.ts';
 
 export type Threshold = 20 | 50 | 100;
 export type ThresholdState = { 20: boolean; 50: boolean; 100: boolean };

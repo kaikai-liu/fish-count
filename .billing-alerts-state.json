@@ -1,0 +1,4 @@
+{
+  "month": "1970-01",
+  "thresholds": { "20": false, "50": false, "100": false }
+}
