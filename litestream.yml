@@ -1,0 +1,15 @@
+# Litestream v0.3.x config. Env vars injected by Fly secrets at runtime.
+# Source: https://litestream.io/guides/backblaze/
+access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+
+dbs:
+  - path: ${DB_PATH}
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: fishcount.sqlite3
+        endpoint: ${LITESTREAM_ENDPOINT}
+        force-path-style: true
+        retention: 720h
+        snapshot-interval: 24h
