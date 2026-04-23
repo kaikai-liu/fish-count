@@ -197,7 +197,7 @@ For Phase 0 stub: the job is a once-per-minute heartbeat with grace period 5 min
 
 **Confidence:** HIGH. [CITED: healthchecks.io/docs/monitoring_cron_jobs/]
 
-## Q3 — Billing Alerts at $20 Threshold (OPS-03)
+## Q3 — Billing Alerts at $20 Threshold (OPS-01)
 
 **Reality:** Fly.io does not support billing alerts or spend caps. This was confirmed by official Fly docs [CITED: fly.io/docs/about/cost-management/ — "We don't support billing alerts (yet)"] and by Fly staff in community forums [CITED: community.fly.io/t/set-a-billing-cap/24810]. There is no native solution.
 
@@ -257,7 +257,7 @@ To avoid alert-spam (re-firing the same alert weekly), the billing-watcher needs
 
 If the planner concludes the DIY GraphQL watcher is brittle, a simpler interpretation of OPS-01 is: "Fly billing dashboard is the alert surface; operator manually checks weekly; ROADMAP notes billing alerts are best-effort until Fly ships native support." This is less automated but honest. Either is defensible. **Recommendation: ship the DIY watcher but design it to fail gracefully — if the GraphQL call fails, the watcher emails the operator with a "billing check failed — please review dashboard manually" message. This preserves the spirit of the requirement even when the API breaks.**
 
-## Q4 — Litestream Setup (OPS-04, OPS-03 the requirement)
+## Q4 — Litestream Setup (OPS-03)
 
 **Recommendation:** Canonical single-container pattern — Litestream wraps the Node app as its child process via `litestream replicate -exec`. Entrypoint script handles restore-on-boot idempotently.
 
