@@ -15,20 +15,34 @@
 import { Cron } from 'croner';
 import { logger } from './logger';
 import { scrapingEnabled } from './kill-switch';
+import { pingHealthcheck } from './heartbeat';
 
 const jobs: Cron[] = [];
 
-/** Heartbeat tick body — exported so Plan 04 can wrap it with a healthcheck ping. */
+/** Heartbeat tick body — wraps work with pingHealthcheck() for OPS-04 dead-man's switch. */
 export async function _heartbeatTick(): Promise<void> {
   const tickLogger = logger.child({ job: 'heartbeat', jobId: crypto.randomUUID() });
 
+  // Kill switch is checked FIRST and does NOT ping. When the kill switch is
+  // active, we WANT the dead-man's switch to fire after grace — that surfaces
+  // to the operator that ingestion is halted. This is intentional per
+  // 00-RESEARCH.md §Q2 (dead-man's switch is an absence-detector).
   if (!scrapingEnabled(process.env)) {
     tickLogger.warn({ reason: 'kill_switch_set' }, 'heartbeat skipped');
     return;
   }
 
-  tickLogger.info({ status: 'ok' }, 'heartbeat tick');
-  // Plan 04 wraps this body with pingHealthcheck('start') / ('success') / ('fail').
+  await pingHealthcheck('start');
+  try {
+    tickLogger.info({ status: 'ok' }, 'heartbeat tick');
+    // Phase 1 replaces this body with the real scrape call. For Phase 0 the
+    // tick is a no-op body that exists only to exercise start/success ping flow.
+    await pingHealthcheck('success');
+  } catch (err) {
+    tickLogger.error({ err }, 'heartbeat tick failed');
+    await pingHealthcheck('fail', 1);
+    throw err;
+  }
 }
 
 /** Starts all scheduled jobs. Safe to call multiple times — guarded by the jobs[] check. */
