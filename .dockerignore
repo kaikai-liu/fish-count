@@ -1,0 +1,14 @@
+node_modules
+.svelte-kit
+build
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+tests
+.vscode
+.DS_Store
+*.md
+!CLAUDE.md
+.planning
