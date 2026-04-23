@@ -1,0 +1,60 @@
+# OPS-01: weekly billing threshold check.
+# Source: 00-RESEARCH.md §Q3 lines 214–253.
+# Runs in GitHub Actions (NOT inside the Fly app) for separation of fate —
+# if the Fly app is what's running up the bill, an in-app watcher shares
+# its failure domain.
+name: Billing Check
+
+on:
+  schedule:
+    # Monday 16:00 UTC — 09:00 PST / 08:00 PDT. Accepts 1h DST drift (benign).
+    - cron: '0 16 * * MON'
+  workflow_dispatch:
+    inputs:
+      test_spend:
+        description: 'Optional override spend in USD (triggers the threshold path without a real API call)'
+        required: false
+        default: ''
+
+jobs:
+  check-billing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to commit updated state file
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Resend SDK
+        # Minimal install — only resend is needed at runtime for the watcher.
+        run: npm install resend@^6.12.2 --no-save --no-audit --no-fund
+
+      - name: Run watcher
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_ORG_SLUG: ${{ secrets.FLY_ORG_SLUG }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          OPERATOR_EMAIL: ${{ secrets.OPERATOR_EMAIL }}
+          OPERATOR_FROM_EMAIL: ${{ secrets.OPERATOR_FROM_EMAIL }}
+          BILLING_TEST_SPEND: ${{ github.event.inputs.test_spend }}
+        run: node --experimental-strip-types scripts/billing-watcher.ts
+
+      - name: Commit updated state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- .billing-alerts-state.json; then
+            echo "No state change — nothing to commit"
+          else
+            git add .billing-alerts-state.json
+            git commit -m "chore(ops): update billing-alerts-state [skip ci]"
+            git push
+          fi
