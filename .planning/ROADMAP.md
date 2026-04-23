@@ -31,7 +31,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Triggering a simulated $20 spend threshold sends a billing alert to the operator email.
   4. The SQLite file on the server is observably replicated to the object-storage bucket (Litestream status + file listing in bucket with recent timestamp).
   5. Structured logs for a manual request are queryable after the fact (retained, not ephemeral).
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 00-00-PLAN.md — Scaffold SvelteKit + TypeScript + Tailwind + Vitest + Docker + fly.toml (greenfield foundation)
+- [ ] 00-01-PLAN.md — Litestream replication to Backblaze B2 + entrypoint restore-on-boot + drill (OPS-03)
+- [ ] 00-02-PLAN.md — pino structured logging + SvelteKit request-ID correlation + Better Stack sink (OPS-06)
+- [ ] 00-03-PLAN.md — SCRAPER_ENABLED kill-switch gate + croner stub heartbeat + SIGTERM shutdown (OPS-05)
+- [ ] 00-04-PLAN.md — healthchecks.io dead-man's switch: pingHealthcheck() + scheduler wiring + drill (OPS-04)
+- [ ] 00-05-PLAN.md — Resend operator-alert wrapper + Fly GraphQL billing watcher in GH Actions (OPS-01)
+- [ ] 00-06-PLAN.md — Deploy to Fly + verify all 5 success criteria end-to-end + signed verification record (OPS-02)
 
 ### Phase 1: Ingest + Store
 **Goal**: A polite, observable, idempotent scraper writes to a canonical schema; the full historical dataset sandiegofishreports.com exposes is in the local store via a resumable CLI; silent-failure monitoring is armed.
@@ -100,7 +108,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 (decimal phases
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Ops Guardrails | 0/TBD | Not started | - |
+| 0. Ops Guardrails | 0/7 | Planned | - |
 | 1. Ingest + Store | 0/TBD | Not started | - |
 | 2. Browse + Trip Picker + Trends | 0/TBD | Not started | - |
 | 3. Forecast Layer | 0/TBD | Not started | - |
@@ -109,3 +117,4 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 (decimal phases
 
 ---
 *Roadmap created: 2026-04-22*
+*Phase 0 planned: 2026-04-23*
