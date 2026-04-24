@@ -1,0 +1,125 @@
+// src/lib/db/scrapeRuns.ts — DAL repository for the scrape_runs ledger.
+// CLAUDE.md Architecture Rule: DAL is the only module that issues SQL.
+//
+// Responsibilities:
+//   D-04: single ledger table with outcome enum — record every scrape attempt.
+//   D-12: resume query — dates to (re)scrape given a range and prior outcomes.
+//   D-23: SLA baseline — 7-day rolling avg of rows_ingested over success runs.
+//   D-25: baseline excludes non-success outcomes (empty, http_error, parse_error, killed).
+import type Database from 'better-sqlite3';
+
+export type ScrapeOutcome = 'success' | 'empty' | 'http_error' | 'parse_error' | 'killed';
+
+export interface ScrapeRunInput {
+  runId: string;
+  runDate: string; // YYYY-MM-DD (from src/lib/shared/dates.ts)
+  startedAt: string; // ISO-8601
+  finishedAt: string; // ISO-8601
+  outcome: ScrapeOutcome;
+  rowsIngested: number;
+  errorMessage?: string;
+}
+
+/**
+ * Append a ledger row. Exactly one call per scrapeDate() invocation per the
+ * Phase 1 pipeline invariant (every early return writes a row first).
+ */
+export function recordOutcome(db: Database.Database, input: ScrapeRunInput): void {
+  db.prepare(
+    `INSERT INTO scrape_runs
+       (run_id, run_date, started_at, finished_at, outcome, rows_ingested, error_message)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    input.runId,
+    input.runDate,
+    input.startedAt,
+    input.finishedAt,
+    input.outcome,
+    input.rowsIngested,
+    input.errorMessage ?? null
+  );
+}
+
+/**
+ * D-23: 7-day rolling average of rows_ingested across success outcomes only,
+ * over the window [today-7, today-1]. Returns null when the window has no
+ * qualifying rows (off-season / fresh install / ingestion dark for a week).
+ *
+ * The `today` parameter is a YYYY-MM-DD string produced by
+ * src/lib/shared/dates.ts — this module never generates date strings itself.
+ */
+export function computeSlaBaseline(db: Database.Database, today: string): number | null {
+  const row = db
+    .prepare(
+      `SELECT AVG(rows_ingested) AS baseline
+         FROM scrape_runs
+        WHERE outcome = 'success'
+          AND run_date >= date(?, '-7 days')
+          AND run_date < date(?)`
+    )
+    .get(today, today) as { baseline: number | null };
+  return row.baseline;
+}
+
+/**
+ * D-12: given a date range, return the dates that still need scraping.
+ *
+ *   resume=true (default):
+ *     - dates with no ledger row            → INCLUDE
+ *     - dates whose latest outcome is success or empty → EXCLUDE
+ *     - dates whose latest outcome is http_error, parse_error, or killed → INCLUDE
+ *
+ *   resume=false: return every date in the range (force full-range scrape).
+ *
+ * "Latest" outcome = highest ledger id for a given run_date; a second attempt
+ * that succeeds correctly supersedes a prior http_error.
+ */
+export function getDatesToScrape(
+  db: Database.Database,
+  args: { from: string; to: string; resume?: boolean }
+): string[] {
+  const resume = args.resume ?? true;
+  const all = enumerateDates(args.from, args.to);
+  if (!resume) return all;
+
+  // Pull the latest outcome per date. We sort by id ASC and overwrite per
+  // date so the final entry in the map is the most recent attempt.
+  const ledger = db
+    .prepare(
+      `SELECT run_date, outcome
+         FROM scrape_runs
+        WHERE run_date BETWEEN ? AND ?
+        ORDER BY id ASC`
+    )
+    .all(args.from, args.to) as Array<{ run_date: string; outcome: ScrapeOutcome }>;
+
+  const latestByDate = new Map<string, ScrapeOutcome>();
+  for (const row of ledger) latestByDate.set(row.run_date, row.outcome);
+
+  return all.filter((d) => {
+    const o = latestByDate.get(d);
+    if (o === undefined) return true; // never attempted
+    // Retry the three failure modes per D-12.
+    return o === 'http_error' || o === 'parse_error' || o === 'killed';
+  });
+}
+
+/**
+ * Pure helper — produces YYYY-MM-DD strings between `from` and `to` inclusive.
+ *
+ * NOTE: This is string arithmetic over pre-existing YYYY-MM-DD inputs, not
+ * "today" / "now" derivation. STO-04's "single date producer" rule applies to
+ * `today()` / `toIsoDate()` (which live in src/lib/shared/dates.ts); enumerating
+ * between two already-formatted date strings is a pure range expansion and
+ * does not introduce a new clock source.
+ */
+function enumerateDates(from: string, to: string): string[] {
+  const result: string[] = [];
+  const f = new Date(from + 'T00:00:00Z');
+  const t = new Date(to + 'T00:00:00Z');
+  for (let d = new Date(f); d <= t; d.setUTCDate(d.getUTCDate() + 1)) {
+    const iso = d.toISOString().slice(0, 10);
+    result.push(iso);
+  }
+  return result;
+}

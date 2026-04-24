@@ -1,7 +1,7 @@
 // src/lib/server/logger.ts
 // Source: 00-RESEARCH.md §Q5 "pino configuration"; §Security Domain redact paths.
 // This replaces the Plan 00 placeholder. The API shape (info/warn/error/child)
-// is preserved so earlier imports (src/lib/db/smoke.ts from Plan 01) keep working.
+// is preserved so existing DAL and scheduler imports keep working across phases.
 import { pino, stdSerializers, type Logger } from 'pino';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
