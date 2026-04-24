@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <title>Dock Totals - 2026-12-25</title>
+</head>
+<body>
+<!--
+  SYNTHETIC empty-day fixture for Plan 01-03 Task 2.
+
+  The real sandiegofishreports.com/dock_totals/boats.php endpoint does NOT
+  serve a zero-row page for future/invalid dates — it falls back to today's
+  data (verified via live probe 2026-04-23 for date=2026-12-25 which returned
+  11 boat-rows). This file is synthesized to exercise the parser's true
+  empty-day path: non-empty HTML, well-formed structure, but zero <tr>
+  rows anywhere inside a table.table-stripped.
+
+  Used by tests/unit/scraper/parser.test.ts to assert
+  parsePage(empty_day_html) returns { rows: [], failures: [] }.
+-->
+<div class="container">
+  <h1>Dock Totals</h1>
+  <p>No fish counts reported for this date.</p>
+  <!-- pager panel without a data table (matches real-site structure for header/footer panels) -->
+  <div class='panel'>
+    <h2 class="panel-heading">Navigate dates</h2>
+    <div class="panel-body">
+      <a href="?date=2026-12-24">Prev</a>
+      <a href="?date=2026-12-26">Next</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
