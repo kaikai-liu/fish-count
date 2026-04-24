@@ -2,6 +2,12 @@
 // WARNING-4 hard test: guarantees the kill-switch gate short-circuits the
 // heartbeat tick BEFORE any pingHealthcheck() call. Complements the Task-2
 // awk-based file-order smoke (which only verifies source text ordering).
+//
+// Phase 1 note (Plan 01-05 Task 2): _heartbeatTick is now an alias for
+// _scrapeTick, which invokes the real pipeline (scrapeDate). The Phase 0
+// ordering invariant still holds — kill-switch blocks BEFORE any ping or
+// work — but tests that exercise the post-gate path must stub
+// $lib/scraper/pipeline so they don't touch DB/fs during unit runs.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 describe('scheduler _heartbeatTick — kill-switch ordering (OPS-04 ∩ OPS-05)', () => {
@@ -16,6 +22,7 @@ describe('scheduler _heartbeatTick — kill-switch ordering (OPS-04 ∩ OPS-05)'
     else process.env.SCRAPER_ENABLED = originalEnv;
     vi.restoreAllMocks();
     vi.doUnmock('../../src/lib/server/heartbeat');
+    vi.doUnmock('../../src/lib/scraper/pipeline');
   });
 
   it('does NOT call pingHealthcheck when SCRAPER_ENABLED=false', async () => {
@@ -26,6 +33,15 @@ describe('scheduler _heartbeatTick — kill-switch ordering (OPS-04 ∩ OPS-05)'
     const pingHealthcheck = vi.fn().mockResolvedValue(undefined);
     vi.doMock('../../src/lib/server/heartbeat', () => ({
       pingHealthcheck
+    }));
+    // Defensive: stub pipeline so a regression that mis-orders the gates
+    // still fails the assertion rather than touching the real DAL.
+    vi.doMock('../../src/lib/scraper/pipeline', () => ({
+      scrapeDate: vi.fn().mockResolvedValue({
+        outcome: 'empty',
+        rowsIngested: 0,
+        runId: 'test'
+      })
     }));
 
     const mod = await import('../../src/lib/server/scheduler');
@@ -44,6 +60,14 @@ describe('scheduler _heartbeatTick — kill-switch ordering (OPS-04 ∩ OPS-05)'
     vi.doMock('../../src/lib/server/heartbeat', () => ({
       pingHealthcheck
     }));
+    // Phase 1: stub pipeline so the post-gate path doesn't open a real DB.
+    vi.doMock('../../src/lib/scraper/pipeline', () => ({
+      scrapeDate: vi.fn().mockResolvedValue({
+        outcome: 'empty',
+        rowsIngested: 0,
+        runId: 'test'
+      })
+    }));
 
     const mod = await import('../../src/lib/server/scheduler');
     await mod._heartbeatTick();
@@ -61,6 +85,13 @@ describe('scheduler _heartbeatTick — kill-switch ordering (OPS-04 ∩ OPS-05)'
     const pingHealthcheck = vi.fn().mockResolvedValue(undefined);
     vi.doMock('../../src/lib/server/heartbeat', () => ({
       pingHealthcheck
+    }));
+    vi.doMock('../../src/lib/scraper/pipeline', () => ({
+      scrapeDate: vi.fn().mockResolvedValue({
+        outcome: 'empty',
+        rowsIngested: 0,
+        runId: 'test'
+      })
     }));
 
     const mod = await import('../../src/lib/server/scheduler');
