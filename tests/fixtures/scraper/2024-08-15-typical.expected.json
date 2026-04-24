@@ -1,0 +1,57 @@
+{
+  "_comment": "Plan 01-03 Task 1: golden snapshot for tests/fixtures/scraper/2024-08-15-typical.html (captured live via curl 2026-04-23). Subset match — rows[] is a representative sample that MUST all appear in parsePage(html).rows. min_rows is the asserted lower bound on total output. species values are lowercased per Zod D-03 transform.",
+  "source_url": "https://www.sandiegofishreports.com/dock_totals/boats.php?date=2024-08-15",
+  "captured_at": "2026-04-23",
+  "rows": [
+    {
+      "source_name": "Dolphin",
+      "landing_source_name": "Fisherman's Landing",
+      "trip_type": "1/2 Day AM",
+      "angler_count": 37,
+      "species": "sheephead",
+      "species_count": 1
+    },
+    {
+      "source_name": "Dolphin",
+      "landing_source_name": "Fisherman's Landing",
+      "trip_type": "1/2 Day AM",
+      "angler_count": 37,
+      "species": "calico bass released",
+      "species_count": 150
+    },
+    {
+      "source_name": "Islander",
+      "landing_source_name": "Fisherman's Landing",
+      "trip_type": "3 Day",
+      "angler_count": 25,
+      "species": "bluefin tuna",
+      "species_count": 150
+    },
+    {
+      "source_name": "Islander",
+      "landing_source_name": "Fisherman's Landing",
+      "trip_type": "3 Day",
+      "angler_count": 25,
+      "species": "yellowtail",
+      "species_count": 105
+    },
+    {
+      "source_name": "Liberty",
+      "landing_source_name": "Fisherman's Landing",
+      "trip_type": "Overnight",
+      "angler_count": 26,
+      "species": "yellowtail",
+      "species_count": 30
+    },
+    {
+      "source_name": "Jig Strike",
+      "landing_source_name": "H&M Landing",
+      "trip_type": "1.5 Day",
+      "angler_count": 12,
+      "species": "bluefin tuna",
+      "species_count": 24
+    }
+  ],
+  "min_rows": 10,
+  "failures_expected": 0
+}

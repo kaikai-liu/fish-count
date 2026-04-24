@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head><title>parse-edge-mangled</title></head>
+<body>
+<!--
+  Synthetic fixture for Plan 01-03 Task 2.
+  Contains ONE valid boat-row (Grande / Pt Loma Sportfishing, 2 species) and
+  ONE malformed row (only 2 <td>s, non-numeric angler count) to exercise the
+  D-07 quarantine-and-continue path. Parser must produce 2 valid CatchRows
+  (one per dock-fragment from the Grande row) and ≥1 ParseFailure entry whose
+  raw_html_snippet contains the literal string "BrokenBoat".
+-->
+<div class='panel'>
+  <h2 class="panel-heading">Point Loma Sportfishing Fish Counts for Today</h2>
+  <table class='table table-stripped'>
+    <tbody>
+      <tr>
+        <td><a href="/charter_boats/grande.php"><b>Grande</b></a> <a href="/landings/pt-loma-sportfishing">Pt Loma Sportfishing</a><br>San Diego, CA</td>
+        <td>30 Anglers<br><a href="#">Full Day</a></td>
+        <td>4 Sand Bass, 30 Yellowtail</td>
+      </tr>
+      <tr>
+        <!-- malformed: only 2 <td> cells -->
+        <td><a href="/charter_boats/broken.php"><b>BrokenBoat</b></a></td>
+        <td>not a number Anglers<br><a href="#">Bad Trip</a></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
