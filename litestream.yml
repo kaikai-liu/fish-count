@@ -1,15 +1,18 @@
-# Litestream v0.3.x config. Env vars injected by Fly secrets at runtime.
+# Litestream v0.3.13 config. Env vars injected by Fly secrets at runtime.
 # Source: https://litestream.io/guides/backblaze/
-access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
-secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+# NOTE: Litestream 0.3.x does NOT expand shell-style ${VAR} in YAML — those
+# are treated as literal strings and S3 auth silently fails. Use Go-template
+# `{{ env "VAR" }}` syntax (supported since 0.3.12). See CR-01 in 00-REVIEW.md.
+access-key-id: {{ env "LITESTREAM_ACCESS_KEY_ID" }}
+secret-access-key: {{ env "LITESTREAM_SECRET_ACCESS_KEY" }}
 
 dbs:
-  - path: ${DB_PATH}
+  - path: {{ env "DB_PATH" }}
     replicas:
       - type: s3
-        bucket: ${LITESTREAM_BUCKET}
+        bucket: {{ env "LITESTREAM_BUCKET" }}
         path: fishcount.sqlite3
-        endpoint: ${LITESTREAM_ENDPOINT}
+        endpoint: {{ env "LITESTREAM_ENDPOINT" }}
         force-path-style: true
         retention: 720h
         snapshot-interval: 24h

@@ -18,7 +18,22 @@ echo "[2/4] Waiting 20 seconds for Litestream to flush (sync-interval default is
 sleep 20
 
 echo "[3/4] Check A — Litestream status from the Fly machine:"
-fly ssh console -a "$APP_NAME" -C "litestream replicas -config /etc/litestream.yml"
+REPLICAS_OUTPUT=$(fly ssh console -a "$APP_NAME" -C "litestream replicas -config /etc/litestream.yml")
+echo "$REPLICAS_OUTPUT"
+
+# CR-01 guard: confirm env templates expanded (catches `${VAR}` / `{{ env }}` regression).
+# If the output contains a literal `${` or `{{` substring, Litestream did not expand the
+# template — replication is broken and B2 auth will silently fail (see 00-REVIEW.md §CR-01).
+if echo "$REPLICAS_OUTPUT" | grep -qE '\$\{|\{\{'; then
+  echo "FAIL: Litestream config template did not expand — replication is broken."
+  echo "      Expected {{ env \"VAR\" }} references to be substituted from Fly secrets."
+  echo "      Check: fly secrets list -a $APP_NAME"
+  exit 1
+fi
+if ! echo "$REPLICAS_OUTPUT" | grep -q .; then
+  echo "FAIL: Litestream reported no replicas — config parse error or missing DB."
+  exit 1
+fi
 
 echo "[4/4] Check B — Backblaze B2 bucket listing:"
 if command -v b2 >/dev/null 2>&1; then
