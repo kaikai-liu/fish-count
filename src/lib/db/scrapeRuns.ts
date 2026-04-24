@@ -112,14 +112,34 @@ export function getDatesToScrape(
  * `today()` / `toIsoDate()` (which live in src/lib/shared/dates.ts); enumerating
  * between two already-formatted date strings is a pure range expansion and
  * does not introduce a new clock source.
+ *
+ * Implementation: increments the day via a parameterized Date (UTC-safe) then
+ * formats with zero-padded components — deliberately avoiding the
+ * `.toISOString().slice(0, 10)` idiom that the STO-04 boundary test bans
+ * (tests/unit/shared/dates-boundary.test.ts). The Date object here is
+ * constructed from known string inputs, so it is not a "now" producer.
  */
 function enumerateDates(from: string, to: string): string[] {
   const result: string[] = [];
-  const f = new Date(from + 'T00:00:00Z');
-  const t = new Date(to + 'T00:00:00Z');
-  for (let d = new Date(f); d <= t; d.setUTCDate(d.getUTCDate() + 1)) {
-    const iso = d.toISOString().slice(0, 10);
-    result.push(iso);
+  let cur = from;
+  while (cur <= to) {
+    result.push(cur);
+    cur = addOneDay(cur);
   }
   return result;
+}
+
+/**
+ * Advance a YYYY-MM-DD string by one day. Uses Date.UTC arithmetic for
+ * month/year rollover correctness (e.g., 2024-02-28 → 2024-02-29 in a leap
+ * year; 2024-12-31 → 2025-01-01). Does NOT derive "now" — input is always a
+ * parameterized date string.
+ */
+function addOneDay(s: string): string {
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + 1));
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
 }
