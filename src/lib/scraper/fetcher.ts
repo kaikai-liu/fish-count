@@ -55,9 +55,9 @@ export async function fetchPage(date: string): Promise<string> {
       minTimeout: 1000,
       maxTimeout: 8000,
       randomize: true,
-      onFailedAttempt: (err) => {
+      onFailedAttempt: (ctx) => {
         logger.warn(
-          { attempt: err.attemptNumber, err: err.message, url },
+          { attempt: ctx.attemptNumber, err: ctx.error.message, url },
           'fetch_attempt_failed'
         );
       }
