@@ -10,9 +10,11 @@ set -euo pipefail
 
 MARKER="verify-replication-$(date +%s)"
 
-echo "[1/4] Writing smoke row with marker=$MARKER to deployed app"
-fly ssh console -a "$APP_NAME" -C "node -e \"const {openSmokeDb, writeSmokeRow} = require('./build/server/chunks/smoke-\$(ls build/server/chunks/ | grep smoke | head -1).js'); const db=openSmokeDb(); writeSmokeRow(db, '$MARKER'); console.log('wrote', '$MARKER');\"" \
-  || echo "[NOTE] If the import path above doesn't resolve, run this instead from the Fly machine: node -e \"(await import('better-sqlite3')).default('/data/fishcount.sqlite3').prepare('INSERT INTO smoke_test(marker) VALUES(?)').run('$MARKER')\""
+echo "[1/4] Writing replication-probe row with marker=$MARKER to deployed app"
+# Phase 1: the Phase 0 scaffolding table was removed when the real DAL shipped.
+# This script now creates and writes to a dedicated replication_probe table
+# that lives alongside the real schema purely for operational checks.
+fly ssh console -a "$APP_NAME" -C "node -e \"const Database=require('better-sqlite3'); const db=new Database('/data/fishcount.sqlite3'); db.pragma('journal_mode = WAL'); db.exec(\\\"CREATE TABLE IF NOT EXISTS replication_probe (id INTEGER PRIMARY KEY AUTOINCREMENT, marker TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))\\\"); db.prepare('INSERT INTO replication_probe(marker) VALUES(?)').run('$MARKER'); console.log('wrote', '$MARKER');\""
 
 echo "[2/4] Waiting 20 seconds for Litestream to flush (sync-interval default is 1s; allow margin)"
 sleep 20

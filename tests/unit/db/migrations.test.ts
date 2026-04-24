@@ -4,6 +4,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import type Database from 'better-sqlite3';
 import { openTestDb } from '../../helpers/in-memory-db';
+import { runMigrations } from '../../../src/lib/db/migrations';
 
 describe('migrations — canonical Phase 1 schema (D-01..D-06)', () => {
   let db: Database.Database | null = null;
@@ -97,10 +98,9 @@ describe('migrations — canonical Phase 1 schema (D-01..D-06)', () => {
 
   it('re-running migrations is idempotent (IF NOT EXISTS guards)', () => {
     db = openTestDb();
-    const { runMigrations } = require('../../../src/lib/db/migrations');
     // Run again — should not throw.
-    expect(() => runMigrations(db)).not.toThrow();
-    expect(() => runMigrations(db)).not.toThrow();
+    expect(() => runMigrations(db!)).not.toThrow();
+    expect(() => runMigrations(db!)).not.toThrow();
     const rows = db
       .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
       .all() as Array<{ name: string }>;

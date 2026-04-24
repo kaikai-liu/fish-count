@@ -34,19 +34,21 @@ fly ssh console -a "$APP_NAME" <<'REMOTE_SH'
 cat > /tmp/drill.js <<'DRILL_JS'
 const Database = require('better-sqlite3');
 const db = new Database('/data/fishcount.sqlite3');
-// Schema mirrors src/lib/db/smoke.ts. If smoke.ts evolves, update this too —
-// see WR-05 follow-up (IN-01 "drill-helper.mjs in image" is the real fix).
+// Dedicated probe table for operational restore-drill checks (Phase 1+). Kept
+// self-contained so the drill never depends on the real DAL schema — replication
+// is an infrastructure property, not an application one.
+// See WR-05 follow-up (IN-01 "drill-helper.mjs in image" is the real fix).
 db.exec(
-  "CREATE TABLE IF NOT EXISTS smoke_test (id INTEGER PRIMARY KEY AUTOINCREMENT, marker TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
+  "CREATE TABLE IF NOT EXISTS replication_probe (id INTEGER PRIMARY KEY AUTOINCREMENT, marker TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
 );
 const mode = process.argv[2];
 const marker = process.argv[3];
 if (mode === 'write') {
-  db.prepare('INSERT INTO smoke_test(marker) VALUES(?)').run(marker);
-  console.log('count_before=' + db.prepare('SELECT COUNT(*) as c FROM smoke_test').get().c);
+  db.prepare('INSERT INTO replication_probe(marker) VALUES(?)').run(marker);
+  console.log('count_before=' + db.prepare('SELECT COUNT(*) as c FROM replication_probe').get().c);
 } else if (mode === 'verify') {
-  console.log('count_after=' + db.prepare('SELECT COUNT(*) as c FROM smoke_test').get().c);
-  const row = db.prepare('SELECT 1 FROM smoke_test WHERE marker=?').get(marker);
+  console.log('count_after=' + db.prepare('SELECT COUNT(*) as c FROM replication_probe').get().c);
+  const row = db.prepare('SELECT 1 FROM replication_probe WHERE marker=?').get(marker);
   console.log('marker_present=' + (row ? 'yes' : 'no'));
 } else {
   console.error('unknown mode: ' + mode);
@@ -80,13 +82,13 @@ cat > /tmp/drill.js <<'DRILL_JS'
 const Database = require('better-sqlite3');
 const db = new Database('/data/fishcount.sqlite3');
 db.exec(
-  "CREATE TABLE IF NOT EXISTS smoke_test (id INTEGER PRIMARY KEY AUTOINCREMENT, marker TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
+  "CREATE TABLE IF NOT EXISTS replication_probe (id INTEGER PRIMARY KEY AUTOINCREMENT, marker TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"
 );
 const mode = process.argv[2];
 const marker = process.argv[3];
 if (mode === 'verify') {
-  console.log('count_after=' + db.prepare('SELECT COUNT(*) as c FROM smoke_test').get().c);
-  const row = db.prepare('SELECT 1 FROM smoke_test WHERE marker=?').get(marker);
+  console.log('count_after=' + db.prepare('SELECT COUNT(*) as c FROM replication_probe').get().c);
+  const row = db.prepare('SELECT 1 FROM replication_probe WHERE marker=?').get(marker);
   console.log('marker_present=' + (row ? 'yes' : 'no'));
 }
 DRILL_JS
