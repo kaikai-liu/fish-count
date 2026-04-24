@@ -111,17 +111,36 @@ async function fetchFlySpend(): Promise<number> {
   const org = payload?.data?.organization as Record<string, unknown> | undefined;
   const billingStatus = org?.billingStatus as Record<string, unknown> | undefined;
   const billingInfo = org?.billingInfo as Record<string, unknown> | undefined;
-  const candidate =
-    billingStatus?.currentMonthSpend ??
-    billingStatus?.monthToDateSpend ??
-    billingInfo?.currentMonthSpend ??
-    org?.currentMonthSpend;
-  if (typeof candidate !== 'number') {
+  // WR-02: record WHICH candidate field we picked so a genuine $0 month is
+  // distinguishable from silent schema drift in GH Actions logs.
+  let spendSource: string;
+  let candidate: unknown;
+  if (typeof billingStatus?.currentMonthSpend === 'number') {
+    candidate = billingStatus.currentMonthSpend;
+    spendSource = 'billingStatus.currentMonthSpend';
+  } else if (typeof billingStatus?.monthToDateSpend === 'number') {
+    candidate = billingStatus.monthToDateSpend;
+    spendSource = 'billingStatus.monthToDateSpend';
+  } else if (typeof billingInfo?.currentMonthSpend === 'number') {
+    candidate = billingInfo.currentMonthSpend;
+    spendSource = 'billingInfo.currentMonthSpend';
+  } else if (typeof org?.currentMonthSpend === 'number') {
+    candidate = org.currentMonthSpend;
+    spendSource = 'organization.currentMonthSpend';
+  } else {
     throw new Error(
       `Fly GraphQL response missing spend field (shape drifted). Received: ${JSON.stringify(org).slice(0, 300)}`
     );
   }
-  return candidate;
+  // Breadcrumb: preserves the raw API shape (sans credentials) so an operator
+  // can distinguish "API working, genuinely $0" from "API shape drifted, silent
+  // zero." See 00-REVIEW.md §WR-02.
+  console.log(
+    `[watcher] raw org shape: keys=${Object.keys(org ?? {}).join(',')} ` +
+      `billingStatus.keys=${Object.keys(billingStatus ?? {}).join(',')} ` +
+      `spend_source=${spendSource}`
+  );
+  return candidate as number;
 }
 
 // --- Resend send (inline — this script runs outside the SvelteKit app, so we
