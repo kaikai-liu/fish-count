@@ -51,7 +51,17 @@ Plans:
   3. The nightly scheduled scrape runs unattended and writes new rows idempotently (re-running the same date produces identical final state, no duplicates).
   4. A written TOS + robots.txt summary exists in `.planning/research/` and the operator of the source site has received the courtesy outreach email, both prior to the first production scrape.
   5. Querying a known date in the store returns canonical `CatchReport` rows conforming to schema, with `scrape_attempts` distinguishing "tried, no rows" from "never tried."
-**Plans**: TBD
+**Plans**: 9 plans
+Plans:
+- [ ] 01-01-PLAN.md — Schema + DAL repositories (boats, landings, catchReports, scrapeRuns, parseFailures) replacing Phase 0 smoke.ts (STO-01..05, ING-04, ING-09)
+- [ ] 01-02-PLAN.md — Scraper fetcher + rate limiter + file mutex + FIRST_SCRAPE_OK gate (ING-02, ING-03, ING-10 gate)
+- [ ] 01-03-PLAN.md — Parser + Zod schema + HTML fixtures with quarantine on malformed rows (ING-06)
+- [ ] 01-04-PLAN.md — Gzipped HTML snapshot writer (ING-05)
+- [ ] 01-05-PLAN.md — Pipeline orchestrator + scheduler tick replacing _heartbeatTick (ING-01, ING-04, ING-09)
+- [ ] 01-06-PLAN.md — Resumable backfill CLI via tsx + node:util parseArgs (ING-03, ING-08)
+- [ ] 01-07-PLAN.md — Row-count SLA alert wired to Phase 0 operator-alert (ING-07)
+- [ ] 01-08-PLAN.md — TOS review template + outreach email draft + FIRST_SCRAPE_OK runbook (ING-10, ING-11)
+- [ ] 01-09-PLAN.md — Static STO-04 date-boundary test + end-to-end integration + VALIDATION.md sign-off (STO-03, STO-04)
 
 ### Phase 2: Browse + Trip Picker + Trends
 **Goal**: Any SD angler can open the site, see today's dock totals, jump to any past date, run a trip-picker query, open a boat's detail page, and compare boats — all anonymously, all on mobile, all with per-angler numbers labeled honestly as derived boat-aggregate averages.
@@ -109,7 +119,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 (decimal phases
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Ops Guardrails | 0/7 | Planned | - |
-| 1. Ingest + Store | 0/TBD | Not started | - |
+| 1. Ingest + Store | 0/9 | Planned | - |
 | 2. Browse + Trip Picker + Trends | 0/TBD | Not started | - |
 | 3. Forecast Layer | 0/TBD | Not started | - |
 | 4. Email Alerts | 0/TBD | Not started | - |
@@ -118,3 +128,4 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 (decimal phases
 ---
 *Roadmap created: 2026-04-22*
 *Phase 0 planned: 2026-04-23*
+*Phase 1 planned: 2026-04-23*
