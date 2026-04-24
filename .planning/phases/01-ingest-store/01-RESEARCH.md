@@ -878,32 +878,37 @@ export async function checkSlaAndAlert(date: string, outcome: string): Promise<v
 | A7 | Native `fetch`'s timeout/abort semantics are sufficient when wrapped in `p-retry`; no need for `undici.Agent` tuning. | HTTP fetcher | At ≤1 req per 5s, connection pooling is irrelevant. If we ever parallelize (we won't per CONTEXT.md), this would matter. |
 | A8 | The source site's `?date=YYYY-MM-DD` query parameter format is the canonical way to fetch historical dates (not `?select=MM-DD-YYYY`). | Fetcher URL construction | Both formats appear in the source's own internal links — the prev/next link uses `?date=YYYY-MM-DD` but the trip-type filter link uses `?select=MM-DD-YYYY`. Verified `?date=YYYY-MM-DD` returns parseable HTML for 2009, 2015, 2024, 2026 dates. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **How should "Released" qualifier be handled?**
    - What we know: "X Spiny Lobster, Y Spiny Lobster <font color="red">Released</font>" appears in real data. Cheerio's `.text()` will produce "Y Spiny Lobster Released" after stripping the `<font>` tag.
    - What's unclear: Should "Spiny Lobster Released" be its own species row in `catch_reports`, OR should the parser strip "Released" and merge into "Spiny Lobster", OR should it be a third column on `catch_reports` (e.g., `released INTEGER` alongside `species_count INTEGER`)?
    - Recommendation: For v1, store verbatim as separate species rows ("spiny lobster" and "spiny lobster released"). This preserves data; UI can merge in Phase 2 if needed. Document the interpretation in `lib/scraper/parser.ts` comments. Flag for operator decision in `01-DISCUSSION.md` if discuss-phase reopens.
+   - **RESOLVED:** Store verbatim as separate species rows per Plan 01-03 schema + parser (e.g., "spiny lobster" and "spiny lobster released" become distinct rows).
 
 2. **Should the `boats` table store the source-site profile URL (e.g., `/charter_boats/grande.php`)?**
    - What we know: Each `<tr>` includes a link `<a href="/charter_boats/grande.php"><b>Grande</b></a>` that BRW-02 will need for the "link back to source" requirement in Phase 2.
    - What's unclear: D-01 specifies `id, source_name, display_name, landing_id` — no URL column.
    - Recommendation: Add a `source_url TEXT` column to `boats` (planner discretion per CONTEXT.md "exact column types/widths"). Cost is one extra TEXT column; benefit is unblocking BRW-02 without a Phase 2 schema migration. Same applies to `landings.source_url`.
+   - **RESOLVED:** Added to `boats` and `landings` tables in Plan 01-01 schema DDL (needed for BRW-02 in Phase 2).
 
 3. **Should the SLA secondary "baseline-too-low" alert fire?**
    - What we know: D-23 defines the baseline; D-25 says only `success` outcomes trigger it. But if 7 consecutive days return `outcome='success', rows_ingested=2` (parser silently breaking), the baseline collapses to 2 and today's 1-row scrape passes the 50% threshold.
    - What's unclear: CONTEXT.md doesn't address this scenario explicitly.
    - Recommendation: Add a SECONDARY alert path: "if baseline < 10 AND date is in fishing season (April–November)" → alert with body "your row-count SLA has likely been blind for N days". This is a defensive backstop. Planner discretion.
+   - **RESOLVED:** Deferred to v2; out-of-scope per Plan 01-07 which implements the primary <50% baseline alert only. Added to CONTEXT.md Deferred Ideas.
 
 4. **What happens if the source site renames "H&M Landing" to "HM Landing" (no ampersand)?**
    - What we know: D-01/D-02 mandate `source_name UNIQUE` with separate `display_name`. A rename in the source would create a NEW landing/boat row (since `source_name` is the unique key).
    - What's unclear: Should we have a manual operator-driven "merge" tool? Or accept that as known data drift?
    - Recommendation: Out of scope for Phase 1. The schema design (D-01) accommodates the future case; operator can SQL-update `display_name` and write a migration script if it happens. Defer.
+   - **RESOLVED:** Deferred; operator-driven SQL if ever triggered. No code in Phase 1.
 
 5. **Is there value in committing more than 3 HTML fixtures?**
    - What we know: D-09 specifies 3 minimum fixtures.
    - What's unclear: Should we also commit a date with ≥1 "Released" row, a date with 50+ boats (large page), and a date from each season?
    - Recommendation: Add at least 5 fixtures: typical, empty, parse-edge (mangled), released-qualifier (real production date with Released rows), and large-day (50+ boats to exercise transaction performance). Planner discretion.
+   - **RESOLVED:** Ship 4 fixtures (typical, empty-day, parse-edge, released-qualifier) per Plan 01-03.
 
 ## Environment Availability
 
