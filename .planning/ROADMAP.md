@@ -73,7 +73,15 @@ Plans:
   3. Every page that shows a per-angler number displays the "derived boat-aggregate average, not individual angler" framing inline (not only in tooltips), and the "About the data" page exists and is linked from the metric.
   4. The page is usable at 375px viewport with no horizontal scroll, filter state round-trips through the URL (copy-paste shareable), and the 30-day calendar heatmap renders insufficient-data cells as gray (not green/red).
   5. Every boat has a detail page linking back to its landing and the source site's boat page; users can compare 2–3 boats side-by-side across a custom date range within a single trip type, and can view weekly/monthly trend charts filtered by species + trip type.
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 02-01-PLAN.md — DAL queries (browse, tripPicker, boatDetail, trends, compare) + urlState helper + dates.ts extensions + seedTestDb test helper + boundary-test scope expansion + echarts/date-fns deps
+- [ ] 02-02-PLAN.md — Component library (PerAnglerMetric/Chart/FilterBar/BoatRow/BoatCard/PageHeader/EmptyState/ProvisionalBadge/LastScrapedLabel/LowDataBadge/PerAnglerFramingProvider) + app.css @theme tokens
+- [ ] 02-03-PLAN.md — +layout.svelte (top nav) + / (today) + /date/[YYYY-MM-DD] (past view) + load tests
+- [ ] 02-04-PLAN.md — /picker (TRP-01..09) with required trip-type, weighted ranking, 30-day heatmap with n<5 gray override, Why-this-boat panel
+- [ ] 02-05-PLAN.md — /boats/[id] (BOAT-01/02) + /compare (TRN-03) with multi-series weekly chart
+- [ ] 02-06-PLAN.md — /trends (TRN-01/02) with gap-aware bucketing + /about (BRW-09) verbatim copy
+- [ ] 02-07-PLAN.md — scripts/seed-dev-db.ts + integration test + per-angler-discipline lint + anti-feature lint + manual UAT sign-off + VALIDATION.md
 **UI hint**: yes
 
 ### Phase 3: Forecast Layer
