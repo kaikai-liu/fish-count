@@ -23,8 +23,7 @@ import { scrapingEnabled } from './kill-switch';
 import { pingHealthcheck } from './heartbeat';
 import { scrapeDate } from '$lib/scraper/pipeline';
 import { today } from '$lib/shared/dates';
-// Plan 01-07 will re-enable this import once checkSlaAndAlert lands:
-// import { checkSlaAndAlert } from '$lib/scraper/sla';
+import { checkSlaAndAlert } from '$lib/scraper/sla';
 
 const jobs: Cron[] = [];
 
@@ -68,8 +67,16 @@ export async function _scrapeTick(): Promise<void> {
       rows: result.rowsIngested
     });
 
-    // Plan 01-07 wires the row-count SLA alert here:
-    //   await checkSlaAndAlert(date, result.outcome);
+    // ING-07: row-count SLA check (D-23/D-24/D-25). Scheduler-only entry point;
+    // checkSlaAndAlert short-circuits internally on non-success outcomes. Wrap
+    // in a non-fatal try/catch so a Resend outage (or any SLA-side error) never
+    // blocks pingHealthcheck('success') — OPS-04 dead-man's switch owns the
+    // higher-level "is ingestion alive" signal; SLA is a secondary tripwire.
+    try {
+      await checkSlaAndAlert(date, result.outcome);
+    } catch (err) {
+      tickLogger.error({ err, msg: 'sla_check_failed_non_fatal' });
+    }
 
     // 'killed' outcome (FIRST_SCRAPE_OK gated or kill-switch flipped mid-run)
     // → treat as failure so OPS-04 fires after grace. Any other outcome,
