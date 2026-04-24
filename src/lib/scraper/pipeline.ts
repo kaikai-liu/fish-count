@@ -145,16 +145,21 @@ export async function scrapeDate(date: string, source: Source): Promise<ScrapeRe
       // Gate 6: parse (row-level quarantine per D-07). parsePage NEVER throws.
       const { rows, failures } = parsePage(html);
 
-      // Pitfall 2: non-empty HTML + zero rows + zero failures + structured
-      // markup = parse_error (selectors likely stale), NOT empty. This is
-      // the drift-detector — an "empty" outcome must mean "source had no
-      // data to report", not "parser silently broke".
-      const looksStructured =
-        html.includes("class='panel'") || html.includes('class="panel"');
+      // Pitfall 2: distinguish legitimate empty-day from silent parser break.
+      //   Empty-day page: has navigation/pager panels but NO "Fish Counts"
+      //     heading (the source-site uses "{Landing} Fish Counts for {date}"
+      //     as the data-panel marker — verified 2026-04-23 live probe).
+      //   Selector drift: data panel present (heading says "Fish Counts")
+      //     but our row selectors matched zero <tr>. That's a parse_error —
+      //     "empty" must mean "source reported nothing", never "we broke".
+      // Source: 01-RESEARCH.md §Code Examples line 646.
+      const looksLikeDataPage =
+        html.includes('Fish Counts') &&
+        (html.includes("class='panel'") || html.includes('class="panel"'));
       if (
         rows.length === 0 &&
         failures.length === 0 &&
-        looksStructured &&
+        looksLikeDataPage &&
         html.length > 500
       ) {
         log.warn({ msg: 'page_structure_unrecognized' });
