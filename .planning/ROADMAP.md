@@ -53,15 +53,15 @@ Plans:
   5. Querying a known date in the store returns canonical `CatchReport` rows conforming to schema, with `scrape_attempts` distinguishing "tried, no rows" from "never tried."
 **Plans**: 9 plans
 Plans:
-- [ ] 01-01-PLAN.md — Schema + DAL repositories (boats, landings, catchReports, scrapeRuns, parseFailures) replacing Phase 0 smoke.ts (STO-01..05, ING-04, ING-09)
-- [ ] 01-02-PLAN.md — Scraper fetcher + rate limiter + file mutex + FIRST_SCRAPE_OK gate (ING-02, ING-03, ING-10 gate)
-- [ ] 01-03-PLAN.md — Parser + Zod schema + HTML fixtures with quarantine on malformed rows (ING-06)
-- [ ] 01-04-PLAN.md — Gzipped HTML snapshot writer (ING-05)
-- [ ] 01-05-PLAN.md — Pipeline orchestrator + scheduler tick replacing _heartbeatTick (ING-01, ING-04, ING-09)
-- [ ] 01-06-PLAN.md — Resumable backfill CLI via tsx + node:util parseArgs (ING-03, ING-08)
-- [ ] 01-07-PLAN.md — Row-count SLA alert wired to Phase 0 operator-alert (ING-07)
-- [ ] 01-08-PLAN.md — TOS review template + outreach email draft + FIRST_SCRAPE_OK runbook (ING-10, ING-11)
-- [ ] 01-09-PLAN.md — Static STO-04 date-boundary test + end-to-end integration + VALIDATION.md sign-off (STO-03, STO-04)
+- [x] 01-01-PLAN.md — Schema + DAL repositories (boats, landings, catchReports, scrapeRuns, parseFailures) replacing Phase 0 smoke.ts (STO-01..05, ING-04, ING-09)
+- [x] 01-02-PLAN.md — Scraper fetcher + rate limiter + file mutex + FIRST_SCRAPE_OK gate (ING-02, ING-03, ING-10 gate)
+- [x] 01-03-PLAN.md — Parser + Zod schema + HTML fixtures with quarantine on malformed rows (ING-06)
+- [x] 01-04-PLAN.md — Gzipped HTML snapshot writer (ING-05)
+- [x] 01-05-PLAN.md — Pipeline orchestrator + scheduler tick replacing _heartbeatTick (ING-01, ING-04, ING-09)
+- [x] 01-06-PLAN.md — Resumable backfill CLI via tsx + node:util parseArgs (ING-03, ING-08)
+- [x] 01-07-PLAN.md — Row-count SLA alert wired to Phase 0 operator-alert (ING-07)
+- [x] 01-08-PLAN.md — TOS review template + outreach email draft + FIRST_SCRAPE_OK runbook (ING-10, ING-11)
+- [x] 01-09-PLAN.md — Static STO-04 date-boundary test + end-to-end integration + VALIDATION.md sign-off (STO-03, STO-04)
 
 ### Phase 2: Browse + Trip Picker + Trends
 **Goal**: Any SD angler can open the site, see today's dock totals, jump to any past date, run a trip-picker query, open a boat's detail page, and compare boats — all anonymously, all on mobile, all with per-angler numbers labeled honestly as derived boat-aggregate averages.
