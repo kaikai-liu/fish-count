@@ -2,6 +2,34 @@
 // Covers OPS-04 ping shape: URL suffixes, no-op when env unset, non-fatal on fetch failure.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+describe('redactPingUrl (WR-04: strip full path, not just UUID)', () => {
+  it('redacts a UUID-shaped healthchecks.io path', async () => {
+    const { redactPingUrl } = await import('../../src/lib/server/heartbeat');
+    const result = redactPingUrl('https://hc-ping.com/abcd1234-5678-90ab-cdef-111122223333');
+    expect(result).toBe('https://hc-ping.com/[REDACTED]');
+    expect(result).not.toContain('abcd1234');
+  });
+
+  it('redacts a slug-shaped healthchecks.io path (project/check name)', async () => {
+    const { redactPingUrl } = await import('../../src/lib/server/heartbeat');
+    const result = redactPingUrl('https://hc-ping.com/my-project/scrape-nightly');
+    expect(result).toBe('https://hc-ping.com/[REDACTED]');
+    expect(result).not.toContain('my-project');
+    expect(result).not.toContain('scrape-nightly');
+  });
+
+  it('redacts status suffixes (/start, /fail) as part of the path', async () => {
+    const { redactPingUrl } = await import('../../src/lib/server/heartbeat');
+    const result = redactPingUrl('https://hc-ping.com/abcd1234-5678-90ab-cdef-111122223333/fail');
+    expect(result).toBe('https://hc-ping.com/[REDACTED]');
+  });
+
+  it('returns [REDACTED] for an invalid URL (never leaks raw input)', async () => {
+    const { redactPingUrl } = await import('../../src/lib/server/heartbeat');
+    expect(redactPingUrl('not a url')).toBe('[REDACTED]');
+  });
+});
+
 describe('pingHealthcheck (OPS-04 dead-man ping)', () => {
   const BASE = 'https://hc-ping.com/abcd1234-5678-90ab-cdef-111122223333';
   let fetchMock: ReturnType<typeof vi.fn>;

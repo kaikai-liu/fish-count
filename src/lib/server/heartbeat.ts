@@ -37,15 +37,30 @@ export async function pingHealthcheck(
       body: exitCode !== 0 ? `exit code: ${exitCode}` : undefined,
       signal: AbortSignal.timeout(PING_TIMEOUT_MS)
     });
-    logger.info({ status, url: redactUuid(url) }, 'healthcheck ping sent');
+    logger.info({ status, url: redactPingUrl(url) }, 'healthcheck ping sent');
   } catch (err) {
     // Do NOT rethrow — a ping failure must not crash the scrape.
     // The dead-man's switch will still fire if pings stop (that's the whole point).
-    logger.warn({ err, status, url: redactUuid(url) }, 'healthcheck ping failed — non-fatal');
+    logger.warn({ err, status, url: redactPingUrl(url) }, 'healthcheck ping failed — non-fatal');
   }
 }
 
-/** Redact the UUID portion of the ping URL for log output — prevents accidental leakage into Better Stack. */
-function redactUuid(url: string): string {
-  return url.replace(/\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/, '/[REDACTED]');
+/**
+ * Redact the entire path of a ping URL for log output.
+ *
+ * WR-04: the previous implementation only matched UUID-4 shapes; healthchecks.io
+ * also supports slug ping URLs (e.g. https://hc-ping.com/my-project/scrape-nightly)
+ * which the old regex let through verbatim. Treating the full path as a secret
+ * ("opaque token") avoids the migration-silent bypass and keeps the log line
+ * useful (protocol + host remain visible for connectivity debugging).
+ *
+ * Exported only for the unit test in tests/scheduler/heartbeat.test.ts.
+ */
+export function redactPingUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}/[REDACTED]`;
+  } catch {
+    return '[REDACTED]';
+  }
 }
