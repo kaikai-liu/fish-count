@@ -75,8 +75,8 @@ Plans:
   5. Every boat has a detail page linking back to its landing and the source site's boat page; users can compare 2–3 boats side-by-side across a custom date range within a single trip type, and can view weekly/monthly trend charts filtered by species + trip type.
 **Plans**: 7 plans
 Plans:
-- [ ] 02-01-PLAN.md — DAL queries (browse, tripPicker, boatDetail, trends, compare) + urlState helper + dates.ts extensions + seedTestDb test helper + boundary-test scope expansion + echarts/date-fns deps
-- [ ] 02-02-PLAN.md — Component library (PerAnglerMetric/Chart/FilterBar/BoatRow/BoatCard/PageHeader/EmptyState/ProvisionalBadge/LastScrapedLabel/LowDataBadge/PerAnglerFramingProvider) + app.css @theme tokens
+- [x] 02-01-PLAN.md — DAL queries (browse, tripPicker, boatDetail, trends, compare) + urlState helper + dates.ts extensions + seedTestDb test helper + boundary-test scope expansion + echarts/date-fns deps
+- [x] 02-02-PLAN.md — Component library (PerAnglerMetric/Chart/FilterBar/BoatRow/BoatCard/PageHeader/EmptyState/ProvisionalBadge/LastScrapedLabel/LowDataBadge/PerAnglerFramingProvider) + app.css @theme tokens
 - [ ] 02-03-PLAN.md — +layout.svelte (top nav) + / (today) + /date/[YYYY-MM-DD] (past view) + load tests
 - [ ] 02-04-PLAN.md — /picker (TRP-01..09) with required trip-type, weighted ranking, 30-day heatmap with n<5 gray override, Why-this-boat panel
 - [ ] 02-05-PLAN.md — /boats/[id] (BOAT-01/02) + /compare (TRN-03) with multi-series weekly chart
