@@ -105,6 +105,25 @@ export function getDatesToScrape(
 }
 
 /**
+ * D-21 (Phase 2): Returns the most recent finished_at where outcome IN ('success','empty').
+ * Used by every Phase 2 data page's "Last scraped at" indicator (BRW-03).
+ * Null when no scrape has ever succeeded or completed with empty result.
+ */
+export function latestSuccessOrEmpty(db: Database.Database): { finished_at: string } | null {
+  const row = db
+    .prepare(
+      `SELECT finished_at
+         FROM scrape_runs
+        WHERE outcome IN ('success', 'empty')
+          AND finished_at IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 1`
+    )
+    .get() as { finished_at: string } | undefined;
+  return row ?? null;
+}
+
+/**
  * Pure helper — produces YYYY-MM-DD strings between `from` and `to` inclusive.
  *
  * NOTE: This is string arithmetic over pre-existing YYYY-MM-DD inputs, not

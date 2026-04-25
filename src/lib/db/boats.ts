@@ -49,6 +49,65 @@ export function getById(db: Database.Database, id: number): BoatRow | undefined 
     .get(id) as BoatRow | undefined;
 }
 
+export interface BoatWithLanding {
+  boat: {
+    id: number;
+    display_name: string;
+    source_url: string | null;
+  };
+  landing: {
+    id: number;
+    display_name: string;
+    source_url: string | null;
+  };
+}
+
+/**
+ * Phase 2 (BOAT-01/02, D-23): Fetch a boat joined with its landing for
+ * the /boats/[id] detail page. Returns null when the boat does not exist
+ * or has no landing FK (which should not happen in a well-formed DB).
+ */
+export function getByIdWithLanding(
+  db: Database.Database,
+  id: number
+): BoatWithLanding | null {
+  const row = db
+    .prepare(
+      `SELECT b.id           AS boat_id,
+              b.display_name AS boat_display_name,
+              b.source_url   AS boat_source_url,
+              l.id           AS landing_id,
+              l.display_name AS landing_display_name,
+              l.source_url   AS landing_source_url
+         FROM boats    b
+         JOIN landings l ON l.id = b.landing_id
+        WHERE b.id = ?`
+    )
+    .get(id) as {
+    boat_id: number;
+    boat_display_name: string;
+    boat_source_url: string | null;
+    landing_id: number;
+    landing_display_name: string;
+    landing_source_url: string | null;
+  } | undefined;
+
+  if (!row) return null;
+
+  return {
+    boat: {
+      id: row.boat_id,
+      display_name: row.boat_display_name,
+      source_url: row.boat_source_url
+    },
+    landing: {
+      id: row.landing_id,
+      display_name: row.landing_display_name,
+      source_url: row.landing_source_url
+    }
+  };
+}
+
 /**
  * Batch helper — resolves the boat + landing FK ids for a batch of parsed
  * catch rows so pipeline.ts can hand fully-populated rows to

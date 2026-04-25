@@ -30,6 +30,8 @@ const SCOPE_DIRS = [
   'src/lib/server',
   'src/lib/alerts',
   'src/lib/ops',
+  'src/routes',
+  'src/lib/components',
   'scripts'
 ];
 
