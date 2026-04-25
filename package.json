@@ -13,7 +13,8 @@
     "test:run": "vitest run",
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
-    "backfill": "tsx scripts/backfill.ts"
+    "backfill": "tsx scripts/backfill.ts",
+    "seed:dev": "tsx scripts/seed-dev-db.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^5.2.0",
