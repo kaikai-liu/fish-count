@@ -1,0 +1,42 @@
+<script lang="ts">
+  import '../app.css';
+  import { page } from '$app/state';
+  let { children } = $props();
+
+  const navItems = [
+    { href: '/', label: 'Home' },
+    { href: '/picker', label: 'Picker' },
+    { href: '/trends', label: 'Trends' },
+    { href: '/compare', label: 'Compare' },
+    { href: '/about', label: 'About' }
+  ];
+</script>
+
+<a href="#main" class="skip-to-main">Skip to main content</a>
+
+<nav class="border-b border-[--color-border] bg-[--color-surface] md:sticky md:top-0 md:z-10">
+  <div class="mx-auto max-w-6xl px-4 py-3 md:px-8">
+    <ul class="flex flex-wrap gap-x-6 gap-y-2 text-base">
+      {#each navItems as item}
+        <li>
+          <a
+            href={item.href}
+            class={page.url.pathname === item.href || (item.href !== '/' && page.url.pathname.startsWith(item.href))
+              ? 'text-[--color-accent] font-semibold'
+              : 'text-[--color-text-muted] hover:underline'}
+          >
+            {item.label}
+          </a>
+        </li>
+      {/each}
+    </ul>
+  </div>
+</nav>
+
+<main id="main" class="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-12">
+  {@render children()}
+</main>
+
+<footer class="mx-auto max-w-6xl px-4 py-8 text-sm text-[--color-text-subtle] md:px-8">
+  <p>FishCount — public San Diego charter-boat dock-totals aggregator. Source: <a href="https://www.sandiegofishreports.com" target="_blank" rel="noopener noreferrer external" class="text-[--color-accent] underline">sandiegofishreports.com</a>.</p>
+</footer>

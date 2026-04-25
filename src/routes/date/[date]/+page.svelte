@@ -5,31 +5,58 @@
   import FilterBar from '$lib/components/FilterBar.svelte';
   import BoatRow from '$lib/components/BoatRow.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
-  import { serializeHomeFilters } from '$lib/shared/urlState';
+  import { serializeDateFilters } from '$lib/shared/urlState';
 
   let { data }: { data: PageData } = $props();
 
   function applyFilter(key: 'tripType' | 'landing' | 'species', value: string) {
     const next = { ...data.filters, [key]: value || undefined };
-    const sp = serializeHomeFilters(next);
-    goto(`?${sp.toString()}`, { keepFocus: true, replaceState: true, noScroll: true });
+    const sp = serializeDateFilters(next);
+    goto(`/date/${data.date}?${sp.toString()}`, { keepFocus: true, replaceState: true, noScroll: true });
   }
 
-  function reset() {
-    goto('/', { keepFocus: true, replaceState: true, noScroll: true });
+  function jumpToDate(value: string) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      goto(`/date/${value}`, { noScroll: true });
+    }
   }
 </script>
 
 <svelte:head>
-  <title>Today's Counts — FishCount</title>
+  <title>{data.date} Counts — FishCount</title>
 </svelte:head>
 
 <PageHeader
-  title="Today's Counts"
-  subtitle={`${data.date}, San Diego`}
+  title="{data.date} Counts"
+  subtitle="San Diego"
   showProvisional={data.isProvisional}
   lastScrapedLabel={data.lastScrapedLabel}
 />
+
+<nav class="mb-4 flex flex-wrap items-center gap-3 text-sm" aria-label="Date navigation">
+  {#if data.nav.prevDisabled}
+    <span class="text-[--color-text-subtle]">‹ Previous day</span>
+  {:else}
+    <a class="text-[--color-accent] underline" href="/date/{data.nav.prevDate}">‹ Previous day</a>
+  {/if}
+  <label class="flex items-center gap-2">
+    <span class="sr-only">Pick a date</span>
+    <input
+      type="date"
+      class="min-h-11 rounded border border-[--color-border] px-2"
+      value={data.date}
+      min={data.nav.minDate}
+      max={data.nav.maxDate}
+      onchange={(e) => jumpToDate((e.target as HTMLInputElement).value)}
+    />
+  </label>
+  <a class="text-[--color-accent] underline" href="/">Today</a>
+  {#if data.nav.nextDisabled}
+    <span class="text-[--color-text-subtle]">Next day ›</span>
+  {:else}
+    <a class="text-[--color-accent] underline" href="/date/{data.nav.nextDate}">Next day ›</a>
+  {/if}
+</nav>
 
 <FilterBar>
   {#snippet filters()}
@@ -41,9 +68,7 @@
         onchange={(e) => applyFilter('tripType', (e.target as HTMLSelectElement).value)}
       >
         <option value="">All</option>
-        {#each data.filterOptions.tripTypes as t}
-          <option value={t}>{t}</option>
-        {/each}
+        {#each data.filterOptions.tripTypes as t}<option value={t}>{t}</option>{/each}
       </select>
     </label>
     <label class="flex flex-col gap-1">
@@ -54,9 +79,7 @@
         onchange={(e) => applyFilter('landing', (e.target as HTMLSelectElement).value)}
       >
         <option value="">All</option>
-        {#each data.filterOptions.landings as l}
-          <option value={l.display_name}>{l.display_name}</option>
-        {/each}
+        {#each data.filterOptions.landings as l}<option value={l.display_name}>{l.display_name}</option>{/each}
       </select>
     </label>
     <label class="flex flex-col gap-1">
@@ -67,22 +90,16 @@
         onchange={(e) => applyFilter('species', (e.target as HTMLSelectElement).value)}
       >
         <option value="">All</option>
-        {#each data.filterOptions.speciesList as s}
-          <option value={s}>{s}</option>
-        {/each}
+        {#each data.filterOptions.speciesList as s}<option value={s}>{s}</option>{/each}
       </select>
     </label>
-  {/snippet}
-  {#snippet actions()}
-    <button type="button" class="text-sm text-[--color-text-muted] underline" onclick={reset}>Reset filters</button>
-    <a href="/date/{data.date}" class="text-sm text-[--color-accent] underline">View past dates</a>
   {/snippet}
 </FilterBar>
 
 {#if data.rows.length === 0}
   <EmptyState
-    heading="No counts reported yet today."
-    body="Boats are still out, or the evening scrape hasn't run. Check back after 23:00 PT."
+    heading="No counts on file for {data.date}."
+    body="This date is either before the dataset's earliest record, or no boats reported."
   />
 {:else}
   <div class="overflow-x-auto rounded border border-[--color-border]">
