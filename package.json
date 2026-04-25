@@ -40,6 +40,8 @@
     "better-sqlite3": "^12.9.0",
     "cheerio": "^1.2.0",
     "croner": "^10.0.1",
+    "date-fns": "^4.1.0",
+    "echarts": "^6.0.0",
     "p-queue": "^9.1.2",
     "p-retry": "^8.0.0",
     "pino": "^10.3.1",
