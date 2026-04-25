@@ -9,10 +9,19 @@
 
   let { data }: { data: PageData } = $props();
 
+  // Form state: seeded from URL-driven SSR data. On filter submit, goto() triggers
+  // a full SSR reload which re-seeds these values from the new URL state.
+  // Using $state here is intentional — the form state is independent of data
+  // between submissions (the user edits filters before clicking "View trend").
+  // eslint-disable-next-line svelte/no-reactive-reassignment
   let formSpecies = $state(data.filters?.species ?? '');
+  // eslint-disable-next-line svelte/no-reactive-reassignment
   let formTripType = $state(data.filters?.tripType ?? '');
+  // eslint-disable-next-line svelte/no-reactive-reassignment
   let formBoatId = $state(data.filters?.boatId?.toString() ?? '');
+  // eslint-disable-next-line svelte/no-reactive-reassignment
   let formRange = $state<TrendsFilters['range']>(data.filters?.range ?? '1y');
+  // eslint-disable-next-line svelte/no-reactive-reassignment
   let formGranularity = $state<TrendsFilters['granularity']>(data.filters?.granularity);
 
   function submit() {
