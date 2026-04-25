@@ -77,10 +77,10 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — DAL queries (browse, tripPicker, boatDetail, trends, compare) + urlState helper + dates.ts extensions + seedTestDb test helper + boundary-test scope expansion + echarts/date-fns deps
 - [x] 02-02-PLAN.md — Component library (PerAnglerMetric/Chart/FilterBar/BoatRow/BoatCard/PageHeader/EmptyState/ProvisionalBadge/LastScrapedLabel/LowDataBadge/PerAnglerFramingProvider) + app.css @theme tokens
-- [ ] 02-03-PLAN.md — +layout.svelte (top nav) + / (today) + /date/[YYYY-MM-DD] (past view) + load tests
-- [ ] 02-04-PLAN.md — /picker (TRP-01..09) with required trip-type, weighted ranking, 30-day heatmap with n<5 gray override, Why-this-boat panel
-- [ ] 02-05-PLAN.md — /boats/[id] (BOAT-01/02) + /compare (TRN-03) with multi-series weekly chart
-- [ ] 02-06-PLAN.md — /trends (TRN-01/02) with gap-aware bucketing + /about (BRW-09) verbatim copy
+- [x] 02-03-PLAN.md — +layout.svelte (top nav) + / (today) + /date/[YYYY-MM-DD] (past view) + load tests
+- [x] 02-04-PLAN.md — /picker (TRP-01..09) with required trip-type, weighted ranking, 30-day heatmap with n<5 gray override, Why-this-boat panel
+- [x] 02-05-PLAN.md — /boats/[id] (BOAT-01/02) + /compare (TRN-03) with multi-series weekly chart
+- [x] 02-06-PLAN.md — /trends (TRN-01/02) with gap-aware bucketing + /about (BRW-09) verbatim copy
 - [ ] 02-07-PLAN.md — scripts/seed-dev-db.ts + integration test + per-angler-discipline lint + anti-feature lint + manual UAT sign-off + VALIDATION.md
 **UI hint**: yes
 
