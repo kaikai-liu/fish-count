@@ -160,7 +160,7 @@ describe('routes/picker/+page.server.ts (load)', () => {
     );
     const result = await load(event);
 
-    const cells = result.heatmap!;
+    const cells = result.heatmap! as Array<{ date: string; value: number | null; n: number }>;
     expect(cells.length).toBe(30);
 
     const withData = cells.filter((c) => c.n > 0);
