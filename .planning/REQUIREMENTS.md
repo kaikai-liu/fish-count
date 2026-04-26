@@ -76,11 +76,14 @@ Requirements for initial release ("shareable with friends" polish bar). Each map
 ### Forecast
 
 - [x] **FCT-01**: Statistical projection (average + prediction bands) is precomputed per (species, trip_type, date-window) and stored in a `forecasts` table
-- [ ] **FCT-02**: Every forecast displays its sample size `n` alongside the projection
-- [ ] **FCT-03**: Projections with `n < 5` do NOT render a point estimate — they render "not enough history"
+- [x] **FCT-02
+**: Every forecast displays its sample size `n` alongside the projection
+- [x] **FCT-03
+**: Projections with `n < 5` do NOT render a point estimate — they render "not enough history"
 - [ ] **FCT-04**: A seasonal-naïve baseline is implemented and projection output must beat it on a held-out validation window; otherwise the baseline ships
 - [ ] **FCT-05**: Calendar heatmap cell coloring uses the precomputed forecast for the cell's date/species/trip-type
-- [ ] **FCT-06**: Forecasts regenerate as part of the nightly scrape pipeline (no stale precomputations served)
+- [x] **FCT-06
+**: Forecasts regenerate as part of the nightly scrape pipeline (no stale precomputations served)
 - [ ] **FCT-07**: Forecast horizon is capped at 30 days ahead; farther-out queries render "horizon too far"
 
 ### Subscriptions & Alerts

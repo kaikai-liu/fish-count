@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 03-01 complete; Wave 1 (03-02 + 03-03) ready to execute in parallel
-last_updated: "2026-04-26T19:42:18.057Z"
+stopped_at: Plan 03-02 complete; Plan 03-03 (picker wiring) ready to execute
+last_updated: "2026-04-26T19:53:43.732Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 29
-  completed_plans: 23
-  percent: 79
+  completed_plans: 24
+  percent: 83
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 03 (forecast-layer) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [████████░░] 79%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [████████░░] 79%
 
 *Updated after each plan completion*
 | Phase 03 P01 | 5min | 3 tasks | 10 files |
+| Phase 03 P02 | 7min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - Credibility guardrails ship with the surfaces they protect: per-angler framing with Phase 2, forecast honesty (PI + n + refusal) with Phase 3, email anti-abuse + deliverability with Phase 4.
 - Followed catchReports.ts upsertMany pattern verbatim — single transaction, prepared statement with named bindings, ON CONFLICT DO UPDATE
 - pruneBeforeHorizon shipped as v1 no-op stub returning 0 (D-16: past forecast rows retained indefinitely)
+- Returned sum_species + sum_anglers from getRatiosForWindow alongside ratio so compute.ts derives exact fleet-wide SUM/SUM (not mean-of-ratios)
+- Pure-math forecast engine follows parser.ts purity contract: no SQL, no module-scope getDb, db handle injected as parameter; per-cell try/catch in recomputeForecasts means one bad cell never aborts the nightly recompute
 
 ### Pending Todos
 
@@ -89,8 +92,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T19:42:18.054Z
-Stopped at: Plan 03-01 complete; Wave 1 (03-02 + 03-03) ready to execute in parallel
+Last session: 2026-04-26T19:53:43.729Z
+Stopped at: Plan 03-02 complete; Plan 03-03 (picker wiring) ready to execute
 Resume file: None
 
 **Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z

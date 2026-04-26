@@ -97,7 +97,7 @@ Plans:
 **Plans**: 6 plans
 Plans:
 - [x] 03-01-PLAN.md — Wave 0: forecasts table DDL + DAL repository + 6 test scaffolds (FCT-01)
-- [ ] 03-02-PLAN.md — Pure-math forecast engine (compute.ts) + getRatiosForWindow + countPresentDays + filled compute/year-boundary/gap-aware/percentile tests (FCT-01/02/03/06)
+- [x] 03-02-PLAN.md — Pure-math forecast engine (compute.ts) + getRatiosForWindow + countPresentDays + filled compute/year-boundary/gap-aware/percentile tests (FCT-01/02/03/06)
 - [ ] 03-03-PLAN.md — forecastHeatmapForQuery DAL + /picker hybrid past/future composer + >30-day horizon branch (FCT-05/07)
 - [ ] 03-04-PLAN.md — PerAnglerMetric kind=forecast extension + heatmapOption tooltip branch + /about Forecasts section + FORECAST_LABEL constant (FCT-02/03/05)
 - [ ] 03-05-PLAN.md — _scrapeTick recompute hook + backfill.ts final recompute + scripts/forecasts-rebuild.ts (FCT-06)
