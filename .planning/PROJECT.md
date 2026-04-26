@@ -20,17 +20,18 @@ FishCount is a public web app that aggregates San Diego charter boat fishing dat
 - [x] Derive per-angler averages (boat total ÷ anglers on that trip) *(Phase 2)*
 - [x] Trip picker: given date + species, show ranked boat list *(Phase 2)*
 - [x] Trip picker: show historical avg fish/angler alongside rankings *(Phase 2)*
-- [x] Trip picker: 30-day calendar heatmap view *(Phase 2 — gray for n<5; color-coding by predicted catch rate ships in Phase 3 with the forecast layer)*
+- [x] Trip picker: 30-day calendar heatmap view *(Phase 2 — gray for n<5; Phase 3 added forecast-driven coloring for today/future)*
 - [x] Trend charts: catches over weeks/months/seasons by species and/or boat *(Phase 2)*
 - [x] Boat comparison: side-by-side performance across custom date ranges *(Phase 2)*
 - [x] Filters + search: by species, boat, landing, trip type *(Phase 2)*
 - [x] Anonymous browsing (no account needed to view any data) *(Phase 2)*
+- [x] Statistical projection: seasonal-naïve weighted-yield baseline + 80% prediction interval + sample size, refusing to render at n<5, capped at 30-day horizon *(Phase 3)*
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Statistical projection: average + confidence bands from history, projected to upcoming weeks *(Phase 3)*
+
 - [ ] Email signup for alerts (the one account-gated feature) *(Phase 4)*
 - [ ] Alerts: notify when a followed species starts running or a followed boat has a hot day *(Phase 4)*
 - [ ] Polish sufficient to share a URL with fellow anglers without embarrassment *(Phase 5)*
@@ -93,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 after Phase 2 (Browse + Trip Picker + Trends) complete — 2/6 phases done, public read surfaces shipped behind per-angler framing discipline*
+*Last updated: 2026-04-26 after Phase 3 (Forecast Layer) complete — 3/6 phases done. Forecast layer ships seasonal-naïve baseline labeled as such per ROADMAP success criterion #2; FCT-04 honesty benchmark documents calibration; n<5 hard floor + 80% PI + 30-day horizon enforced.*
