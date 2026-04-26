@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Plan 03-05 complete; Plan 03-06 (forecast benchmark) ready to execute
-last_updated: "2026-04-26T20:29:34.756Z"
+status: verifying
+stopped_at: Phase 03-forecast-layer complete (all 6 plans done; FCT-01..07 + FCT-04 honesty artifact landed)
+last_updated: "2026-04-26T20:39:07.068Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 29
-  completed_plans: 27
-  percent: 93
+  completed_plans: 28
+  percent: 97
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 
 Phase: 03 (forecast-layer) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-26
 
-Progress: [█████████░] 93%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [█████████░] 93%
 | Phase 03 P03 | 9min | 2 tasks | 5 files |
 | Phase 03 P04 | 6min | 3 tasks | 6 files |
 | Phase 03 P05 | 7min | 3 tasks | 6 files |
+| Phase 03 P06 | 5min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - Phase 3 FCT-06 wired in three places: _scrapeTick inline (success/empty gate, non-fatal try/catch), scripts/backfill.ts final step, and scripts/forecasts-rebuild.ts ad-hoc operator CLI. Recompute failure never blocks pingHealthcheck('success') — OPS-04 owns ingestion liveness; forecast pipeline is a secondary tripwire.
 - vi.doMock with $lib alias paths must use the alias specifier the consumer imports with, not the equivalent relative path. Relative-path mocks for $lib aliases silently fall through to the real module. Recorded as a pattern for future tests.
 - scripts/forecasts-rebuild.ts deliberately omits --from / --to range flags per RESEARCH §9. Operator use case is 'fix it now', full window is bounded (~3,720 cells) and idempotent (UPSERT). Range mode would be a YAGNI flag.
+- Plan 03-06 ships forecast-benchmark CLI as the FCT-04 honesty artifact: tsx-runnable script comparing seasonal-naïve baseline vs fleet-mean baseline on a held-out year, reporting MAE / median absolute error / 80% PI coverage, with all SQL routed through src/lib/db/queries/benchmark.ts to preserve DAL boundary.
+- Did NOT inline dev-fixture benchmark numbers into /about — synthetic round-robin replay produces unrealistically smooth distributions; Status note in 03-VALIDATION-BENCHMARK.md flags the dev-fixture origin and points operators at production rerun.
 
 ### Pending Todos
 
@@ -104,8 +107,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:29:23.675Z
-Stopped at: Plan 03-05 complete; Plan 03-06 (forecast benchmark) ready to execute
+Last session: 2026-04-26T20:39:07.065Z
+Stopped at: Phase 03-forecast-layer complete (all 6 plans done; FCT-01..07 + FCT-04 honesty artifact landed)
 Resume file: None
 
 **Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z

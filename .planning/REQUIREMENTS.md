@@ -80,7 +80,8 @@ Requirements for initial release ("shareable with friends" polish bar). Each map
 **: Every forecast displays its sample size `n` alongside the projection
 - [x] **FCT-03
 **: Projections with `n < 5` do NOT render a point estimate — they render "not enough history"
-- [ ] **FCT-04**: A seasonal-naïve baseline is implemented and projection output must beat it on a held-out validation window; otherwise the baseline ships
+- [x] **FCT-04
+**: A seasonal-naïve baseline is implemented and projection output must beat it on a held-out validation window; otherwise the baseline ships
 - [x] **FCT-05
 **: Calendar heatmap cell coloring uses the precomputed forecast for the cell's date/species/trip-type
 - [x] **FCT-06

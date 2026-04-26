@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 0: Ops Guardrails** - Cost alerts, kill switch, backups, and dead-man's switch before any cloud traffic
 - [ ] **Phase 1: Ingest + Store** - Polite scraper, idempotent store, observability, resumable backfill complete
 - [x] **Phase 2: Browse + Trip Picker + Trends** - Public read surfaces with honest per-angler framing and shareable URLs (completed 2026-04-25)
-- [ ] **Phase 3: Forecast Layer** - Statistical projections with prediction intervals, `n`, refusal-when-n<5, calendar recolor
+- [x] **Phase 3: Forecast Layer** - Statistical projections with prediction intervals, `n`, refusal-when-n<5, calendar recolor (completed 2026-04-26)
 - [ ] **Phase 4: Email Alerts** - Abuse-safe signup, double opt-in, deliverability, hot-day and run-start alerts
 - [ ] **Phase 5: Polish** - Loading/empty/error states and shareable-with-friends finish
 
@@ -101,7 +101,7 @@ Plans:
 - [x] 03-03-PLAN.md — forecastHeatmapForQuery DAL + /picker hybrid past/future composer + >30-day horizon branch (FCT-05/07)
 - [x] 03-04-PLAN.md — PerAnglerMetric kind=forecast extension + heatmapOption tooltip branch + /about Forecasts section + FORECAST_LABEL constant (FCT-02/03/05)
 - [x] 03-05-PLAN.md — _scrapeTick recompute hook + backfill.ts final recompute + scripts/forecasts-rebuild.ts (FCT-06)
-- [ ] 03-06-PLAN.md — scripts/forecast-benchmark.ts + 03-VALIDATION-BENCHMARK.md + /about benchmark reference (FCT-04)
+- [x] 03-06-PLAN.md — scripts/forecast-benchmark.ts + 03-VALIDATION-BENCHMARK.md + /about benchmark reference (FCT-04) (completed 2026-04-26)
 
 ### Phase 4: Email Alerts
 **Goal**: Anglers can opt in to email alerts for followed boats or species and receive "hot day" and "starting to run" notifications — with list-bombing, deliverability, and abuse protections all shipping on day one.
