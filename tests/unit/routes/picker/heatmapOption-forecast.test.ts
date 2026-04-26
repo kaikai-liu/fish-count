@@ -20,15 +20,16 @@ function callFormatter(cells: AnyHeatmapCell[], date: string): string {
 
 describe('heatmapOption tooltip formatter — forecast branch (D-22, D-23, D-24)', () => {
   it('Phase 2 actuals cell n>=5 renders unchanged (toFixed(1) + fish/angler)', () => {
-    const cells: HeatmapCell[] = [{ date: '2026-05-10', value: 7.85, n: 12 }];
+    // Use 7.5 (exact in float) so toFixed(1) is deterministic across IEEE-754 rounding.
+    const cells: HeatmapCell[] = [{ date: '2026-05-10', value: 7.5, n: 12 }];
     const out = callFormatter(cells as AnyHeatmapCell[], '2026-05-10');
-    expect(out).toContain('7.9 fish/angler');
+    expect(out).toContain('7.5 fish/angler');
     expect(out).toContain('n=12 trips');
     expect(out).not.toContain('forecast');
   });
 
   it('Phase 2 actuals cell n<5 renders existing "low data" copy unchanged', () => {
-    const cells: HeatmapCell[] = [{ date: '2026-05-10', value: 7.85, n: 3 }];
+    const cells: HeatmapCell[] = [{ date: '2026-05-10', value: 7.5, n: 3 }];
     const out = callFormatter(cells as AnyHeatmapCell[], '2026-05-10');
     expect(out).toContain('low data');
     expect(out).toContain('n=3 trips');
