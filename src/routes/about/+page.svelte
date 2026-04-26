@@ -55,8 +55,11 @@
     it skeptically. We don't hide it; we flag it.
   </p>
   <p class="mb-4">
-    In Phase 3 we add forecast projections, and we will refuse to render a point
-    estimate when n&lt;5 — only the historical record will show.
+    For forecast projections (future-dated cells in the picker heatmap), we apply
+    a stricter rule: if fewer than 5 historical trips match the target slot, we
+    refuse to show a number entirely — the cell renders gray with "not enough
+    history" instead of any point estimate. See the Forecasts section below for
+    the full method.
   </p>
 
   <h2 class="mb-2 mt-6 text-xl font-semibold">Data gaps</h2>
@@ -70,6 +73,68 @@
     The "Last scraped at" indicator at the top of every data page tells you when the
     most recent scrape finished. Today's data is labeled "provisional" until the day
     rolls over — boats are still reporting.
+  </p>
+
+  <h2 id="forecasts" class="mb-2 mt-6 text-xl font-semibold">Forecasts</h2>
+  <p class="mb-4">
+    When you select a future date in the trip picker, the calendar heatmap shows a
+    statistical projection rather than historical actuals. Here is exactly what
+    those numbers mean and how we compute them.
+  </p>
+
+  <h3 class="mb-2 mt-4 text-lg font-semibold">The model</h3>
+  <p class="mb-4">
+    We use a seasonal-naïve baseline. For any target date, we look up every trip of
+    the same species and trip type that occurred within ±7 calendar days of the
+    same calendar slot in previous years, then compute the fleet-wide weighted
+    average (SUM fish ÷ SUM anglers) and the empirical 10th and 90th percentiles
+    of per-trip per-angler ratios. This is not a machine-learning model. It is a
+    summary of historical patterns for the same time of year, and we label it as
+    such.
+  </p>
+
+  <h3 class="mb-2 mt-4 text-lg font-semibold">Prediction intervals</h3>
+  <p class="mb-4">
+    The [low–high] range shown on a forecast cell is an 80% prediction interval —
+    the range that contained 80% of historical trip outcomes inside the same
+    seasonal window. Wider bands mean the fishing was more variable historically
+    (or the sample size is small). The prediction interval is about per-trip
+    outcomes, not about the precision of the average.
+  </p>
+
+  <h3 class="mb-2 mt-4 text-lg font-semibold">Sample size and "not enough history"</h3>
+  <p class="mb-4">
+    When fewer than 5 historical trips match the target slot, we refuse to show a
+    point estimate and display "not enough history" instead. Off-season slots
+    (e.g., closed-rockfish months, peak-bluefin months before bluefin appeared in
+    the dataset) will consistently render gray. This is the intended behavior, not
+    a bug.
+  </p>
+
+  <h3 class="mb-2 mt-4 text-lg font-semibold">Horizon cap</h3>
+  <p class="mb-4">
+    Forecasts are only available within 30 days of today. Beyond that, the heatmap
+    area renders "horizon too far — historical data only." The rankings table
+    below the heatmap always shows historical actuals regardless of target date —
+    the horizon cap only affects the future-projection display.
+  </p>
+
+  <h3 class="mb-2 mt-4 text-lg font-semibold">Data gaps in the forecast window</h3>
+  <p class="mb-4">
+    When our scraper missed days that would have contributed to the forecast
+    window, the cell shows "based on N of M days" alongside the projection. A
+    forecast based on 42 of 56 expected days is less reliable than one based on
+    56 of 56 — the annotation makes that visible rather than hidden.
+  </p>
+
+  <h3 class="mb-2 mt-4 text-lg font-semibold">Benchmark validation</h3>
+  <p class="mb-4">
+    We benchmark this seasonal-naïve baseline against a simpler fleet-mean model on
+    held-out historical data — the methodology and results are documented in our
+    forecast benchmark report (Phase 3 validation). The shipped baseline is the
+    one labeled here; we do not claim ML-grade accuracy and do not present
+    fake-precision numbers (no decimals on forecast values, no "73.4% chance"
+    framing).
   </p>
 
   <h2 class="mb-2 mt-6 text-xl font-semibold">Contact</h2>
