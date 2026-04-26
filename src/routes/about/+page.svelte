@@ -130,11 +130,13 @@
   <h3 class="mb-2 mt-4 text-lg font-semibold">Benchmark validation</h3>
   <p class="mb-4">
     We benchmark this seasonal-naïve baseline against a simpler fleet-mean model on
-    held-out historical data — the methodology and results are documented in our
-    forecast benchmark report (Phase 3 validation). The shipped baseline is the
-    one labeled here; we do not claim ML-grade accuracy and do not present
-    fake-precision numbers (no decimals on forecast values, no "73.4% chance"
-    framing).
+    held-out historical data — the methodology, MAE, median absolute error, and
+    80% prediction interval coverage are documented in our forecast benchmark
+    report (Phase 3 validation, kept at
+    <code>.planning/phases/03-forecast-layer/03-VALIDATION-BENCHMARK.md</code>
+    in the project repository). The shipped baseline is the one labeled here; we
+    do not claim ML-grade accuracy and do not present fake-precision numbers (no
+    decimals on forecast values, no "73.4% chance" framing).
   </p>
 
   <h2 class="mb-2 mt-6 text-xl font-semibold">Contact</h2>
