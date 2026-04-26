@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 3 context gathered
-last_updated: "2026-04-26T18:49:59.163Z"
+status: executing
+stopped_at: Plan 03-01 complete; Wave 1 (03-02 + 03-03) ready to execute in parallel
+last_updated: "2026-04-26T19:42:18.057Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 29
-  completed_plans: 22
-  percent: 76
+  completed_plans: 23
+  percent: 79
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Given a date (or range) and a target species, help an angler pick the charter boat with the best historical odds.
-**Current focus:** Phase 02 — browse-trip-picker-trends
+**Current focus:** Phase 03 — forecast-layer
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
-Status: Ready to plan
+Phase: 03 (forecast-layer) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░] 79%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 03 P01 | 5min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - Phase 0 precedes Phase 1 — no scraping into the cloud without billing alerts, kill switch, dead-man's switch, and Litestream backups in place.
 - Backfill is a Phase 1 exit criterion (not a v2 follow-up) so the forecast layer has real history to chew on.
 - Credibility guardrails ship with the surfaces they protect: per-angler framing with Phase 2, forecast honesty (PI + n + refusal) with Phase 3, email anti-abuse + deliverability with Phase 4.
+- Followed catchReports.ts upsertMany pattern verbatim — single transaction, prepared statement with named bindings, ON CONFLICT DO UPDATE
+- pruneBeforeHorizon shipped as v1 no-op stub returning 0 (D-16: past forecast rows retained indefinitely)
 
 ### Pending Todos
 
@@ -86,8 +89,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: --stopped-at
-Stopped at: Phase 3 context gathered
-Resume file: --resume-file
+Last session: 2026-04-26T19:42:18.054Z
+Stopped at: Plan 03-01 complete; Wave 1 (03-02 + 03-03) ready to execute in parallel
+Resume file: None
 
 **Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z

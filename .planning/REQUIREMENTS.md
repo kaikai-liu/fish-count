@@ -75,7 +75,7 @@ Requirements for initial release ("shareable with friends" polish bar). Each map
 
 ### Forecast
 
-- [ ] **FCT-01**: Statistical projection (average + prediction bands) is precomputed per (species, trip_type, date-window) and stored in a `forecasts` table
+- [x] **FCT-01**: Statistical projection (average + prediction bands) is precomputed per (species, trip_type, date-window) and stored in a `forecasts` table
 - [ ] **FCT-02**: Every forecast displays its sample size `n` alongside the projection
 - [ ] **FCT-03**: Projections with `n < 5` do NOT render a point estimate — they render "not enough history"
 - [ ] **FCT-04**: A seasonal-naïve baseline is implemented and projection output must beat it on a held-out validation window; otherwise the baseline ships
@@ -198,7 +198,7 @@ Populated by roadmap creation. Each v1 requirement maps to exactly one phase.
 | TRN-01 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRN
 | TRN-02 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRN
 | TRN-03 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRN
-| FCT-01 | Phase 3: Forecast Layer | Pending |
+| FCT-01 | Phase 3: Forecast Layer | Validated 2026-04-26 |
 | FCT-02 | Phase 3: Forecast Layer | Pending |
 | FCT-03 | Phase 3: Forecast Layer | Pending |
 | FCT-04 | Phase 3: Forecast Layer | Pending |
