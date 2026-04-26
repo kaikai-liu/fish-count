@@ -94,7 +94,14 @@ Plans:
   3. Forecast tables regenerate automatically as part of the nightly scrape pipeline — no manual recompute step, and queries for "today" never return stale-by-a-cycle results.
   4. The calendar heatmap's cell coloring is driven by the precomputed forecast for that cell's (date, species, trip_type); forecast horizon requests beyond 30 days render a "horizon too far" message instead of a number.
   5. All displayed forecast numbers are integers (no false-precision decimals) and gap-aware aggregations report "based on N of M days" when scrape gaps exist in the input window.
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 03-01-PLAN.md — Wave 0: forecasts table DDL + DAL repository + 6 test scaffolds (FCT-01)
+- [ ] 03-02-PLAN.md — Pure-math forecast engine (compute.ts) + getRatiosForWindow + countPresentDays + filled compute/year-boundary/gap-aware/percentile tests (FCT-01/02/03/06)
+- [ ] 03-03-PLAN.md — forecastHeatmapForQuery DAL + /picker hybrid past/future composer + >30-day horizon branch (FCT-05/07)
+- [ ] 03-04-PLAN.md — PerAnglerMetric kind=forecast extension + heatmapOption tooltip branch + /about Forecasts section + FORECAST_LABEL constant (FCT-02/03/05)
+- [ ] 03-05-PLAN.md — _scrapeTick recompute hook + backfill.ts final recompute + scripts/forecasts-rebuild.ts (FCT-06)
+- [ ] 03-06-PLAN.md — scripts/forecast-benchmark.ts + 03-VALIDATION-BENCHMARK.md + /about benchmark reference (FCT-04)
 
 ### Phase 4: Email Alerts
 **Goal**: Anglers can opt in to email alerts for followed boats or species and receive "hot day" and "starting to run" notifications — with list-bombing, deliverability, and abuse protections all shipping on day one.
@@ -129,7 +136,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 (decimal phases
 | 0. Ops Guardrails | 0/7 | Planned | - |
 | 1. Ingest + Store | 0/9 | Planned | - |
 | 2. Browse + Trip Picker + Trends | 7/7 | Complete | 2026-04-25 |
-| 3. Forecast Layer | 0/TBD | Not started | - |
+| 3. Forecast Layer | 0/6 | Planned | - |
 | 4. Email Alerts | 0/TBD | Not started | - |
 | 5. Polish | 0/TBD | Not started | - |
 
