@@ -34,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { scrapeDate } from '../src/lib/scraper/pipeline.ts';
 import { getDatesToScrape } from '../src/lib/db/scrapeRuns.ts';
 import { getDb, closeDb } from '../src/lib/db/client.ts';
+import { recomputeForecasts } from '../src/lib/forecast/compute.ts';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const USAGE =
@@ -129,6 +130,18 @@ export async function main(): Promise<number> {
       );
       return 1;
     }
+  }
+
+  // D-17 (FCT-06): recompute forecasts once at end of backfill run so the operator
+  // gets forecasts populated immediately rather than waiting for the next nightly tick.
+  // Non-fatal: a recompute failure does not change the backfill exit code.
+  try {
+    recomputeForecasts(db);
+    log('[backfill] forecast recompute complete', quiet);
+  } catch (err) {
+    console.error(
+      `[backfill] forecast recompute failed (non-fatal): ${(err as Error).message}`
+    );
   }
 
   const durationMin = ((Date.now() - startTime) / 60000).toFixed(1);
