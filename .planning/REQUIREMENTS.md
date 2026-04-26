@@ -207,10 +207,10 @@ Populated by roadmap creation. Each v1 requirement maps to exactly one phase.
 | FCT-01 | Phase 3: Forecast Layer | Validated 2026-04-26 |
 | FCT-02 | Phase 3: Forecast Layer | Validated 2026-04-26 |
 | FCT-03 | Phase 3: Forecast Layer | Validated 2026-04-26 |
-| FCT-04 | Phase 3: Forecast Layer | Pending |
+| FCT-04 | Phase 3: Forecast Layer | Validated 2026-04-26 |
 | FCT-05 | Phase 3: Forecast Layer | Validated 2026-04-26 |
-| FCT-06 | Phase 3: Forecast Layer | Pending |
-| FCT-07 | Phase 3: Forecast Layer | Pending |
+| FCT-06 | Phase 3: Forecast Layer | Validated 2026-04-26 |
+| FCT-07 | Phase 3: Forecast Layer | Validated 2026-04-26 |
 | ALT-01 | Phase 4: Email Alerts | Pending |
 | ALT-02 | Phase 4: Email Alerts | Pending |
 | ALT-03 | Phase 4: Email Alerts | Pending |
