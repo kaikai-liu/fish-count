@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 03-03 complete; Plan 03-04 (scheduler/recompute wiring) ready to execute
-last_updated: "2026-04-26T20:05:11.680Z"
+stopped_at: Plan 03-04 complete; Plan 03-05 (scheduler recompute wiring) ready to execute
+last_updated: "2026-04-26T20:18:30.405Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 29
-  completed_plans: 24
-  percent: 83
+  completed_plans: 26
+  percent: 90
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 03 (forecast-layer) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-04-26
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [████████░░] 83%
 | Phase 03 P01 | 5min | 3 tasks | 10 files |
 | Phase 03 P02 | 7min | 3 tasks | 9 files |
 | Phase 03 P03 | 9min | 2 tasks | 5 files |
+| Phase 03 P04 | 6min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - Phase 3 hybrid heatmap composer: past cells from heatmapForQuery (catch_reports) + today/future cells from forecastHeatmapForQuery (forecasts), merged by date. Single today() call per request feeds both horizon check and split (RESEARCH §4).
 - FCT-07 horizon gate: when target_date - today > 30, /picker returns horizonTooFar:true with heatmap:null and the verbatim message 'horizon too far — historical data only'; rankings continue to render (historical actuals are unaffected by the cap).
 - forecastHeatmapForQuery preserves Phase 2 D-15 shape contract ({date, value, n}) so buildHeatmapOption needs only a tooltip-formatter branch (Plan 03-04), not a rendering rewrite. Additive fields (pi_low, pi_high, gap_present, gap_expected) discriminate forecast-vs-actual at tooltip time via 'pi_low' in cell.
+- Phase 3 forecast UI surfaces locked: PerAnglerMetric kind='historical'|'forecast' with /about#forecasts anchor; heatmap tooltip formatter discriminates via 'pi_low' in cell; verbatim copy constants (FORECAST_LABEL, NOT_ENOUGH_HISTORY, PI_LABEL) live in src/lib/copy/metrics.ts as single source of truth
+- /about page Forecasts section anchored at #forecasts documents the seasonal-naïve baseline, 80% PI, n<5 refusal, 30-day horizon cap, gap-aware aggregation, and benchmark validation — fulfills CLAUDE.md non-negotiable #3 'beat seasonal-naïve OR ship the baseline labeled' on the user-visible side
+- PerAnglerMetric kind defaults to 'historical' so all 7+ Phase 2 callers (/, /date/[date], /picker, /boats/[id], /compare, /trends, BoatCard) keep working without changes; only future /picker forecast-cell wiring opts into kind='forecast' explicitly
 
 ### Pending Todos
 
@@ -96,8 +100,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:04:52.430Z
-Stopped at: Plan 03-03 complete; Plan 03-04 (scheduler/recompute wiring) ready to execute
+Last session: 2026-04-26T20:18:19.655Z
+Stopped at: Plan 03-04 complete; Plan 03-05 (scheduler recompute wiring) ready to execute
 Resume file: None
 
 **Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z
