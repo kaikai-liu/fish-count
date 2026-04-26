@@ -162,3 +162,24 @@ function addOneDay(s: string): string {
   const dd = String(dt.getUTCDate()).padStart(2, '0');
   return `${yy}-${mm}-${dd}`;
 }
+
+/**
+ * Phase 3 (D-24): count input dates with outcome IN ('success','empty').
+ * Days with outcome IN ('killed','http_error','parse_error') OR no scrape_runs
+ * row at all are NOT counted — they are gaps the forecast couldn't see through.
+ *
+ * Returns 0 when the input array is empty (no SQL run; avoids dynamic placeholder edge case).
+ */
+export function countPresentDays(db: Database.Database, dates: string[]): number {
+  if (dates.length === 0) return 0;
+  const placeholders = dates.map(() => '?').join(',');
+  const row = db
+    .prepare(
+      `SELECT COUNT(DISTINCT run_date) AS present_count
+         FROM scrape_runs
+        WHERE run_date IN (${placeholders})
+          AND outcome IN ('success', 'empty')`
+    )
+    .get(...dates) as { present_count: number };
+  return row.present_count;
+}
