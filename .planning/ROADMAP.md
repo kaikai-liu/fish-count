@@ -81,7 +81,7 @@ Plans:
 - [x] 02-04-PLAN.md — /picker (TRP-01..09) with required trip-type, weighted ranking, 30-day heatmap with n<5 gray override, Why-this-boat panel
 - [x] 02-05-PLAN.md — /boats/[id] (BOAT-01/02) + /compare (TRN-03) with multi-series weekly chart
 - [x] 02-06-PLAN.md — /trends (TRN-01/02) with gap-aware bucketing + /about (BRW-09) verbatim copy
-- [ ] 02-07-PLAN.md — scripts/seed-dev-db.ts + integration test + per-angler-discipline lint + anti-feature lint + manual UAT sign-off + VALIDATION.md
+- [x] 02-07-PLAN.md — scripts/seed-dev-db.ts + integration test + per-angler-discipline lint + anti-feature lint + manual UAT sign-off + VALIDATION.md
 **UI hint**: yes
 
 ### Phase 3: Forecast Layer

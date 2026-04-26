@@ -2,8 +2,8 @@
 phase: "02-browse-trip-picker-trends"
 plan: "07"
 subsystem: "integration"
-status: "awaiting-uat"
-tags: ["seed-dev-db", "integration-test", "lint", "per-angler-discipline", "anti-feature"]
+status: "complete"
+tags: ["seed-dev-db", "integration-test", "lint", "per-angler-discipline", "anti-feature", "uat-approved"]
 dependency_graph:
   requires: ["02-01", "02-02", "02-03", "02-04", "02-05", "02-06"]
   provides: ["seed-dev-db", "integration-smoke", "per-angler-discipline-lint", "anti-feature-lint"]
@@ -26,18 +26,46 @@ decisions:
   - "Integration test seeds 90 days (2024-01-01 to 2024-04-01) for sufficient trends/compare/picker data density."
   - "Compare test uses URLSearchParams.append for boatIds (repeated keys) per parseCompareFilters sp.getAll contract."
   - "Picker test uses windowDays=7 not 30 (Zod schema caps at 14)."
+  - "Seed rotation excludes edge-case fixtures (empty-day, parse-edge-mangled) — they remain for parser unit tests but make dev UX look broken when replayed across hundreds of days."
+uat_bug_fixes:
+  - id: "TAILWIND-V4-SYNTAX"
+    severity: "blocker"
+    symptom: "All buttons rendered invisible (white-on-white). Tailwind v4 miscompiles bg-[--color-X] into background-color: --color-X (no var() wrapper)"
+    fix: "Mechanical sed [--color-X] → (--color-X) across 92 occurrences in 17 src files"
+    commit: "3c1c010"
+  - id: "SEED-EMPTY-FIXTURES"
+    severity: "high"
+    symptom: "Picker default state landed on empty/edge-case fixtures for ~half of dates → 'No matching trips' on otherwise-valid queries"
+    fix: "Filter seed rotation to substantive fixtures only"
+    commit: "ecc36d5"
+  - id: "COMPARE-COMMA-URL"
+    severity: "medium"
+    symptom: "Hand-typed/shared ?boatIds=28,29 URLs routed to guidance state — only repeated-key form ?boatIds=28&boatIds=29 was accepted"
+    fix: "parseCompareFilters now accepts both forms; serializer unchanged"
+    commit: "f11f8e0"
+  - id: "PERANGLER-FRAMING-MUTATION"
+    severity: "blocker"
+    symptom: "state_unsafe_mutation runtime error in PerAnglerFramingProvider aborted hydration on /compare and /picker — form submit appeared dead"
+    fix: "Switched consume() latch from $state proxy to plain object (no reactivity needed for one-shot flag)"
+    commit: "e2249de"
+  - id: "TRENDS-NODATA-TEST"
+    severity: "low"
+    symptom: "Integration test asserted chartOption !== null, but new trends noData branch returns null when query window has no rows"
+    fix: "Split test into data branch (range='all') + noData branch (range='1y')"
+    commit: "e2249de"
 metrics:
-  duration: "10m"
+  duration: "10m execute + ~80m UAT walkthrough/fixes"
   completed: "2026-04-25"
-  tasks_completed: "2/3"
+  tasks_completed: "3/3"
   files_created: 5
-  files_modified: 1
-  tests_added: 29
+  files_modified: 19
+  tests_added: 31
+  tests_total_passing: 373
 ---
 
 # Phase 02 Plan 07: Final Integration, Lint Guards, and UAT — Summary
 
-**One-liner:** Dev fixture replay CLI (seed-dev-db.ts) + 18-test cross-route integration smoke + per-angler discipline lint (3-file allowlist, Approach C) + anti-feature lint, all green against full 368-test suite. UAT checkpoint pending operator sign-off.
+**One-liner:** Dev fixture replay CLI (seed-dev-db.ts) + 19-test cross-route integration smoke + per-angler discipline lint (3-file allowlist, Approach C) + anti-feature lint, all green against full 373-test suite. **UAT approved 2026-04-25 by operator** after 30-item walkthrough surfaced 5 real bugs (4 product, 1 test) — all fixed and re-verified.
 
 ---
 
