@@ -201,7 +201,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     rankings,
     heatmap, // null when horizonTooFar
     horizonTooFar,
-    heatmapHorizonMessage, // 'horizon too far — historical data only' when horizonTooFar; else null
+    heatmapHorizonMessage, // D-10 verbatim message when horizonTooFar; else null
     why,
     windowStart: fromDate,
     windowEnd: toDate,
