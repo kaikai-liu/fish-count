@@ -100,7 +100,7 @@ Plans:
 - [x] 03-02-PLAN.md — Pure-math forecast engine (compute.ts) + getRatiosForWindow + countPresentDays + filled compute/year-boundary/gap-aware/percentile tests (FCT-01/02/03/06)
 - [x] 03-03-PLAN.md — forecastHeatmapForQuery DAL + /picker hybrid past/future composer + >30-day horizon branch (FCT-05/07)
 - [x] 03-04-PLAN.md — PerAnglerMetric kind=forecast extension + heatmapOption tooltip branch + /about Forecasts section + FORECAST_LABEL constant (FCT-02/03/05)
-- [ ] 03-05-PLAN.md — _scrapeTick recompute hook + backfill.ts final recompute + scripts/forecasts-rebuild.ts (FCT-06)
+- [x] 03-05-PLAN.md — _scrapeTick recompute hook + backfill.ts final recompute + scripts/forecasts-rebuild.ts (FCT-06)
 - [ ] 03-06-PLAN.md — scripts/forecast-benchmark.ts + 03-VALIDATION-BENCHMARK.md + /about benchmark reference (FCT-04)
 
 ### Phase 4: Email Alerts
