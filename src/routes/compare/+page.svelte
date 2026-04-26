@@ -18,12 +18,19 @@
   // boatIds stored as a comma-separated string for the text input
   let formBoatIdsRaw = $state(data.filters?.boatIds.join(',') ?? '');
 
-  function submit() {
+  async function submit() {
     const parsedIds = formBoatIdsRaw
       .split(',')
       .map((s) => Number(s.trim()))
       .filter((n) => Number.isFinite(n) && n > 0);
-    if (parsedIds.length < 2 || parsedIds.length > 3 || !formTripType) return;
+    if (parsedIds.length < 2 || parsedIds.length > 3 || !formTripType) {
+      console.warn('[compare] submit blocked: invalid form state', {
+        formTripType,
+        formBoatIdsRaw,
+        parsedIds
+      });
+      return;
+    }
     const filters: CompareFilters = {
       tripType: formTripType,
       fromDate: formFromDate,
@@ -31,7 +38,13 @@
       boatIds: parsedIds
     };
     const sp = serializeCompareFilters(filters);
-    goto(`/compare?${sp.toString()}`, { keepFocus: true, replaceState: true, noScroll: true });
+    const url = `/compare?${sp.toString()}`;
+    try {
+      await goto(url, { keepFocus: true, replaceState: true, noScroll: true });
+    } catch (err) {
+      console.error('[compare] goto failed, falling back to hard nav', err);
+      window.location.href = url;
+    }
   }
 
   function reset() {
