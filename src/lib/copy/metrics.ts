@@ -30,3 +30,14 @@ export const BEST_DAY_UNIT = 'fish/angler';
 
 /** Heatmap visualMap legend "high" label (paired with "low"). */
 export const HEATMAP_LEGEND_HIGH = 'high (fish/angler)';
+
+/** Phase 3 D-25: inline kind label for forecast cells in PerAnglerMetric and heatmap tooltip.
+ *  CONTEXT.md §Specific Ideas: verbatim 'forecast' — never 'prediction' or 'projection' or 'estimate'. */
+export const FORECAST_LABEL = 'forecast';
+
+/** Phase 3 D-08: verbatim n<5 refusal copy. Used in PerAnglerMetric (kind='forecast' value=null)
+ *  AND in the heatmap tooltip's n<5 branch (replaces Phase 2 'low data — ' copy for forecast cells). */
+export const NOT_ENOUGH_HISTORY = 'not enough history';
+
+/** Phase 3 D-04: prediction interval label. The PI is empirical 10/90 = 80% coverage. */
+export const PI_LABEL = '80% PI';
