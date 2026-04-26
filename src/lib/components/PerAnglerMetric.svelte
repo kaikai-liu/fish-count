@@ -46,8 +46,8 @@
   {/if}
 </span>
 {#if renderFraming && !isUnknown}
-  <small class="block text-sm text-[--color-text-muted] mt-1">
+  <small class="block text-sm text-(--color-text-muted) mt-1">
     derived boat-aggregate average, not individual angler —
-    <a href="/about" class="text-[--color-accent] underline">About the data</a>
+    <a href="/about" class="text-(--color-accent) underline">About the data</a>
   </small>
 {/if}

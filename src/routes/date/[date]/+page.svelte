@@ -35,26 +35,26 @@
 
 <nav class="mb-4 flex flex-wrap items-center gap-3 text-sm" aria-label="Date navigation">
   {#if data.nav.prevDisabled}
-    <span class="text-[--color-text-subtle]">‹ Previous day</span>
+    <span class="text-(--color-text-subtle)">‹ Previous day</span>
   {:else}
-    <a class="text-[--color-accent] underline" href="/date/{data.nav.prevDate}">‹ Previous day</a>
+    <a class="text-(--color-accent) underline" href="/date/{data.nav.prevDate}">‹ Previous day</a>
   {/if}
   <label class="flex items-center gap-2">
     <span class="sr-only">Pick a date</span>
     <input
       type="date"
-      class="min-h-11 rounded border border-[--color-border] px-2"
+      class="min-h-11 rounded border border-(--color-border) px-2"
       value={data.date}
       min={data.nav.minDate}
       max={data.nav.maxDate}
       onchange={(e) => jumpToDate((e.target as HTMLInputElement).value)}
     />
   </label>
-  <a class="text-[--color-accent] underline" href="/">Today</a>
+  <a class="text-(--color-accent) underline" href="/">Today</a>
   {#if data.nav.nextDisabled}
-    <span class="text-[--color-text-subtle]">Next day ›</span>
+    <span class="text-(--color-text-subtle)">Next day ›</span>
   {:else}
-    <a class="text-[--color-accent] underline" href="/date/{data.nav.nextDate}">Next day ›</a>
+    <a class="text-(--color-accent) underline" href="/date/{data.nav.nextDate}">Next day ›</a>
   {/if}
 </nav>
 
@@ -63,7 +63,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Trip type</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         value={data.filters.tripType ?? ''}
         onchange={(e) => applyFilter('tripType', (e.target as HTMLSelectElement).value)}
       >
@@ -74,7 +74,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Landing</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         value={data.filters.landing ?? ''}
         onchange={(e) => applyFilter('landing', (e.target as HTMLSelectElement).value)}
       >
@@ -85,7 +85,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Species</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         value={data.filters.species ?? ''}
         onchange={(e) => applyFilter('species', (e.target as HTMLSelectElement).value)}
       >
@@ -102,9 +102,9 @@
     body="This date is either before the dataset's earliest record, or no boats reported."
   />
 {:else}
-  <div class="overflow-x-auto rounded border border-[--color-border]">
+  <div class="overflow-x-auto rounded border border-(--color-border)">
     <table class="w-full text-sm">
-      <thead class="bg-[--color-surface-muted] text-left text-sm font-semibold">
+      <thead class="bg-(--color-surface-muted) text-left text-sm font-semibold">
         <tr>
           <th class="px-3 py-2">Boat</th>
           <th class="px-3 py-2">Landing</th>

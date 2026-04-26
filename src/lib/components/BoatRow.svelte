@@ -23,16 +23,16 @@
   );
 </script>
 
-<tr class="border-b border-[--color-border] hover:bg-[--color-surface-muted]">
+<tr class="border-b border-(--color-border) hover:bg-(--color-surface-muted)">
   <td class="px-3 py-2">
     <div class="flex flex-wrap items-center gap-2">
-      <a href="/boats/{row.boat_id}" class="text-[--color-accent] underline">{row.boat_name}</a>
+      <a href="/boats/{row.boat_id}" class="text-(--color-accent) underline">{row.boat_name}</a>
       {#if showProvisional}
         <ProvisionalBadge />
       {/if}
     </div>
   </td>
-  <td class="px-3 py-2 text-[--color-text-muted]">{row.landing_name}</td>
+  <td class="px-3 py-2 text-(--color-text-muted)">{row.landing_name}</td>
   <td class="px-3 py-2">{row.trip_type}</td>
   <td class="px-3 py-2 tabular-nums text-right">{row.angler_count}</td>
   <td class="px-3 py-2">{row.species}</td>
@@ -42,7 +42,7 @@
       href={sourceDailyUrl}
       target="_blank"
       rel="noopener noreferrer external"
-      class="text-[--color-accent] underline"
+      class="text-(--color-accent) underline"
       aria-label="View on sandiegofishreports.com"
     >↗</a>
   </td>

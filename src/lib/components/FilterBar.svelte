@@ -24,7 +24,7 @@
 
 <form
   role="search"
-  class="mb-6 flex flex-col gap-4 rounded border border-[--color-border] bg-[--color-surface-muted] p-4 md:flex-row md:flex-wrap md:items-end md:gap-4"
+  class="mb-6 flex flex-col gap-4 rounded border border-(--color-border) bg-(--color-surface-muted) p-4 md:flex-row md:flex-wrap md:items-end md:gap-4"
   onsubmit={(e) => e.preventDefault()}
 >
   <div class="flex-1 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:gap-4">

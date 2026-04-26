@@ -36,7 +36,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Trip type</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         value={data.filters.tripType ?? ''}
         onchange={(e) => applyFilter('tripType', (e.target as HTMLSelectElement).value)}
       >
@@ -49,7 +49,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Landing</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         value={data.filters.landing ?? ''}
         onchange={(e) => applyFilter('landing', (e.target as HTMLSelectElement).value)}
       >
@@ -62,7 +62,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Species</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         value={data.filters.species ?? ''}
         onchange={(e) => applyFilter('species', (e.target as HTMLSelectElement).value)}
       >
@@ -74,8 +74,8 @@
     </label>
   {/snippet}
   {#snippet actions()}
-    <button type="button" class="text-sm text-[--color-text-muted] underline" onclick={reset}>Reset filters</button>
-    <a href="/date/{data.date}" class="text-sm text-[--color-accent] underline">View past dates</a>
+    <button type="button" class="text-sm text-(--color-text-muted) underline" onclick={reset}>Reset filters</button>
+    <a href="/date/{data.date}" class="text-sm text-(--color-accent) underline">View past dates</a>
   {/snippet}
 </FilterBar>
 
@@ -85,9 +85,9 @@
     body="Boats are still out, or the evening scrape hasn't run. Check back after 23:00 PT."
   />
 {:else}
-  <div class="overflow-x-auto rounded border border-[--color-border]">
+  <div class="overflow-x-auto rounded border border-(--color-border)">
     <table class="w-full text-sm">
-      <thead class="bg-[--color-surface-muted] text-left text-sm font-semibold">
+      <thead class="bg-(--color-surface-muted) text-left text-sm font-semibold">
         <tr>
           <th class="px-3 py-2">Boat</th>
           <th class="px-3 py-2">Landing</th>

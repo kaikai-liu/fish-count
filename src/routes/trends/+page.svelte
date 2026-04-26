@@ -55,7 +55,7 @@
         >Species <span aria-hidden="true">*</span></span
       >
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         required
         bind:value={formSpecies}
       >
@@ -68,7 +68,7 @@
         >Trip type <span aria-hidden="true">*</span></span
       >
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         required
         bind:value={formTripType}
       >
@@ -81,14 +81,14 @@
       <input
         type="number"
         min="1"
-        class="min-h-11 w-32 rounded border border-[--color-border] px-2 tabular-nums"
+        class="min-h-11 w-32 rounded border border-(--color-border) px-2 tabular-nums"
         bind:value={formBoatId}
       />
     </label>
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Range</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         bind:value={formRange}
       >
         <option value="3mo">3 months</option>
@@ -100,7 +100,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Granularity</span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         bind:value={formGranularity}
       >
         <option value="">(auto)</option>
@@ -112,14 +112,14 @@
   {#snippet actions()}
     <button
       type="button"
-      class="min-h-11 rounded bg-[--color-accent] px-4 py-2 font-semibold text-white hover:bg-[--color-accent-hover]"
+      class="min-h-11 rounded bg-(--color-accent) px-4 py-2 font-semibold text-white hover:bg-(--color-accent-hover)"
       onclick={submit}
     >
       View trend
     </button>
     <button
       type="button"
-      class="text-sm text-[--color-text-muted] underline"
+      class="text-sm text-(--color-text-muted) underline"
       onclick={reset}
     >
       Reset
@@ -128,7 +128,7 @@
 </FilterBar>
 
 {#if data.guidance}
-  <p class="rounded border border-[--color-border] bg-[--color-surface-muted] p-4 text-sm text-[--color-text-muted]">
+  <p class="rounded border border-(--color-border) bg-(--color-surface-muted) p-4 text-sm text-(--color-text-muted)">
     {data.guidance}
   </p>
 {:else if data.chartOption && data.filters}
@@ -138,6 +138,6 @@
       ariaLabel={`${data.granularity} ${FISH_PER_ANGLER_ARIA} trend for ${data.filters.species} on ${data.filters.tripType}${data.boatName ? ' for ' + data.boatName : ''}`}
       height="360px"
     />
-    <p class="mt-2 text-sm text-[--color-text-muted]">{data.captionGranularity}</p>
+    <p class="mt-2 text-sm text-(--color-text-muted)">{data.captionGranularity}</p>
   </section>
 {/if}

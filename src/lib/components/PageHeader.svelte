@@ -15,7 +15,7 @@
   } = $props();
 </script>
 
-<header class="border-b border-[--color-border] pb-4 mb-6 md:mb-8">
+<header class="border-b border-(--color-border) pb-4 mb-6 md:mb-8">
   <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
     <div class="flex-1">
       <div class="flex flex-wrap items-center gap-3">
@@ -25,7 +25,7 @@
         {/if}
       </div>
       {#if subtitle}
-        <p class="mt-1 text-base text-[--color-text-muted]">{subtitle}</p>
+        <p class="mt-1 text-base text-(--color-text-muted)">{subtitle}</p>
       {/if}
     </div>
     <div class="md:text-right">

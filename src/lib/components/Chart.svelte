@@ -66,10 +66,10 @@
   role="img"
   aria-label={ariaLabel}
   style="width:100%;height:{height}"
-  class="bg-[--color-surface-muted]"
+  class="bg-(--color-surface-muted)"
 >
   {#if !mounted || loading}
-    <div class="flex h-full w-full items-center justify-center text-sm text-[--color-text-muted]">
+    <div class="flex h-full w-full items-center justify-center text-sm text-(--color-text-muted)">
       Loading chart…
     </div>
   {/if}

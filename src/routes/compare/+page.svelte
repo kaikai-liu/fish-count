@@ -50,7 +50,7 @@
         Trip type <span aria-hidden="true">*</span>
       </span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         required
         bind:value={formTripType}
       >
@@ -65,7 +65,7 @@
       <span class="text-sm font-semibold">From</span>
       <input
         type="date"
-        class="min-h-11 rounded border border-[--color-border] px-2"
+        class="min-h-11 rounded border border-(--color-border) px-2"
         bind:value={formFromDate}
       />
     </label>
@@ -74,7 +74,7 @@
       <span class="text-sm font-semibold">To</span>
       <input
         type="date"
-        class="min-h-11 rounded border border-[--color-border] px-2"
+        class="min-h-11 rounded border border-(--color-border) px-2"
         bind:value={formToDate}
       />
     </label>
@@ -85,11 +85,11 @@
       </span>
       <input
         type="text"
-        class="min-h-11 rounded border border-[--color-border] px-2"
+        class="min-h-11 rounded border border-(--color-border) px-2"
         placeholder="e.g. 12,15,23"
         bind:value={formBoatIdsRaw}
       />
-      <span class="text-xs text-[--color-text-muted]">
+      <span class="text-xs text-(--color-text-muted)">
         Find boat IDs on each boat's detail page URL.
       </span>
     </label>
@@ -98,19 +98,19 @@
   {#snippet actions()}
     <button
       type="button"
-      class="min-h-11 rounded bg-[--color-accent] px-4 py-2 font-semibold text-white hover:bg-[--color-accent-hover]"
+      class="min-h-11 rounded bg-(--color-accent) px-4 py-2 font-semibold text-white hover:bg-(--color-accent-hover)"
       onclick={submit}
     >
       Compare boats
     </button>
-    <button type="button" class="text-sm text-[--color-text-muted] underline" onclick={reset}>
+    <button type="button" class="text-sm text-(--color-text-muted) underline" onclick={reset}>
       Reset
     </button>
   {/snippet}
 </FilterBar>
 
 {#if data.guidance}
-  <p class="rounded border border-[--color-border] bg-[--color-surface-muted] p-4 text-sm text-[--color-text-muted]">
+  <p class="rounded border border-(--color-border) bg-(--color-surface-muted) p-4 text-sm text-(--color-text-muted)">
     {data.guidance}
   </p>
 {:else if data.rows && data.chartOption}
@@ -118,18 +118,18 @@
     <section class="mb-8 grid gap-4 md:grid-cols-3">
       {#each data.rows as r, i (i)}
         {#if r === null}
-          <article class="rounded border border-[--color-border] p-4 text-sm text-[--color-text-muted]">
+          <article class="rounded border border-(--color-border) p-4 text-sm text-(--color-text-muted)">
             <h3 class="text-lg font-semibold">Boat {data.filters?.boatIds[i]}</h3>
             <p>No trips in window for this boat on {data.filters?.tripType}.</p>
           </article>
         {:else}
-          <article class="rounded border border-[--color-border] p-4">
+          <article class="rounded border border-(--color-border) p-4">
             <h3 class="text-lg font-semibold">{r.boat_name}</h3>
-            <p class="text-sm text-[--color-text-muted]">{r.landing_name}</p>
+            <p class="text-sm text-(--color-text-muted)">{r.landing_name}</p>
             <div class="mt-3">
               <PerAnglerMetric value={r.avg_per_angler} nTrips={r.total_trips} ctx="card" />
             </div>
-            <dl class="mt-3 text-sm text-[--color-text-muted]">
+            <dl class="mt-3 text-sm text-(--color-text-muted)">
               <div>
                 <dt class="inline">Total trips:</dt>
                 <dd class="inline tabular-nums">{r.total_trips}</dd>

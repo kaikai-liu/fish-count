@@ -84,7 +84,7 @@
       <span class="text-sm font-semibold">Target date <span aria-hidden="true">*</span></span>
       <input
         type="date"
-        class="min-h-11 rounded border border-[--color-border] px-2"
+        class="min-h-11 rounded border border-(--color-border) px-2"
         required
         bind:value={formDate}
       />
@@ -93,7 +93,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Species <span aria-hidden="true">*</span></span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         required
         bind:value={formSpecies}
       >
@@ -107,7 +107,7 @@
     <label class="flex flex-col gap-1">
       <span class="text-sm font-semibold">Trip type <span aria-hidden="true">*</span></span>
       <select
-        class="min-h-11 rounded border border-[--color-border] bg-[--color-surface] px-2"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
         required
         bind:value={formTripType}
       >
@@ -125,7 +125,7 @@
           type="number"
           min="0"
           max="14"
-          class="min-h-11 w-20 rounded border border-[--color-border] px-2 tabular-nums"
+          class="min-h-11 w-20 rounded border border-(--color-border) px-2 tabular-nums"
           bind:value={formWindowDays}
         />
       </label>
@@ -134,7 +134,7 @@
         <span class="text-sm font-semibold">From</span>
         <input
           type="date"
-          class="min-h-11 rounded border border-[--color-border] px-2"
+          class="min-h-11 rounded border border-(--color-border) px-2"
           bind:value={formFromDate}
         />
       </label>
@@ -142,7 +142,7 @@
         <span class="text-sm font-semibold">To</span>
         <input
           type="date"
-          class="min-h-11 rounded border border-[--color-border] px-2"
+          class="min-h-11 rounded border border-(--color-border) px-2"
           bind:value={formToDate}
         />
       </label>
@@ -157,14 +157,14 @@
   {#snippet actions()}
     <button
       type="button"
-      class="min-h-11 rounded bg-[--color-accent] px-4 py-2 font-semibold text-white hover:bg-[--color-accent-hover]"
+      class="min-h-11 rounded bg-(--color-accent) px-4 py-2 font-semibold text-white hover:bg-(--color-accent-hover)"
       onclick={submit}
     >
       Find boats
     </button>
     <button
       type="button"
-      class="text-sm text-[--color-text-muted] underline"
+      class="text-sm text-(--color-text-muted) underline"
       onclick={reset}
     >
       Reset filters
@@ -174,7 +174,7 @@
 
 {#if data.guidance}
   <!-- TRP-05: No trip type submitted — render guidance prompt -->
-  <p class="rounded border border-[--color-border] bg-[--color-surface-muted] p-4 text-sm text-[--color-text-muted]">
+  <p class="rounded border border-(--color-border) bg-(--color-surface-muted) p-4 text-sm text-(--color-text-muted)">
     {data.guidance}
   </p>
 {:else if data.rankings && data.rankings.length === 0}
@@ -188,7 +188,7 @@
     <section class="mb-8">
       <h2 class="mb-3 text-xl font-semibold">30-day window</h2>
       <Chart option={heatmapOption} ariaLabel={heatmapAriaLabel} height="240px" />
-      <p class="mt-2 text-sm text-[--color-text-muted]">
+      <p class="mt-2 text-sm text-(--color-text-muted)">
         Cells with fewer than 5 historical trips render gray (insufficient data).
       </p>
     </section>
