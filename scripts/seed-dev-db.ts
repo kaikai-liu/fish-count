@@ -111,8 +111,14 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 
   // T-02-35: fixture-only — no fetch/network calls. HTML files are read from disk.
+  // Edge-case fixtures (empty days, mangled rows) are kept for parser unit tests
+  // but excluded from seed rotation — replaying them across hundreds of days
+  // produces sparse data that makes the dev UX look broken (e.g. picker default
+  // state returns "no matching trips" because the rotation lands on an empty
+  // fixture for "today"). Restrict seed rotation to substantive fixtures.
+  const SEED_EXCLUDE = /-empty-day|parse-edge-mangled/;
   const fixtureFiles = readdirSync(FIXTURE_DIR)
-    .filter((f) => f.endsWith('.html'))
+    .filter((f) => f.endsWith('.html') && !SEED_EXCLUDE.test(f))
     .sort(); // deterministic order
   if (fixtureFiles.length === 0) {
     console.error(`[seed-dev-db] no .html fixtures found in ${FIXTURE_DIR}`);
