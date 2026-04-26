@@ -147,7 +147,8 @@ describe('_scrapeTick — Phase 3 forecast recompute hook (D-13, D-14, FCT-06)',
     vi.doUnmock('../../src/lib/server/heartbeat');
     vi.doUnmock('../../src/lib/scraper/pipeline');
     vi.doUnmock('../../src/lib/scraper/sla');
-    vi.doUnmock('../../src/lib/forecast/compute');
+    vi.doUnmock('$lib/forecast/compute');
+    vi.doUnmock('$lib/db/client');
     vi.doUnmock('../../src/lib/server/kill-switch');
   });
 
@@ -155,7 +156,8 @@ describe('_scrapeTick — Phase 3 forecast recompute hook (D-13, D-14, FCT-06)',
     process.env.SCRAPER_ENABLED = 'true';
     process.env.FIRST_SCRAPE_OK = 'true';
     const recomputeSpy = vi.fn();
-    vi.doMock('../../src/lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/db/client', () => ({ getDb: () => ({} as never) }));
     vi.doMock('../../src/lib/scraper/pipeline', () => ({
       scrapeDate: vi.fn().mockResolvedValue({ outcome: 'success', rowsIngested: 12, runId: 'r1' })
     }));
@@ -176,7 +178,8 @@ describe('_scrapeTick — Phase 3 forecast recompute hook (D-13, D-14, FCT-06)',
     process.env.SCRAPER_ENABLED = 'true';
     process.env.FIRST_SCRAPE_OK = 'true';
     const recomputeSpy = vi.fn();
-    vi.doMock('../../src/lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/db/client', () => ({ getDb: () => ({} as never) }));
     vi.doMock('../../src/lib/scraper/pipeline', () => ({
       scrapeDate: vi.fn().mockResolvedValue({ outcome: 'empty', rowsIngested: 0, runId: 'r2' })
     }));
@@ -199,7 +202,8 @@ describe('_scrapeTick — Phase 3 forecast recompute hook (D-13, D-14, FCT-06)',
       process.env.SCRAPER_ENABLED = 'true';
       process.env.FIRST_SCRAPE_OK = 'true';
       const recomputeSpy = vi.fn();
-      vi.doMock('../../src/lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+      vi.doMock('$lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/db/client', () => ({ getDb: () => ({} as never) }));
       vi.doMock('../../src/lib/scraper/pipeline', () => ({
         scrapeDate: vi.fn().mockResolvedValue({ outcome, rowsIngested: 0, runId: 'r-' + outcome })
       }));
@@ -224,7 +228,8 @@ describe('_scrapeTick — Phase 3 forecast recompute hook (D-13, D-14, FCT-06)',
       throw new Error('forecast recompute boom');
     });
     const pingSpy = vi.fn().mockResolvedValue(undefined);
-    vi.doMock('../../src/lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/db/client', () => ({ getDb: () => ({} as never) }));
     vi.doMock('../../src/lib/scraper/pipeline', () => ({
       scrapeDate: vi.fn().mockResolvedValue({ outcome: 'success', rowsIngested: 5, runId: 'r-fail' })
     }));
@@ -245,7 +250,8 @@ describe('_scrapeTick — Phase 3 forecast recompute hook (D-13, D-14, FCT-06)',
   it('kill switch active → recomputeForecasts is NOT called (existing OPS-05 invariant)', async () => {
     process.env.SCRAPER_ENABLED = 'false';
     const recomputeSpy = vi.fn();
-    vi.doMock('../../src/lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/forecast/compute', () => ({ recomputeForecasts: recomputeSpy }));
+    vi.doMock('$lib/db/client', () => ({ getDb: () => ({} as never) }));
     vi.doMock('../../src/lib/server/kill-switch', () => ({ scrapingEnabled: () => false }));
     vi.doMock('../../src/lib/scraper/pipeline', () => ({ scrapeDate: vi.fn() }));
     vi.doMock('../../src/lib/scraper/sla', () => ({
