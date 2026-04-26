@@ -149,6 +149,37 @@ describe('urlState.parsePickerFilters', () => {
       expect(parsed.species).toBe(original.species);
       expect(parsed.tripType).toBe(original.tripType);
       expect(parsed.windowDays).toBe(original.windowDays);
+      expect(parsed.rangeMode).toBe(original.rangeMode);
+    }
+  });
+
+  it('rangeMode=false from URL parses as boolean false (regression: z.coerce.boolean() turns string "false" into true)', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'false'
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.rangeMode).toBe(false);
+    }
+  });
+
+  it('rangeMode=true from URL parses as boolean true', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'true',
+      fromDate: '2024-07-01',
+      toDate: '2024-07-10'
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.rangeMode).toBe(true);
     }
   });
 });
@@ -185,6 +216,21 @@ describe('urlState.parseCompareFilters', () => {
     const sp3 = toSp({ tripType: 'Full Day', fromDate: '2024-06-01', toDate: '2024-06-30', boatIds: ['1', '2', '3'] });
     expect('error' in parseCompareFilters(sp2)).toBe(false);
     expect('error' in parseCompareFilters(sp3)).toBe(false);
+  });
+
+  it('accepts comma-separated boatIds (?boatIds=28,29) as well as repeated keys', () => {
+    const sp = new URLSearchParams('tripType=Full+Day&fromDate=2024-06-01&toDate=2024-06-30&boatIds=28,29');
+    const result = parseCompareFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.boatIds).toEqual([28, 29]);
+    }
+    const sp3 = new URLSearchParams('tripType=Full+Day&fromDate=2024-06-01&toDate=2024-06-30&boatIds=1,2,3');
+    const r3 = parseCompareFilters(sp3);
+    expect('error' in r3).toBe(false);
+    if (!('error' in r3)) {
+      expect(r3.boatIds).toEqual([1, 2, 3]);
+    }
   });
 
   it('serializeCompareFilters with boatIds=[1,2] produces "boatIds=1&boatIds=2"', () => {

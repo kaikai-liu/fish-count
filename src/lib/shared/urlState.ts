@@ -89,12 +89,18 @@ export function serializeDateFilters(filters: DateFilters): URLSearchParams {
 // windowDays: default 3, clamped [0, 14] (D-11, T-02-03).
 // ---------------------------------------------------------------------------
 
+// String "false" coerces to boolean true under z.coerce.boolean — must parse
+// the literal "true"/"false" strings produced by serializePickerFilters.
+const boolStringField = z
+  .enum(['true', 'false'])
+  .transform((s) => s === 'true');
+
 export const PickerFiltersSchema = z.object({
   date: dateField,
   species: z.string().min(1, 'species is required'),
   tripType: z.string().min(1, 'tripType is required'),
   windowDays: z.coerce.number().int().min(0).max(14).default(3),
-  rangeMode: z.coerce.boolean().default(false),
+  rangeMode: boolStringField.default('false'),
   fromDate: dateField.optional(),
   toDate: dateField.optional()
 });
@@ -135,8 +141,16 @@ export const CompareFiltersSchema = z.object({
 export type CompareFilters = z.infer<typeof CompareFiltersSchema>;
 
 export function parseCompareFilters(sp: URLSearchParams): CompareFilters | { error: ZodError } {
-  // boatIds are encoded as repeated keys: ?boatIds=1&boatIds=2&boatIds=3
-  const boatIds = sp.getAll('boatIds').map(Number);
+  // Accept both the canonical repeated-key form (?boatIds=1&boatIds=2&boatIds=3,
+  // produced by serializeCompareFilters) and the comma form (?boatIds=1,2,3,
+  // which the form's text input naturally produces when a user copies and
+  // pastes the boat IDs into a URL bar).
+  const boatIds = sp
+    .getAll('boatIds')
+    .flatMap((v) => v.split(','))
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .map(Number);
   const raw = {
     tripType: sp.get('tripType') ?? undefined,
     fromDate: sp.get('fromDate') ?? undefined,
