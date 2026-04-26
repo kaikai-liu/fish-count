@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 0: Ops Guardrails** - Cost alerts, kill switch, backups, and dead-man's switch before any cloud traffic
 - [ ] **Phase 1: Ingest + Store** - Polite scraper, idempotent store, observability, resumable backfill complete
-- [ ] **Phase 2: Browse + Trip Picker + Trends** - Public read surfaces with honest per-angler framing and shareable URLs
+- [x] **Phase 2: Browse + Trip Picker + Trends** - Public read surfaces with honest per-angler framing and shareable URLs (completed 2026-04-25)
 - [ ] **Phase 3: Forecast Layer** - Statistical projections with prediction intervals, `n`, refusal-when-n<5, calendar recolor
 - [ ] **Phase 4: Email Alerts** - Abuse-safe signup, double opt-in, deliverability, hot-day and run-start alerts
 - [ ] **Phase 5: Polish** - Loading/empty/error states and shareable-with-friends finish
@@ -128,7 +128,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5 (decimal phases
 |-------|----------------|--------|-----------|
 | 0. Ops Guardrails | 0/7 | Planned | - |
 | 1. Ingest + Store | 0/9 | Planned | - |
-| 2. Browse + Trip Picker + Trends | 0/TBD | Not started | - |
+| 2. Browse + Trip Picker + Trends | 7/7 | Complete | 2026-04-25 |
 | 3. Forecast Layer | 0/TBD | Not started | - |
 | 4. Email Alerts | 0/TBD | Not started | - |
 | 5. Polish | 0/TBD | Not started | - |

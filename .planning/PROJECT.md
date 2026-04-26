@@ -14,27 +14,26 @@ FishCount is a public web app that aggregates San Diego charter boat fishing dat
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- [x] Scheduled scrape of `sandiegofishreports.com/dock_totals/boats.php` into local storage *(Phase 1)*
+- [x] Historical backfill of all dates the source exposes *(Phase 1)*
+- [x] Store per-boat, per-day records: boat, landing, trip type, angler count, species + counts *(Phase 1)*
+- [x] Derive per-angler averages (boat total ÷ anglers on that trip) *(Phase 2)*
+- [x] Trip picker: given date + species, show ranked boat list *(Phase 2)*
+- [x] Trip picker: show historical avg fish/angler alongside rankings *(Phase 2)*
+- [x] Trip picker: 30-day calendar heatmap view *(Phase 2 — gray for n<5; color-coding by predicted catch rate ships in Phase 3 with the forecast layer)*
+- [x] Trend charts: catches over weeks/months/seasons by species and/or boat *(Phase 2)*
+- [x] Boat comparison: side-by-side performance across custom date ranges *(Phase 2)*
+- [x] Filters + search: by species, boat, landing, trip type *(Phase 2)*
+- [x] Anonymous browsing (no account needed to view any data) *(Phase 2)*
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Scheduled scrape of `sandiegofishreports.com/dock_totals/boats.php` into local storage
-- [ ] Historical backfill of all dates the source exposes (walk back via the site's date navigation)
-- [ ] Store per-boat, per-day records: boat, landing, trip type, angler count, species + counts
-- [ ] Derive per-angler averages (boat total ÷ anglers on that trip)
-- [ ] Trip picker: given date + species, show ranked boat list
-- [ ] Trip picker: show historical avg fish/angler alongside rankings
-- [ ] Trip picker: 30-day calendar heatmap view, color-coded by predicted catch rate
-- [ ] Trend charts: catches over weeks/months/seasons by species and/or boat
-- [ ] Boat comparison: side-by-side performance across custom date ranges
-- [ ] Filters + search: by species, boat, landing, trip type
-- [ ] Statistical projection: average + confidence bands from history, projected to upcoming weeks
-- [ ] Anonymous browsing (no account needed to view any data)
-- [ ] Email signup for alerts (the one account-gated feature)
-- [ ] Alerts: notify when a followed species starts running or a followed boat has a hot day
-- [ ] Polish sufficient to share a URL with fellow anglers without embarrassment
+- [ ] Statistical projection: average + confidence bands from history, projected to upcoming weeks *(Phase 3)*
+- [ ] Email signup for alerts (the one account-gated feature) *(Phase 4)*
+- [ ] Alerts: notify when a followed species starts running or a followed boat has a hot day *(Phase 4)*
+- [ ] Polish sufficient to share a URL with fellow anglers without embarrassment *(Phase 5)*
 
 ### Out of Scope
 
@@ -94,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-22 after initialization*
+*Last updated: 2026-04-25 after Phase 2 (Browse + Trip Picker + Trends) complete — 2/6 phases done, public read surfaces shipped behind per-angler framing discipline*

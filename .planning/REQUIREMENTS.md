@@ -40,38 +40,38 @@ Requirements for initial release ("shareable with friends" polish bar). Each map
 
 ### Browse
 
-- [ ] **BRW-01**: Public home page lists today's per-boat counts with boat, landing, trip type, angler count, species, and counts — matching the source schema an SD angler recognizes
-- [ ] **BRW-02**: Every per-boat row links back to the corresponding source-site page for attribution and verification
-- [ ] **BRW-03**: A "Last scraped at [time PT]" indicator is visible on every data-showing page
-- [ ] **BRW-04**: Today's data is labeled "provisional — boats still reporting" until after the evening scrape
-- [ ] **BRW-05**: Date navigation allows jumping to any past date the store covers (calendar picker + prev/next)
-- [ ] **BRW-06**: Trip type, landing, and species filters use verbatim SD-native labels pulled from the source
-- [ ] **BRW-07**: Filter state is reflected in the URL so the page is shareable via link (query-string state)
-- [ ] **BRW-08**: Mobile layout is usable at 375px viewport without horizontal scroll
-- [ ] **BRW-09**: An "About the data" page explains the source, scrape cadence, and the per-angler-average caveat
+- [x] **BRW-01**: Public home page lists today's per-boat counts with boat, landing, trip type, angler count, species, and counts — matching the source schema an SD angler recognizes
+- [x] **BRW-02**: Every per-boat row links back to the corresponding source-site page for attribution and verification
+- [x] **BRW-03**: A "Last scraped at [time PT]" indicator is visible on every data-showing page
+- [x] **BRW-04**: Today's data is labeled "provisional — boats still reporting" until after the evening scrape
+- [x] **BRW-05**: Date navigation allows jumping to any past date the store covers (calendar picker + prev/next)
+- [x] **BRW-06**: Trip type, landing, and species filters use verbatim SD-native labels pulled from the source
+- [x] **BRW-07**: Filter state is reflected in the URL so the page is shareable via link (query-string state)
+- [x] **BRW-08**: Mobile layout is usable at 375px viewport without horizontal scroll
+- [x] **BRW-09**: An "About the data" page explains the source, scrape cadence, and the per-angler-average caveat
 
 ### Trip Picker
 
-- [ ] **TRP-01**: User can enter a target date (or date range) and a target species and see a ranked list of boats
-- [ ] **TRP-02**: Ranking defaults to avg fish-per-angler for the chosen species on the matching trip type, not raw totals
-- [ ] **TRP-03**: Every ranked result shows: n historical trips in the window, avg fish/angler, last trip date, and trip type
-- [ ] **TRP-04**: Results prominently label "avg fish/angler — boat aggregate, not individual angler"
-- [ ] **TRP-05**: Trip type is a required filter (enforced default) so users cannot accidentally compare a Long Range trip to a 1/2 Day trip
-- [ ] **TRP-06**: Results include an expandable "Why this boat?" explanation with the data behind the ranking
-- [ ] **TRP-07**: Boats with < 5 trips in the matched window are shown with a "low data" flag, not hidden
-- [ ] **TRP-08**: A 30-day calendar heatmap view of the same query (date + species + trip type) is available
-- [ ] **TRP-09**: Calendar cells with insufficient data render gray, not a green/red color, to avoid false signal
+- [x] **TRP-01**: User can enter a target date (or date range) and a target species and see a ranked list of boats
+- [x] **TRP-02**: Ranking defaults to avg fish-per-angler for the chosen species on the matching trip type, not raw totals
+- [x] **TRP-03**: Every ranked result shows: n historical trips in the window, avg fish/angler, last trip date, and trip type
+- [x] **TRP-04**: Results prominently label "avg fish/angler — boat aggregate, not individual angler"
+- [x] **TRP-05**: Trip type is a required filter (enforced default) so users cannot accidentally compare a Long Range trip to a 1/2 Day trip
+- [x] **TRP-06**: Results include an expandable "Why this boat?" explanation with the data behind the ranking
+- [x] **TRP-07**: Boats with < 5 trips in the matched window are shown with a "low data" flag, not hidden
+- [x] **TRP-08**: A 30-day calendar heatmap view of the same query (date + species + trip type) is available
+- [x] **TRP-09**: Calendar cells with insufficient data render gray, not a green/red color, to avoid false signal
 
 ### Boat Detail
 
-- [ ] **BOAT-01**: Every boat has a detail page showing its recent trips, season-to-date totals, and trip types it runs
-- [ ] **BOAT-02**: Boat detail page shows a link back to the landing and to the source site's boat page
+- [x] **BOAT-01**: Every boat has a detail page showing its recent trips, season-to-date totals, and trip types it runs
+- [x] **BOAT-02**: Boat detail page shows a link back to the landing and to the source site's boat page
 
 ### Trends
 
-- [ ] **TRN-01**: Trend chart shows species-catch over time (weekly/monthly aggregation) with a species + trip-type filter
-- [ ] **TRN-02**: Trend chart shows boat-performance over time (avg fish/angler) for a selected boat within a trip type
-- [ ] **TRN-03**: Users can compare two or three boats side-by-side across a user-selected date range in the same trip type
+- [x] **TRN-01**: Trend chart shows species-catch over time (weekly/monthly aggregation) with a species + trip-type filter
+- [x] **TRN-02**: Trend chart shows boat-performance over time (avg fish/angler) for a selected boat within a trip type
+- [x] **TRN-03**: Users can compare two or three boats side-by-side across a user-selected date range in the same trip type
 
 ### Forecast
 
@@ -175,29 +175,29 @@ Populated by roadmap creation. Each v1 requirement maps to exactly one phase.
 | STO-03 | Phase 1: Ingest + Store | Pending |
 | STO-04 | Phase 1: Ingest + Store | Pending |
 | STO-05 | Phase 1: Ingest + Store | Pending |
-| BRW-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-03 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-04 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-05 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-06 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-07 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-08 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BRW-09 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-03 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-04 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-05 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-06 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-07 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-08 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRP-09 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BOAT-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| BOAT-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRN-01 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRN-02 | Phase 2: Browse + Trip Picker + Trends | Pending |
-| TRN-03 | Phase 2: Browse + Trip Picker + Trends | Pending |
+| BRW-01 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-02 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-03 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-04 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-05 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-06 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-07 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-08 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| BRW-09 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BRW
+| TRP-01 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-02 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-03 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-04 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-05 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-06 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-07 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-08 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| TRP-09 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRP
+| BOAT-01 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BOAT
+| BOAT-02 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25BOAT
+| TRN-01 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRN
+| TRN-02 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRN
+| TRN-03 | Phase 2: Browse + Trip Picker + Trends | Validated 2026-04-25TRN
 | FCT-01 | Phase 3: Forecast Layer | Pending |
 | FCT-02 | Phase 3: Forecast Layer | Pending |
 | FCT-03 | Phase 3: Forecast Layer | Pending |
