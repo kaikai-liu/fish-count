@@ -66,7 +66,10 @@ describe('picker hybrid heatmap composer (D-21, D-34)', () => {
       boatName: 'Grande',
       landingName: "Point Loma Sportfishing"
     });
-    // Past actual: 2026-05-13 — should appear in heatmap from catch_reports.
+    // Past actual: 2026-05-13 — must be inside the heatmap window for the
+    // composer to query it. Use target_date = 2026-05-12 so the 30-cell window
+    // is 2026-05-12..2026-06-10, which spans past (≤ 2026-05-14) and future
+    // (≥ 2026-05-15 = today PT).
     seedTrip(db, {
       boatId,
       landingId,
@@ -78,7 +81,7 @@ describe('picker hybrid heatmap composer (D-21, D-34)', () => {
     });
 
     const { load } = await import('../../src/routes/picker/+page.server');
-    const event = makeEvent('species=yellowtail&tripType=Full+Day&date=2026-05-15');
+    const event = makeEvent('species=yellowtail&tripType=Full+Day&date=2026-05-12');
     const result = await load(event);
 
     expect(result.heatmap).not.toBeNull();

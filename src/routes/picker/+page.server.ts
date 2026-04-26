@@ -23,10 +23,20 @@ import {
   type RankedBoat,
   type HeatmapCell
 } from '$lib/db/queries/tripPicker';
+import {
+  forecastHeatmapForQuery,
+  type ForecastHeatmapCell
+} from '$lib/db/queries/forecastHeatmap';
 import { distinctTripTypes, distinctSpecies, mostCommonTripType } from '$lib/db/queries/browse';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
-import { today, toPtTimeLabel, addDays } from '$lib/shared/dates';
+import { today, toPtTimeLabel, addDays, daysBetween } from '$lib/shared/dates';
 import { parsePickerFilters, type PickerFilters } from '$lib/shared/urlState';
+
+// D-21: Phase 3 hybrid heatmap merges Phase 2 actuals + Phase 3 forecasts.
+// First three fields ({date, value, n}) are the Phase 2 D-15 contract; forecast
+// cells additively carry pi_low/pi_high/gap_present/gap_expected which the Plan
+// 03-04 tooltip formatter discriminates by `'pi_low' in cell`.
+type AnyHeatmapCell = HeatmapCell | ForecastHeatmapCell;
 
 export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const db = getDb();
@@ -57,7 +67,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       filters: null,
       guidance: 'Pick a date, target species, and trip type to start.',
       rankings: null as RankedBoat[] | null,
-      heatmap: null as HeatmapCell[] | null,
+      heatmap: null as AnyHeatmapCell[] | null,
+      horizonTooFar: false,
+      heatmapHorizonMessage: null as string | null,
       why: null as Record<number, WhyPanel> | null,
       windowStart: null as string | null,
       windowEnd: null as string | null,
@@ -89,27 +101,73 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     tripType: filters.tripType
   });
 
+  // D-21 + RESEARCH §4: capture the PT calendar date ONCE per request and
+  // reuse for horizon check AND past/future split. Re-reading inside the load
+  // body can produce DST-boundary inconsistency within a single request.
+  const todayPt = today();
+
+  // D-10 (FCT-07): >30-day target → render "horizon too far" message; rankings
+  // still computed below (historical actuals unaffected by horizon cap).
+  const horizonDaysOut = daysBetween(todayPt, filters.date);
+  const horizonTooFar = horizonDaysOut > 30;
+
   // Heatmap: 30-cell window starting at target date (or rangeMode fromDate).
   // D-13: 30 days starting on the selected target date.
   const heatmapStart = filters.rangeMode && filters.fromDate ? filters.fromDate : filters.date;
   const heatmapEnd = addDays(heatmapStart, 29);
 
-  const presentCells = heatmapForQuery(db, {
-    fromDate: heatmapStart,
-    toDate: heatmapEnd,
-    species: filters.species,
-    tripType: filters.tripType
-  });
+  let heatmap: AnyHeatmapCell[] | null = null;
+  let heatmapHorizonMessage: string | null = null;
 
-  // Gap-fill: build all 30 date slots.
-  // Dates not present in presentCells get a stub cell with value=null, n=0.
-  // (D-14: these null/n=0 cells will render gray in buildHeatmapOption.)
-  const presentMap = new Map<string, HeatmapCell>(presentCells.map((c) => [c.date, c]));
-  const heatmap: HeatmapCell[] = [];
-  for (let i = 0; i < 30; i++) {
-    const d = addDays(heatmapStart, i);
-    const found = presentMap.get(d);
-    heatmap.push(found ?? { date: d, value: null, n: 0 });
+  if (horizonTooFar) {
+    // D-10 verbatim copy. Heatmap area renders the message in place of the calendar.
+    heatmapHorizonMessage = 'horizon too far — historical data only';
+  } else {
+    // D-21 hybrid composer: past cells from catch_reports actuals; today/future
+    // cells from precomputed forecasts. Two queries, then merge by date.
+    const pastEnd = addDays(todayPt, -1); // last "past" date (inclusive)
+    const futureStart = todayPt; // first "today/future" date (inclusive)
+
+    // Past range: heatmapStart .. min(heatmapEnd, pastEnd)
+    const pastRangeEnd = pastEnd < heatmapEnd ? pastEnd : heatmapEnd;
+    const pastCells: HeatmapCell[] =
+      heatmapStart <= pastRangeEnd
+        ? heatmapForQuery(db, {
+            fromDate: heatmapStart,
+            toDate: pastRangeEnd,
+            species: filters.species,
+            tripType: filters.tripType
+          })
+        : [];
+
+    // Future range: max(heatmapStart, futureStart) .. heatmapEnd
+    const futureRangeStart = heatmapStart > futureStart ? heatmapStart : futureStart;
+    const futureCells: ForecastHeatmapCell[] =
+      futureRangeStart <= heatmapEnd
+        ? forecastHeatmapForQuery(db, {
+            fromDate: futureRangeStart,
+            toDate: heatmapEnd,
+            species: filters.species,
+            tripType: filters.tripType
+          })
+        : [];
+
+    // Merge into one map keyed by date. Forecast cells (additive shape) win
+    // over past cells if both happened to map to the same date — by
+    // construction they do not (pastEnd < futureStart), but ordering is
+    // explicit for safety.
+    const presentMap = new Map<string, AnyHeatmapCell>();
+    for (const c of pastCells) presentMap.set(c.date, c);
+    for (const c of futureCells) presentMap.set(c.date, c);
+
+    // Gap-fill the full 30-cell array. Dates absent from both sources get a
+    // stub cell with value=null, n=0 (D-14 gray render).
+    const cells: AnyHeatmapCell[] = [];
+    for (let i = 0; i < 30; i++) {
+      const d = addDays(heatmapStart, i);
+      cells.push(presentMap.get(d) ?? { date: d, value: null, n: 0 });
+    }
+    heatmap = cells;
   }
 
   // D-28: "Why this boat?" panel data — computed server-side, present per row.
@@ -141,11 +199,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     filters,
     guidance: null,
     rankings,
-    heatmap,
+    heatmap, // null when horizonTooFar
+    horizonTooFar,
+    heatmapHorizonMessage, // 'horizon too far — historical data only' when horizonTooFar; else null
     why,
     windowStart: fromDate,
     windowEnd: toDate,
-    heatmapRange: { from: heatmapStart, to: heatmapEnd },
+    heatmapRange: horizonTooFar ? null : { from: heatmapStart, to: heatmapEnd },
     filterOptions,
     lastScrapedLabel
   };
