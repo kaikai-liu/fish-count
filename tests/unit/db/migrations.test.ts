@@ -27,6 +27,29 @@ describe('migrations — canonical Phase 1 schema (D-01..D-06)', () => {
     }
   });
 
+  it('creates the Phase 3 forecasts table (D-11)', () => {
+    db = openTestDb();
+    const rows = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+      .all() as Array<{ name: string }>;
+    expect(rows.map((r) => r.name)).toContain('forecasts');
+  });
+
+  it('forecasts has UNIQUE index on (forecast_date, species, trip_type) — the Phase 3 idempotent-upsert key (D-11)', () => {
+    db = openTestDb();
+    const indexes = db
+      .prepare(`PRAGMA index_list(forecasts)`)
+      .all() as Array<{ name: string; unique: number }>;
+    const uniqueIndex = indexes.find((i) => i.name === 'idx_forecasts_unique');
+    expect(uniqueIndex, 'no idx_forecasts_unique on forecasts').toBeDefined();
+    expect(uniqueIndex!.unique).toBe(1);
+    const idxCols = db
+      .prepare(`PRAGMA index_info(${uniqueIndex!.name})`)
+      .all() as Array<{ seqno: number; name: string }>;
+    const cols = idxCols.sort((a, b) => a.seqno - b.seqno).map((c) => c.name);
+    expect(cols).toEqual(['forecast_date', 'species', 'trip_type']);
+  });
+
   it('catch_reports has columns in canonical order (D-05)', () => {
     db = openTestDb();
     const cols = db
@@ -104,10 +127,10 @@ describe('migrations — canonical Phase 1 schema (D-01..D-06)', () => {
     const rows = db
       .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
       .all() as Array<{ name: string }>;
-    // Still exactly the 5 tables — no duplicates.
+    // Phase 1 tables (5) + Phase 3 forecasts (1) — no duplicates.
     const domain = rows.map((r) => r.name).filter((n) => !n.startsWith('sqlite_'));
     expect(domain.sort()).toEqual(
-      ['boats', 'catch_reports', 'landings', 'parse_failures', 'scrape_runs'].sort()
+      ['boats', 'catch_reports', 'forecasts', 'landings', 'parse_failures', 'scrape_runs'].sort()
     );
   });
 });

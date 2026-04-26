@@ -86,6 +86,28 @@ const SCHEMA_SQL = `
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_parse_failures_run ON parse_failures(run_id);
+
+  -- D-11 (Phase 3 FCT-01): forecasts table — fleet-wide statistical projection
+  -- per (forecast_date, species, trip_type). Computed nightly by recomputeForecasts.
+  -- D-07: ALL cells written; value=NULL when n_trips<5; baseline_value always populated.
+  CREATE TABLE IF NOT EXISTS forecasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    forecast_date TEXT NOT NULL,
+    species TEXT NOT NULL,
+    trip_type TEXT NOT NULL,
+    value REAL,
+    pi_low REAL,
+    pi_high REAL,
+    n_trips INTEGER NOT NULL DEFAULT 0,
+    baseline_value REAL,
+    gap_days_present INTEGER NOT NULL DEFAULT 0,
+    gap_days_expected INTEGER NOT NULL DEFAULT 0,
+    computed_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_forecasts_unique
+    ON forecasts(forecast_date, species, trip_type);
+  CREATE INDEX IF NOT EXISTS idx_forecasts_range
+    ON forecasts(forecast_date, species, trip_type);
 `;
 
 /**
