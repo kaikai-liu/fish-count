@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 03-02 complete; Plan 03-03 (picker wiring) ready to execute
-last_updated: "2026-04-26T19:53:43.732Z"
+stopped_at: Plan 03-03 complete; Plan 03-04 (scheduler/recompute wiring) ready to execute
+last_updated: "2026-04-26T20:05:11.680Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 6
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-22)
 ## Current Position
 
 Phase: 03 (forecast-layer) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-04-26
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 83%
 *Updated after each plan completion*
 | Phase 03 P01 | 5min | 3 tasks | 10 files |
 | Phase 03 P02 | 7min | 3 tasks | 9 files |
+| Phase 03 P03 | 9min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - pruneBeforeHorizon shipped as v1 no-op stub returning 0 (D-16: past forecast rows retained indefinitely)
 - Returned sum_species + sum_anglers from getRatiosForWindow alongside ratio so compute.ts derives exact fleet-wide SUM/SUM (not mean-of-ratios)
 - Pure-math forecast engine follows parser.ts purity contract: no SQL, no module-scope getDb, db handle injected as parameter; per-cell try/catch in recomputeForecasts means one bad cell never aborts the nightly recompute
+- Phase 3 hybrid heatmap composer: past cells from heatmapForQuery (catch_reports) + today/future cells from forecastHeatmapForQuery (forecasts), merged by date. Single today() call per request feeds both horizon check and split (RESEARCH §4).
+- FCT-07 horizon gate: when target_date - today > 30, /picker returns horizonTooFar:true with heatmap:null and the verbatim message 'horizon too far — historical data only'; rankings continue to render (historical actuals are unaffected by the cap).
+- forecastHeatmapForQuery preserves Phase 2 D-15 shape contract ({date, value, n}) so buildHeatmapOption needs only a tooltip-formatter branch (Plan 03-04), not a rendering rewrite. Additive fields (pi_low, pi_high, gap_present, gap_expected) discriminate forecast-vs-actual at tooltip time via 'pi_low' in cell.
 
 ### Pending Todos
 
@@ -92,8 +96,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T19:53:43.729Z
-Stopped at: Plan 03-02 complete; Plan 03-03 (picker wiring) ready to execute
+Last session: 2026-04-26T20:04:52.430Z
+Stopped at: Plan 03-03 complete; Plan 03-04 (scheduler/recompute wiring) ready to execute
 Resume file: None
 
 **Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z
