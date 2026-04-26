@@ -275,7 +275,32 @@ describe('Phase 2 routes — integration smoke (seed-fixture data)', () => {
     expect(result.chartOption).toBeNull();
   });
 
-  it('/trends — with species + tripType + 1y range returns chartOption with bucket data', async () => {
+  it('/trends — with species + tripType + range covering seed returns chartOption with bucket data', async () => {
+    // The seed runs 2024-01-01 → 2024-04-01. /trends defaults its date window
+    // off today() (rangeToDates uses today() − range), so range=1y from a
+    // current system date will not overlap the seed. Use range='all' (10-year
+    // sentinel per T-02-31) to guarantee the seeded 2024 data is in window.
+    const { load } = await import('../../src/routes/trends/+page.server');
+    const params = new URLSearchParams({
+      species: firstSpecies,
+      tripType: firstTripType,
+      range: 'all'
+    });
+    const event = makeEvent('/trends', params.toString());
+    const result = await load(event);
+    expect(result.guidance).toBeNull();
+    expect(result.noData).toBe(false);
+    expect(result.chartOption).not.toBeNull();
+    expect(Array.isArray(result.chartOption?.series)).toBe(true);
+    expect(result.chartOption?.series?.length).toBeGreaterThan(0);
+    // The xAxis data should have bucket keys
+    expect(Array.isArray(result.chartOption?.xAxis?.data)).toBe(true);
+    expect((result.chartOption?.xAxis?.data as any[]).length).toBeGreaterThan(0);
+  });
+
+  it('/trends — with species + tripType but query window outside seed → noData branch', async () => {
+    // Inverse of the above: range='1y' from today() does NOT overlap 2024 seed,
+    // so the loader takes its noData branch and returns chartOption: null.
     const { load } = await import('../../src/routes/trends/+page.server');
     const params = new URLSearchParams({
       species: firstSpecies,
@@ -285,12 +310,8 @@ describe('Phase 2 routes — integration smoke (seed-fixture data)', () => {
     const event = makeEvent('/trends', params.toString());
     const result = await load(event);
     expect(result.guidance).toBeNull();
-    expect(result.chartOption).not.toBeNull();
-    expect(Array.isArray(result.chartOption?.series)).toBe(true);
-    expect(result.chartOption?.series?.length).toBeGreaterThan(0);
-    // The xAxis data should have bucket keys
-    expect(Array.isArray(result.chartOption?.xAxis?.data)).toBe(true);
-    expect((result.chartOption?.xAxis?.data as any[]).length).toBeGreaterThan(0);
+    expect(result.noData).toBe(true);
+    expect(result.chartOption).toBeNull();
   });
 
   // ── /about ────────────────────────────────────────────────────────────────

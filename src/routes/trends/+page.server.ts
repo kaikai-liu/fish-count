@@ -66,6 +66,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     return {
       filters: null,
       guidance: 'Pick a species and trip type to view its trend over time.',
+      noData: false,
       chartOption: null,
       captionGranularity: null,
       granularity: null,
@@ -122,6 +123,23 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const boatRow = filters.boatId ? getById(db, filters.boatId) : null;
   const boatName = boatRow?.display_name ?? (filters.boatId ? `Boat ${filters.boatId}` : null);
 
+  // No-data path: every bucket is null → render an EmptyState in the page
+  // instead of an empty chart. Distinguish from "guidance" (missing inputs).
+  const hasAnyData = aligned.some((b) => b.value !== null);
+  if (!hasAnyData) {
+    return {
+      filters,
+      guidance: null,
+      noData: true,
+      chartOption: null,
+      captionGranularity: null,
+      granularity,
+      filterOptions,
+      lastScrapedLabel,
+      boatName
+    };
+  }
+
   const seriesName = boatName ? `${boatName} · ${filters.species}` : filters.species;
 
   // yAxis.name uses FISH_PER_ANGLER_AXIS constant — never inline the literal string
@@ -155,6 +173,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   return {
     filters,
     guidance: null,
+    noData: false,
     chartOption,
     captionGranularity,
     granularity,

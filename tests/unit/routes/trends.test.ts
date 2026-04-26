@@ -120,6 +120,19 @@ describe('/trends +page.server.ts load()', () => {
   it('3. species + tripType + range=1y → chartOption set, granularity monthly (auto >6mo)', async () => {
     const db = openTestDb();
     setTestDb(db);
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Test Boat',
+      landingName: 'Point Loma Sportfishing'
+    });
+    seedTrip(db, {
+      boatId,
+      landingId,
+      date: '2026-01-15',
+      tripType: 'Long Range',
+      species: 'yellowtail',
+      anglers: 20,
+      count: 40
+    });
 
     const result = await load(
       makeEvent('species=yellowtail&tripType=Long Range&range=1y')
@@ -270,6 +283,19 @@ describe('/trends +page.server.ts load()', () => {
   it("9. chartOption.yAxis.name === 'fish/angler' (FISH_PER_ANGLER_AXIS resolved)", async () => {
     const db = openTestDb();
     setTestDb(db);
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Test Boat',
+      landingName: 'Point Loma Sportfishing'
+    });
+    seedTrip(db, {
+      boatId,
+      landingId,
+      date: '2026-03-15',
+      tripType: 'Long Range',
+      species: 'yellowtail',
+      anglers: 20,
+      count: 40
+    });
 
     const result = await load(
       makeEvent('species=yellowtail&tripType=Long Range&range=3mo')
@@ -290,9 +316,37 @@ describe('/trends +page.server.ts load()', () => {
     expect(Array.isArray(result.filterOptions.speciesList)).toBe(true);
   });
 
+  it('noData=true when filters valid but no rows match — chartOption null, guidance null', async () => {
+    const db = openTestDb();
+    setTestDb(db);
+    // Empty DB: query has no matching rows.
+
+    const result = await load(
+      makeEvent('species=yellowtail&tripType=Long Range&range=1y')
+    );
+
+    expect(result.guidance).toBeNull();
+    expect(result.noData).toBe(true);
+    expect(result.chartOption).toBeNull();
+    expect(result.filters).not.toBeNull();
+  });
+
   it('connectNulls is false on the series (D-27 gap-aware)', async () => {
     const db = openTestDb();
     setTestDb(db);
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Test Boat',
+      landingName: 'Point Loma Sportfishing'
+    });
+    seedTrip(db, {
+      boatId,
+      landingId,
+      date: '2026-03-15',
+      tripType: 'Long Range',
+      species: 'yellowtail',
+      anglers: 20,
+      count: 40
+    });
 
     const result = await load(
       makeEvent('species=yellowtail&tripType=Long Range&range=3mo')

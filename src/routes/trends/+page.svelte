@@ -4,6 +4,7 @@
   import PageHeader from '$lib/components/PageHeader.svelte';
   import FilterBar from '$lib/components/FilterBar.svelte';
   import Chart from '$lib/components/Chart.svelte';
+  import EmptyState from '$lib/components/EmptyState.svelte';
   import { serializeTrendsFilters, type TrendsFilters } from '$lib/shared/urlState';
   import { FISH_PER_ANGLER_ARIA } from '$lib/copy/metrics';
 
@@ -131,6 +132,11 @@
   <p class="rounded border border-(--color-border) bg-(--color-surface-muted) p-4 text-sm text-(--color-text-muted)">
     {data.guidance}
   </p>
+{:else if data.noData && data.filters}
+  <EmptyState
+    heading="No data for this combination."
+    body={`We have no records for ${data.filters.species} on ${data.filters.tripType}${data.boatName ? ' for ' + data.boatName : ''} in the selected range. Try a different species or trip type, or widen the time range.`}
+  />
 {:else if data.chartOption && data.filters}
   <section>
     <Chart
