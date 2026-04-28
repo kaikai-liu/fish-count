@@ -210,11 +210,10 @@ describe('picker hybrid heatmap composer (D-21, D-34)', () => {
     const event = makeEvent('species=yellowtail&tripType=Full+Day&date=2026-05-15');
     await load(event);
 
-    // The loader body itself reads today() exactly TWICE per request: once in the
-    // filterOptions block (defaultDate) and once for `const todayPt = today()`.
-    // No third call inside the load body.
-    expect(todayMock.mock.calls.length).toBeLessThanOrEqual(2);
-    expect(todayMock.mock.calls.length).toBeGreaterThan(0);
+    // WR-03 fix: the loader body now reads today() EXACTLY ONCE per request —
+    // the captured todayPt is reused for filterOptions.defaultDate, the horizon
+    // check, and the past/future split (RESEARCH §4 / CONTEXT.md DST-safety).
+    expect(todayMock.mock.calls.length).toBe(1);
   });
 
   it('30-cell array is gap-filled with {date, value: null, n: 0} when neither source has the date', async () => {

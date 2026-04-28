@@ -44,12 +44,18 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // D-29: picker caches 5 min (input-derived read surface).
   setHeaders({ 'cache-control': 'public, max-age=300' });
 
+  // D-21 + RESEARCH §4: capture the PT calendar date ONCE per request and
+  // reuse for filterOptions.defaultDate, the horizon check, AND the past/future
+  // heatmap split. Re-reading inside the load body can produce DST-boundary
+  // inconsistency within a single request.
+  const todayPt = today();
+
   // Filter-bar option lists — always populated regardless of parse result.
   const filterOptions = {
     tripTypes: distinctTripTypes(db),
     speciesList: distinctSpecies(db),
     defaultTripType: mostCommonTripType(db), // D-10: pre-select most common trip type
-    defaultDate: today()
+    defaultDate: todayPt
   };
 
   const lastScrape = latestSuccessOrEmpty(db);
@@ -100,11 +106,6 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     species: filters.species,
     tripType: filters.tripType
   });
-
-  // D-21 + RESEARCH §4: capture the PT calendar date ONCE per request and
-  // reuse for horizon check AND past/future split. Re-reading inside the load
-  // body can produce DST-boundary inconsistency within a single request.
-  const todayPt = today();
 
   // D-10 (FCT-07): >30-day target → render "horizon too far" message; rankings
   // still computed below (historical actuals unaffected by horizon cap).
