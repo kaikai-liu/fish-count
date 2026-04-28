@@ -163,10 +163,35 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
 
     // Gap-fill the full 30-cell array. Dates absent from both sources get a
     // stub cell with value=null, n=0 (D-14 gray render).
+    //
+    // WR-04 fix: branch the stub shape on past vs future. A future date with
+    // no forecast row is conceptually a forecast cell — emit a forecast-shaped
+    // stub (carries pi_low) so heatmapOption.ts's `isForecastCell` discriminant
+    // routes the tooltip to the verbatim "not enough history — n=0 trips" copy
+    // (D-08) rather than the actuals "low data" branch. n=0 still triggers the
+    // n<5 gray render path.
     const cells: AnyHeatmapCell[] = [];
     for (let i = 0; i < 30; i++) {
       const d = addDays(heatmapStart, i);
-      cells.push(presentMap.get(d) ?? { date: d, value: null, n: 0 });
+      const existing = presentMap.get(d);
+      if (existing) {
+        cells.push(existing);
+        continue;
+      }
+      if (d >= todayPt) {
+        const stub: ForecastHeatmapCell = {
+          date: d,
+          value: null,
+          n: 0,
+          pi_low: null,
+          pi_high: null,
+          gap_present: 0,
+          gap_expected: 0
+        };
+        cells.push(stub);
+      } else {
+        cells.push({ date: d, value: null, n: 0 });
+      }
     }
     heatmap = cells;
   }

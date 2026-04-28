@@ -255,4 +255,63 @@ describe('picker hybrid heatmap composer (D-21, D-34)', () => {
     expect((emptyCell as any).value).toBeNull();
     expect((emptyCell as any).n).toBe(0);
   });
+
+  it('WR-04: future-date gap-fill cells carry pi_low (forecast shape) so tooltip routes to "not enough history"', async () => {
+    vi.doMock('$lib/shared/dates', async () => {
+      const actual = await vi.importActual<typeof import('../../src/lib/shared/dates')>(
+        '../../src/lib/shared/dates'
+      );
+      return { ...actual, today: () => '2026-05-15' };
+    });
+
+    const { getDb } = await import('../../src/lib/db/client');
+    const { seedBoat, seedTrip } = await import('../helpers/seedTestDb');
+    const db = getDb();
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Grande',
+      landingName: 'Point Loma Sportfishing'
+    });
+    // Seed only ONE past row so distinctSpecies/distinctTripTypes return data,
+    // but no forecast rows — every today/future cell will be gap-filled.
+    seedTrip(db, {
+      boatId,
+      landingId,
+      date: '2026-05-13',
+      tripType: 'Full Day',
+      species: 'yellowtail',
+      anglers: 20,
+      count: 30
+    });
+
+    const { load } = await import('../../src/routes/picker/+page.server');
+    // target date 2026-05-12 → window 2026-05-12..2026-06-10 spans both past and future.
+    const event = makeEvent('species=yellowtail&tripType=Full+Day&date=2026-05-12');
+    const result = await load(event);
+
+    expect(result.heatmap).not.toBeNull();
+    const cellMap = new Map((result.heatmap as any[]).map((c) => [c.date, c]));
+
+    // Past gap-fill (date < 2026-05-15): plain {date, value, n} stub — no pi_low.
+    const pastGap = cellMap.get('2026-05-12');
+    expect(pastGap).toBeDefined();
+    expect((pastGap as any).value).toBeNull();
+    expect((pastGap as any).n).toBe(0);
+    expect('pi_low' in (pastGap as any)).toBe(false);
+
+    // Today gap-fill (date == 2026-05-15): forecast-shaped stub — carries pi_low.
+    const todayGap = cellMap.get('2026-05-15');
+    expect(todayGap).toBeDefined();
+    expect((todayGap as any).value).toBeNull();
+    expect((todayGap as any).n).toBe(0);
+    expect('pi_low' in (todayGap as any)).toBe(true);
+    expect((todayGap as any).pi_low).toBeNull();
+    expect((todayGap as any).pi_high).toBeNull();
+
+    // Future gap-fill (date > 2026-05-15): forecast-shaped stub.
+    const futureGap = cellMap.get('2026-06-01');
+    expect(futureGap).toBeDefined();
+    expect('pi_low' in (futureGap as any)).toBe(true);
+    expect((futureGap as any).gap_present).toBe(0);
+    expect((futureGap as any).gap_expected).toBe(0);
+  });
 });
