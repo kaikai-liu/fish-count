@@ -28,7 +28,7 @@ import { logger } from '$lib/server/logger';
 import { today, addDays } from '$lib/shared/dates';
 import { distinctSpecies, distinctTripTypes } from '$lib/db/queries/browse';
 import { getRatiosForWindow } from '$lib/db/catchReports';
-import { countPresentDays } from '$lib/db/scrapeRuns';
+import { countPresentDays, earliestScrapeRunYear } from '$lib/db/scrapeRuns';
 import { upsertMany, type ForecastRow } from '$lib/db/forecasts';
 
 /**
@@ -79,7 +79,7 @@ export function computeCell(db: Database.Database, input: CellInput): CellComput
   const forecastYear = parseInt(forecastDate.slice(0, 4), 10);
 
   // ±7 calendar-day window around the same (month, day-of-month) for gap accounting.
-  const candidateDates = enumerateWindowDates(forecastDate, forecastYear);
+  const candidateDates = enumerateWindowDates(db, forecastDate, forecastYear);
   const { windowStart, windowEnd, windowWraps } = computeWindowBounds(forecastDate);
 
   // Pull per-trip ratios + sum_species/sum_anglers from prior years only (D-01).
@@ -230,38 +230,53 @@ export function recomputeForecasts(
  * Enumerate the ±7 calendar dates from prior years for a given forecastDate.
  * Excludes the forecast year itself per RESEARCH §5 / D-24 ("only past years contribute").
  *
- * Returns at most 15 × (forecastYear - earliestYear) dates. The earliest year
- * defaults to 2010 (project's working data range). Dates are emitted as
+ * WR-01 fix: bound the earliest year to the year of the earliest `scrape_runs`
+ * row rather than a hardcoded 2010. Project ingestion did not start in 2010,
+ * so years with no ledger rows otherwise count as gaps in `gap_days_present`
+ * forever — undermining the verbatim "based on N of M days" honesty signal
+ * (PITFALLS §8). On a fresh ledger the function returns [] (no expected dates).
+ *
+ * WR-02 fix: enumerate the 15 MM-DD slots once via the same year-2000 leap
+ * anchor used by `computeWindowBounds`, then map (year, MM-DD) for each prior
+ * year — dropping 02-29 in non-leap years rather than rolling it to 02-28.
+ * This keeps the candidate calendar set aligned with the SQL window so the
+ * invariant `gap_days_present <= gap_days_expected` reflects the same dates
+ * the SQL aggregates over.
+ *
+ * Returns at most 15 × (forecastYear - earliestYear) dates (minus 1 per
+ * non-leap prior year when forecastDate is 02-29). Dates are emitted as
  * YYYY-MM-DD strings using our addDays date producer.
  */
-function enumerateWindowDates(forecastDate: string, forecastYear: number): string[] {
-  const EARLIEST_YEAR = 2010;
+function enumerateWindowDates(
+  db: Database.Database,
+  forecastDate: string,
+  forecastYear: number
+): string[] {
+  const earliestRecorded = earliestScrapeRunYear(db);
+  if (earliestRecorded === null) return []; // empty ledger ⇒ no expected dates
+  const earliest = Math.min(earliestRecorded, forecastYear);
+
+  // Generate the 15 MM-DD slots once via the year-2000 leap anchor — same
+  // basis as computeWindowBounds, so the candidate calendar set matches the
+  // SQL window exactly.
+  const yearAnchor = `2000-${forecastDate.slice(5)}`;
+  const slots: string[] = [];
+  for (let d = -7; d <= 7; d++) slots.push(addDays(yearAnchor, d).slice(5));
+
   const result: string[] = [];
-  const mm = forecastDate.slice(5, 7);
-  const dd = forecastDate.slice(8, 10);
-  for (let y = EARLIEST_YEAR; y < forecastYear; y++) {
-    // Pin the prior-year copy of the (month, day-of-month).
-    // Feb 29 in non-leap years rolls forward via addDays — acceptable for v1
-    // (the ±7 window swallows the 1-day difference).
-    const anchor = canonicalAnchor(y, mm, dd);
-    for (let d = -7; d <= 7; d++) {
-      result.push(addDays(anchor, d));
+  for (let y = earliest; y < forecastYear; y++) {
+    for (const mmdd of slots) {
+      // Drop 02-29 in non-leap years — strftime('%m-%d', source_date) never
+      // emits 02-29 in non-leap years either, so this matches what the SQL
+      // window can possibly see.
+      if (mmdd === '02-29') {
+        const isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+        if (!isLeap) continue;
+      }
+      result.push(`${y}-${mmdd}`);
     }
   }
   return result;
-}
-
-/**
- * Build a YYYY-MM-DD anchor for a (year, mm, dd). When dd is 29 and year is
- * a non-leap year for February, the addDays helper handles the rollover; we
- * simply emit Feb 28 in that case to keep the anchor valid.
- */
-function canonicalAnchor(year: number, mm: string, dd: string): string {
-  if (mm === '02' && dd === '29') {
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    if (!isLeap) return `${year}-02-28`;
-  }
-  return `${year}-${mm}-${dd}`;
 }
 
 /**

@@ -127,7 +127,19 @@ describe('forecast gap-aware aggregation (D-24)', () => {
         count: 30
       });
     }
-    // No scrape_runs entries at all → gap_days_present === 0
+    // WR-01: enumerateWindowDates is bounded by earliestScrapeRunYear; without
+    // any scrape_runs row, gap_days_expected is 0 (we cannot promise coverage
+    // we never had). Seed a single unrelated ledger row in a prior year to
+    // anchor the expected window, then verify that none of the ±7-day window
+    // dates around 05-15 are marked present.
+    recordOutcome(db, {
+      runId: 'unrelated',
+      runDate: '2024-01-01',
+      startedAt: 'x',
+      finishedAt: 'x',
+      outcome: 'success',
+      rowsIngested: 1
+    });
     const r = computeCell(db, {
       forecastDate: '2026-05-15',
       species: 'yellowtail',

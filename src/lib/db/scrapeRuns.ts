@@ -183,3 +183,24 @@ export function countPresentDays(db: Database.Database, dates: string[]): number
     .get(...dates) as { present_count: number };
   return row.present_count;
 }
+
+/**
+ * Phase 3 (WR-01 fix): the calendar year of the earliest `scrape_runs` row.
+ *
+ * Used by the forecast layer's `enumerateWindowDates` to bound the candidate
+ * date set to years where scraping was actually attempted — otherwise pre-2010
+ * "expected" days are unreachable and inflate `gap_days_expected` so the
+ * verbatim "based on N of M days" annotation loses its honesty signal.
+ *
+ * Returns null when the ledger is empty (fresh install / pre-Phase-1 state) —
+ * the forecast layer interprets this as "no expected dates", which is the
+ * correct stance: we cannot promise any historical coverage we never had.
+ */
+export function earliestScrapeRunYear(db: Database.Database): number | null {
+  const row = db
+    .prepare(
+      `SELECT MIN(CAST(strftime('%Y', run_date) AS INTEGER)) AS y FROM scrape_runs`
+    )
+    .get() as { y: number | null };
+  return row.y;
+}
