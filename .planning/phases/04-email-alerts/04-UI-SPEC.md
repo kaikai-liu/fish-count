@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: email-alerts
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-27
+reviewed_at: 2026-04-27
 ---
 
 # Phase 4 — UI Design Contract
