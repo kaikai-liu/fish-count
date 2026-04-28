@@ -355,6 +355,20 @@ export async function main(
     const seasonalSamples: ForecastSample[] = [];
     const fleetMeanSamples: ForecastSample[] = [];
 
+    // WR-05: fleetMeanForecast depends only on (species, tripType, heldOutYear)
+    // — invariant across the date dimension. Cache per (species, tripType) so
+    // the helper runs ~120 times instead of ~43,800 (a ~365× saving on
+    // production-scale data). Uses Map.has() to distinguish "not yet cached"
+    // from "cached null" (fleetMeanForecast can legitimately return null).
+    const fleetCache = new Map<string, number | null>();
+    function cachedFleetMean(species: string, tripType: string): number | null {
+      const k = `${species}\x00${tripType}`;
+      if (!fleetCache.has(k)) {
+        fleetCache.set(k, fleetMeanForecast(db, species, tripType, heldOutYear));
+      }
+      return fleetCache.get(k) ?? null;
+    }
+
     let totalEvaluated = 0;
     for (const date of heldOutDates) {
       for (const species of speciesList) {
@@ -369,7 +383,7 @@ export async function main(
             tripType,
             heldOutYear
           );
-          const fleet = fleetMeanForecast(db, species, tripType, heldOutYear);
+          const fleet = cachedFleetMean(species, tripType);
           seasonalSamples.push({
             forecast: seasonal.value,
             actual,
