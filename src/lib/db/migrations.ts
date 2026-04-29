@@ -108,6 +108,72 @@ const SCHEMA_SQL = `
     ON forecasts(forecast_date, species, trip_type);
   CREATE INDEX IF NOT EXISTS idx_forecasts_range
     ON forecasts(forecast_date, species, trip_type);
+
+  -- Phase 4 ALT-01/02: subscribers — pending → active state machine.
+  -- email is canonicalized lowercase+trimmed at DAL write boundary (src/lib/db/subscribers.ts).
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'active')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    confirmed_at TEXT,
+    signup_ip TEXT,
+    paused_until TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_subscribers_status ON subscribers(status);
+
+  -- Phase 4 ALT-01: 1:N followed boats.
+  CREATE TABLE IF NOT EXISTS subscriber_boats (
+    subscriber_id INTEGER NOT NULL,
+    boat_id INTEGER NOT NULL,
+    PRIMARY KEY (subscriber_id, boat_id),
+    FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE CASCADE,
+    FOREIGN KEY (boat_id) REFERENCES boats(id)
+  );
+
+  -- Phase 4 ALT-01: 1:N followed species (verbatim names per CLAUDE.md domain language).
+  CREATE TABLE IF NOT EXISTS subscriber_species (
+    subscriber_id INTEGER NOT NULL,
+    species TEXT NOT NULL,
+    PRIMARY KEY (subscriber_id, species),
+    FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE CASCADE
+  );
+
+  -- Phase 4 ALT-06: suppression_list — canonicalized email key, irrevocable.
+  -- Outlives subscribers row (subscribers row is hard-deleted on unsubscribe; suppression survives).
+  CREATE TABLE IF NOT EXISTS suppression_list (
+    email TEXT PRIMARY KEY,
+    suppressed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    reason TEXT NOT NULL CHECK (reason IN ('user_unsub', 'operator_remove'))
+  );
+
+  -- Phase 4 ALT-03: per-IP signup-attempt ledger.
+  CREATE TABLE IF NOT EXISTS signup_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip TEXT NOT NULL,
+    attempted_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_signup_attempts_ip_time
+    ON signup_attempts(ip, attempted_at);
+
+  -- Phase 4 ALT-09/10/11/12: alerts_sent dedup + dispatch ledger + warm-up counter source.
+  -- trigger_key examples: "boat:42:1/2 Day AM" (hot_day) | "species:bluefin:Overnight" (run)
+  -- trigger_date is YYYY-MM-DD PT for hot_day, "YYYY-Www" ISO-week for starting_to_run.
+  CREATE TABLE IF NOT EXISTS alerts_sent (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('hot_day', 'starting_to_run')),
+    trigger_key TEXT NOT NULL,
+    trigger_date TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('queued', 'sent', 'expired')),
+    queued_at TEXT NOT NULL DEFAULT (datetime('now')),
+    sent_at TEXT,
+    resend_message_id TEXT,
+    FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE CASCADE
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_alerts_sent_unique
+    ON alerts_sent(subscriber_id, kind, trigger_key, trigger_date);
+  CREATE INDEX IF NOT EXISTS idx_alerts_sent_sent_at ON alerts_sent(sent_at);
 `;
 
 /**
