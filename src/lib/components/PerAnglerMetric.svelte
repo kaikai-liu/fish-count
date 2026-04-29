@@ -2,6 +2,7 @@
   import { getContext } from 'svelte';
   import LowDataBadge from './LowDataBadge.svelte';
   import { FISH_PER_ANGLER_AXIS, FORECAST_LABEL, NOT_ENOUGH_HISTORY, PI_LABEL } from '$lib/copy/metrics';
+  import { formatPerAngler } from '$lib/shared/format';
 
   type Ctx = 'row' | 'card' | 'hero';
   type Kind = 'historical' | 'forecast';
@@ -38,11 +39,8 @@
       // D-23: integer-only display (Math.round) — no decimals ever for forecasts.
       return String(Math.round(value as number));
     }
-    // Historical (default) branch — Phase 2 behavior unchanged.
-    if (value === null || Number.isNaN(value as number) || nTrips === 0) return '—';
-    if ((value as number) >= 10) return String(Math.round(value as number));
-    const fixed = (value as number).toFixed(1);
-    return fixed.endsWith('.0') ? fixed.slice(0, -2) : fixed;
+    // Historical branch — extracted to shared helper for web/email parity (UI-SPEC FLAG #9).
+    return formatPerAngler(value, nTrips);
   });
 
   // For forecast kind, the 'not enough history' branch replaces the LowDataBadge entirely.
