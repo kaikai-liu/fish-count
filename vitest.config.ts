@@ -6,10 +6,19 @@ import { fileURLToPath } from 'node:url';
 // Mirror it here so unit tests of modules that import from `$lib/...` work out of the box.
 const lib = fileURLToPath(new URL('./src/lib', import.meta.url));
 
+// Same problem with SvelteKit's `$env/dynamic/private` virtual module — synthesized by
+// the SvelteKit vite plugin at runtime, absent under bare vitest. Shim re-exports
+// `process.env` as `env`, matching SvelteKit's server-side behavior. See
+// tests/helpers/env-dynamic-private-shim.ts for rationale.
+const envDynamicPrivateShim = fileURLToPath(
+  new URL('./tests/helpers/env-dynamic-private-shim.ts', import.meta.url)
+);
+
 export default defineConfig({
   resolve: {
     alias: {
-      $lib: lib
+      $lib: lib,
+      '$env/dynamic/private': envDynamicPrivateShim
     }
   },
   test: {
