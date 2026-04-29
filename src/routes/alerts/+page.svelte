@@ -7,6 +7,7 @@
   import type { PageData, ActionData } from './$types';
   import PageHeader from '$lib/components/PageHeader.svelte';
   import SignupForm from '$lib/components/SignupForm.svelte';
+  import { FISH_PER_ANGLER_AXIS } from '$lib/copy/metrics';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
@@ -37,10 +38,10 @@
     <div class="mt-4 text-sm text-(--color-text-muted) space-y-3">
       <p>
         Two kinds of alerts. "Hot day" fires when a boat you follow has today's
-        avg fish/angler more than 2× its trailing 30-day same-trip-type average
-        (with at least 8 anglers reporting). "Starting to run" fires when a
-        species you follow has a rolling 7-day fleet-wide avg more than 1.5×
-        the same-week-last-year baseline.
+        avg {FISH_PER_ANGLER_AXIS} more than 2× its trailing 30-day same-trip-type
+        average (with at least 8 anglers reporting). "Starting to run" fires
+        when a species you follow has a rolling 7-day fleet-wide avg more than
+        1.5× the same-week-last-year baseline.
       </p>
       <p>
         One alert per boat per day max; one alert per species per week max. We
