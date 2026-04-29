@@ -50,13 +50,15 @@ export function getById(db: Database.Database, id: number): BoatRow | undefined 
 }
 
 /**
- * Phase 4 ALT-01/02 (manage page) helper. Returns every boat as
- * `{id, display_name}` ordered alphabetically — the shape consumed
- * by the `<select multiple>` on /alerts and /alerts/manage.
+ * Phase 4 ALT-01/02 (Plan 04-04 signup, Plan 04-05 manage). Returns every boat as
+ * `{id, display_name}` ordered alphabetically — the shape consumed by the
+ * `<select multiple>` on /alerts and /alerts/manage. Uses the boats table
+ * directly (not catch_reports JOIN) so brand-new boats with no historical
+ * catch yet still appear in the picker.
  *
- * DAL boundary (CLAUDE.md Architecture Rule): manage routes MUST NOT
- * inline `db.prepare('SELECT …')`; this helper is the single point of
- * truth so the route tier never issues SQL.
+ * DAL boundary (CLAUDE.md Architecture Rule): /alerts and manage routes MUST NOT
+ * inline `db.prepare('SELECT …')`; this helper is the single point of truth so
+ * the route tier never issues SQL.
  */
 export function listForSelect(
   db: Database.Database
@@ -123,23 +125,6 @@ export function getByIdWithLanding(
       source_url: row.landing_source_url
     }
   };
-}
-
-/**
- * Phase 4 ALT-01 (Plan 04-04): list of boats for the /alerts signup multi-select.
- * Returns { id, display_name } tuples ordered by display_name ASC. Uses the
- * boats table directly (not catch_reports JOIN) so brand-new boats with no
- * historical catch yet still appear in the picker.
- *
- * DAL boundary: this stays inside src/lib/db/. Routes import it; routes do
- * NOT inline SQL.
- */
-export function listForSelect(
-  db: Database.Database
-): Array<{ id: number; display_name: string }> {
-  return db
-    .prepare(`SELECT id, display_name FROM boats ORDER BY display_name ASC`)
-    .all() as Array<{ id: number; display_name: string }>;
 }
 
 /**
