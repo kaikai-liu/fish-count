@@ -139,6 +139,40 @@
     decimals on forecast values, no "73.4% chance" framing).
   </p>
 
+  <!-- Phase 4 ALT-01 — Email alerts section. UI-SPEC §"/about#email" verbatim copy.
+       Anchored at #email so emails (Plan 03 compliance footer) and inline CTAs deep-link here. -->
+  <h2 id="email" class="mb-2 mt-6 text-xl font-semibold">Email alerts</h2>
+
+  <p class="mb-4">We send two kinds of alerts: "hot day" and "starting to run."</p>
+
+  <p class="mb-4">
+    A "hot day" fires when a boat you follow has today's avg fish/angler more than 2× its trailing 30-day same-trip-type average, with at least 8 anglers reporting (so a 1-angler fluke doesn't trigger). One alert per boat per day, max.
+  </p>
+
+  <p class="mb-4">
+    A "starting to run" fires when a species you follow has a rolling 7-day fleet-wide avg/angler more than 1.5× the same-week-last-year baseline on the same trip type. One alert per species per week, max.
+  </p>
+
+  <p class="mb-4">
+    We send the alerts as honestly as we frame the data: same n=X disclosure, same
+    trip-type discipline, same per-angler caveat. We don't predict your catch — we tell
+    you that historically, conditions matched a pattern.
+  </p>
+
+  <p class="mb-4">
+    We use Resend for delivery and Litestream-backed SQLite for the suppression list. We
+    don't share your email. We don't run analytics on opens or clicks. Unsubscribing is
+    one click and permanent.
+  </p>
+
+  <h3 id="warmup" class="mb-2 mt-4 text-lg font-semibold">Warm-up and rate limits</h3>
+  <p class="mb-4">
+    During the first two weeks of production sending, we cap volume at 50 alerts/day (week 1) and 200/day (week 2). If volume exceeds the cap, alerts queue and send the next morning — we never silently drop alerts. Public signups are rate-limited to 3 per hour per IP, and the form rejects disposable-email domains. After the first 14 days, the volume cap lifts; the abuse protections stay on.
+  </p>
+  <p class="mb-4 text-sm text-(--color-text-muted)">
+    <a href="/alerts" class="text-(--color-accent) underline">Sign up for alerts →</a>
+  </p>
+
   <h2 class="mb-2 mt-6 text-xl font-semibold">Contact</h2>
   <p class="mb-4">
     Reach out: [contact pointer — populated in Phase 5].
