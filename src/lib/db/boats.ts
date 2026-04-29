@@ -49,6 +49,23 @@ export function getById(db: Database.Database, id: number): BoatRow | undefined 
     .get(id) as BoatRow | undefined;
 }
 
+/**
+ * Phase 4 ALT-01/02 (manage page) helper. Returns every boat as
+ * `{id, display_name}` ordered alphabetically — the shape consumed
+ * by the `<select multiple>` on /alerts and /alerts/manage.
+ *
+ * DAL boundary (CLAUDE.md Architecture Rule): manage routes MUST NOT
+ * inline `db.prepare('SELECT …')`; this helper is the single point of
+ * truth so the route tier never issues SQL.
+ */
+export function listForSelect(
+  db: Database.Database
+): Array<{ id: number; display_name: string }> {
+  return db
+    .prepare(`SELECT id, display_name FROM boats ORDER BY display_name ASC`)
+    .all() as Array<{ id: number; display_name: string }>;
+}
+
 export interface BoatWithLanding {
   boat: {
     id: number;
