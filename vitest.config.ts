@@ -6,10 +6,9 @@ import { fileURLToPath } from 'node:url';
 // Mirror it here so unit tests of modules that import from `$lib/...` work out of the box.
 const lib = fileURLToPath(new URL('./src/lib', import.meta.url));
 
-// Phase 4 Plan 02: SvelteKit's `$env/dynamic/private` virtual module is not
-// resolved by vitest (no SvelteKit plugin in test runtime). Alias it to a
-// process.env-backed shim so server-side modules importing `env` (tokens.ts)
-// load cleanly under unit tests.
+// Phase 4: SvelteKit's `$env/dynamic/private` virtual module is synthesized by the
+// SvelteKit vite plugin at runtime; under bare vitest it doesn't exist. Alias it to a
+// process.env-backed shim so server-side modules importing `env` load cleanly under unit tests.
 const sveltekitEnvShim = fileURLToPath(new URL('./tests/helpers/sveltekit-env-shim.ts', import.meta.url));
 
 export default defineConfig({
