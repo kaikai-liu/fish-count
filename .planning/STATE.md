@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 03-forecast-layer complete (all 6 plans done; FCT-01..07 + FCT-04 honesty artifact landed)
-last_updated: "2026-04-26T20:39:07.068Z"
-last_activity: 2026-04-26
+status: executing
+stopped_at: Phase 4 UI-SPEC approved
+last_updated: "2026-04-29T19:04:54.703Z"
+last_activity: 2026-04-29 — Phase 04 Wave 1 complete (04-01, 04-02, 04-03 merged)
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 29
+  completed_phases: 3
+  total_plans: 37
   completed_plans: 28
-  percent: 67
+  percent: 76
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-22)
 
 **Core value:** Given a date (or range) and a target species, help an angler pick the charter boat with the best historical odds.
-**Current focus:** Phase 03 — forecast-layer
+**Current focus:** Phase 04 — email-alerts
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-26
+Phase: 04 (email-alerts) — EXECUTING
+Plan: Wave 1 of 4 complete (3 of 8 plans done)
+Status: Executing Phase 04
+Last activity: 2026-04-29 — Phase 04 Wave 1 complete (04-01, 04-02, 04-03 merged)
 
 Progress: [██████████] 97%
 
@@ -108,8 +108,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:39:07.065Z
-Stopped at: Phase 03-forecast-layer complete (all 6 plans done; FCT-01..07 + FCT-04 honesty artifact landed)
-Resume file: None
+Last session: --stopped-at
+Stopped at: Phase 4 UI-SPEC approved
+Resume file: --resume-file
 
-**Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z
+**Planned Phase:** 4 (email-alerts) — 8 plans — 2026-04-29T19:02:24.749Z
