@@ -210,5 +210,19 @@
         {/each}
       </ul>
     </section>
+
+    <!-- Phase 4 ALT-01: inline CTA on results — appears AFTER per-angler framing
+         (UI-SPEC §"Inline framing for follow this CTAs" + CLAUDE.md non-negotiable #4).
+         Only shown when species filter is set; uses the verbatim species name. -->
+    {#if data.filters?.species}
+      <p class="mt-6 text-sm">
+        <a
+          href="/alerts?species={encodeURIComponent(data.filters.species)}"
+          class="text-(--color-accent) underline"
+        >
+          Get alerts when {data.filters.species} starts to run →
+        </a>
+      </p>
+    {/if}
   </PerAnglerFramingProvider>
 {/if}
