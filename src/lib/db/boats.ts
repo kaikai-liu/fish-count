@@ -109,6 +109,23 @@ export function getByIdWithLanding(
 }
 
 /**
+ * Phase 4 ALT-01 (Plan 04-04): list of boats for the /alerts signup multi-select.
+ * Returns { id, display_name } tuples ordered by display_name ASC. Uses the
+ * boats table directly (not catch_reports JOIN) so brand-new boats with no
+ * historical catch yet still appear in the picker.
+ *
+ * DAL boundary: this stays inside src/lib/db/. Routes import it; routes do
+ * NOT inline SQL.
+ */
+export function listForSelect(
+  db: Database.Database
+): Array<{ id: number; display_name: string }> {
+  return db
+    .prepare(`SELECT id, display_name FROM boats ORDER BY display_name ASC`)
+    .all() as Array<{ id: number; display_name: string }>;
+}
+
+/**
  * Batch helper — resolves the boat + landing FK ids for a batch of parsed
  * catch rows so pipeline.ts can hand fully-populated rows to
  * catchReports.upsertMany. Preserves DAL boundary: the pipeline never
