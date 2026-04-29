@@ -20,6 +20,7 @@ import { verifyToken, signToken } from '$lib/alerts/tokens';
 import * as subscribers from '$lib/db/subscribers';
 import { listForSelect } from '$lib/db/boats';
 import { distinctSpecies } from '$lib/db/queries/browse';
+import { today, addDays } from '$lib/shared/dates';
 import { logger } from '$lib/server/logger';
 
 function tokenFromUrl(url: URL): string | null {
@@ -74,11 +75,11 @@ const UpdateSchema = z.object({
 });
 
 function pausedUntilFor(pause: 'off' | '1w' | '2w' | '1m' | 'until-on'): string | null {
-  const now = Date.now();
   if (pause === 'off') return null;
   if (pause === 'until-on') return '9999-12-31';
+  // STO-04: derive paused_until via the canonical date producer (today + N).
   const days = pause === '1w' ? 7 : pause === '2w' ? 14 : 30;
-  return new Date(now + days * 86400_000).toISOString().slice(0, 10);
+  return addDays(today(), days);
 }
 
 function fdToObject(fd: FormData): Record<string, unknown> {
