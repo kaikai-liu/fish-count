@@ -758,7 +758,7 @@ These are choices made under auto mode where reasonable defaults were picked but
 9. **Email rendering of `<PerAnglerMetric>`-formatted values:** server-side composer in `EmailLayout.ts` re-implements the formatter. Risk: the two formatters can drift. Mitigation: a single shared `formatPerAngler(value, nTrips)` function in `src/lib/shared/format.ts` consumed by both Svelte component and email composer.
 10. **Postal address sourcing:** env var `POSTAL_ADDRESS`. If a maildrop / virtual mailbox service hasn't been chosen by Phase 4 plan-time, the planner blocks the phase until one is procured. The address MUST be real before first send (CAN-SPAM).
 11. **Honeypot field name:** `website`. Could be `phone` or `address` or randomized. `website` chosen because dumb auto-fillers commonly target it and it's not present elsewhere on the form (so a non-empty value is unambiguously a bot).
-12. **Per-IP rate-limit window:** 4 signups per 1h per IP (matches ALT-03 wording "rejects a fourth submission"). Could be tighter (3/h) or use a sliding window. v1 uses fixed-window for implementation simplicity.
+12. **Per-IP rate-limit window:** RESOLVED 2026-04-28: 3/h matches REQUIREMENTS.md ALT-03 verbatim. Could be tightened further if abuse observed. (Earlier draft proposed 4/h matching "rejects a fourth submission" wording — overridden in favor of REQUIREMENTS.md's explicit "3 signups per hour per IP".)
 
 ---
 

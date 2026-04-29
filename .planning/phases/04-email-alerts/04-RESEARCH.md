@@ -1063,37 +1063,37 @@ CREATE INDEX IF NOT EXISTS idx_alerts_sent_sent_at ON alerts_sent(sent_at);
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **MIN_ANGLERS floor for hot-day evaluator (Assumption A2)**
    - What we know: ALT-09 specifies "≥ N anglers"; UI-SPEC §"Email body structure" Block 4 expects `n=[anglers] anglers` rendered.
    - What's unclear: The exact value of N. PITFALLS §3 spirit is "n<5 is unhonest"; for a per-boat per-trip-type metric, N=8 is a reasonable floor below typical SD half-day boat counts.
-   - Recommendation: Default N=8 in plan; surface to operator via a `HOT_DAY_MIN_ANGLERS` env var (with default 8). Tunable without redeploy.
+   - RESOLVED: Default 8 (env override HOT_DAY_MIN_ANGLERS). Implemented in Plan 07 Task 1.
 
 2. **Postal address sourcing (Assumption A6 / UI-SPEC §FLAG #10)**
    - What we know: CAN-SPAM 15 U.S.C. § 7704(a)(5) requires a "valid physical postal address". UI-SPEC mandates the address render in every email and plan-time blocks until procured.
    - What's unclear: Operator's choice — virtual mailbox service (UPS Store, iPostal1, ~$10–20/mo) vs. P.O. Box vs. operator's actual address.
-   - Recommendation: Discuss-phase to surface this as a decision; planner may add a Wave 0 task: "operator confirms POSTAL_ADDRESS env var with a real, deliverable address before any email is sent."
+   - RESOLVED: Operator procures virtual mailbox before first prod send. Plan 08 Task 4 (manual UAT checkpoint) blocks first send until POSTAL_ADDRESS env is set + verified.
 
 3. **Rate-limit window: fixed-bucket 1h vs. sliding 1h (Assumption A5)**
    - What we know: UI-SPEC §FLAG #12 says fixed-window for v1 simplicity.
    - What's unclear: Whether attackers will exploit boundary timing in practice.
-   - Recommendation: Ship fixed-bucket per UI-SPEC FLAG. Revisit if abuse observed.
+   - RESOLVED: Fixed 1h bucket (Plan 02 MAX_ATTEMPTS=3, WINDOW_SECONDS=3600). Sliding window deferred to v2 if abuse observed.
 
 4. **Cap-rollover for queued alerts (Pattern 4 / Pitfall 7 mitigation)**
    - What we know: UI-SPEC promises "alerts queue and send the next morning. We never silently drop alerts."
    - What's unclear: How to handle queued alerts whose triggers are stale (e.g., boat had a hot day Monday, queue overflowed, by Tuesday the boat's avg is back to normal — do we still send the Monday alert?).
-   - Recommendation: Send queued alerts as-is. The trigger fired; the user wants to know about it. Add a 24h queue TTL — alerts queued >24h are marked `status='expired'` and not resent. Operator alert if queue size grows unbounded.
+   - RESOLVED: Queue and drain next dispatch tick (Plan 07 Task 3 drainQueued); 24h TTL via markExpired (Plan 01 alertsSent.markExpired). Per Blocker B1 fix.
 
 5. **Hot-day alert for boats running multiple trip-types same day (e.g., 1/2 Day AM AND 1/2 Day PM)**
    - What we know: `trigger_key = "boat:" + boat_id + ":" + trip_type` allows two alerts per boat per day if both trip types fire.
    - What's unclear: Whether a subscriber following the boat wants 2 emails.
-   - Recommendation: Two emails — they're distinct trip-type events with distinct historical baselines. `trigger_key` design already enforces dedup correctly per (boat, trip_type, date).
+   - RESOLVED: Two distinct candidates (Plan 07 evaluator emits per (boat, trip_type), trigger_key includes trip_type).
 
 6. **PROJECT_SECRET rotation strategy**
    - What we know: HMAC tokens are signed with `PROJECT_SECRET`. If rotated, all in-flight tokens (24h confirm, 30-day manage, no-expiry unsubscribe) become invalid.
    - What's unclear: Operator policy on secret rotation.
-   - Recommendation: v1 — single secret, document that rotation invalidates manage links and forces users to request fresh ones. v2 — dual-key verify (try current then previous) for hitless rotation. Out of scope for Phase 4.
+   - RESOLVED: Single secret v1; rotation invalidates active manage links — documented in Plan 08 runbook §Recovery.
 
 ---
 
