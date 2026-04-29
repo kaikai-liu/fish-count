@@ -1,10 +1,13 @@
 // tests/helpers/seedTestDb.ts
 // Phase 2: Shared seeding helpers for query/route tests.
 // Factored from inline helpers in catchReports.test.ts and scrapeRuns.test.ts.
+// Phase 4: extended with seedSubscriber + seedSuppressed (Plan 04-01).
 import type Database from 'better-sqlite3';
 import * as boats from '../../src/lib/db/boats';
 import * as catchReports from '../../src/lib/db/catchReports';
 import type { CatchReportRow } from '../../src/lib/db/catchReports';
+import * as subscribersDal from '../../src/lib/db/subscribers';
+import * as suppression from '../../src/lib/db/suppressionList';
 
 export function seedBoat(
   db: Database.Database,
@@ -55,4 +58,45 @@ export function seedTrip(
 
 export function seedTripsBatch(db: Database.Database, rows: CatchReportRow[]): void {
   catchReports.upsertMany(db, rows);
+}
+
+/**
+ * Phase 4 helper: seed a subscriber (active by default) with optional follows.
+ * Returns the subscriber id so tests can then dispatch alerts to them.
+ *
+ * Note: when boats[] is non-empty, the caller MUST have seeded the matching
+ * boats rows first — subscriber_boats has a FK to boats.
+ */
+export function seedSubscriber(
+  db: Database.Database,
+  args: {
+    email: string;
+    status?: 'pending' | 'active';
+    boats?: number[];
+    species?: string[];
+    ip?: string;
+  }
+): number {
+  const id = subscribersDal.createPending(db, {
+    email: args.email,
+    boats: args.boats ?? [],
+    species: args.species ?? [],
+    ip: args.ip ?? '127.0.0.1'
+  });
+  if ((args.status ?? 'active') === 'active') {
+    subscribersDal.activate(db, id);
+  }
+  return id;
+}
+
+/**
+ * Phase 4 helper: add an email to the suppression list.
+ * Reason defaults to 'user_unsub' (the most common path).
+ */
+export function seedSuppressed(
+  db: Database.Database,
+  email: string,
+  reason: 'user_unsub' | 'operator_remove' = 'user_unsub'
+): void {
+  suppression.add(db, email, reason);
 }
