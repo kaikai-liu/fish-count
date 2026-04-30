@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
 milestone: v2
-milestone_name: pending-new-milestone
-status: between_milestones
-stopped_at: v1.0 milestone closed 2026-04-30 — pivot to v2 multi-axis trend explorer pending /gsd-new-milestone
+milestone_name: multi-axis-trend-explorer
+status: defining_requirements
+stopped_at: v2 milestone defined 2026-04-30 — PROJECT.md updated, REQUIREMENTS.md and ROADMAP.md pending
 last_updated: "2026-04-30T00:00:00Z"
 last_activity: 2026-04-30
 progress:
@@ -20,18 +20,18 @@ progress:
 
 See: .planning/PROJECT.md (updated 2026-04-30)
 
-**Core value (v2, anticipated):** Visualise SD charter boat catch over time across multiple comparison axes (species across boats / landings; boat or landing performance across species), like exploring a stock-market chart.
-**Current focus:** Define v2 milestone via `/gsd-new-milestone`.
+**Core value (v2):** Pick a boat, species, or landing as a "ticker" and see SD charter boat catch history with comparison overlays across a chosen time range — like exploring a stock-market chart.
+**Current focus:** Defining v2 requirements (next: REQUIREMENTS.md, then ROADMAP.md).
 
 ## Current Position
 
-Milestone: v2 (not yet defined)
-Phase: —
+Milestone: v2 Multi-Axis Trend Explorer
+Phase: Not started (defining requirements)
 Plan: —
-Status: Between milestones — awaiting `/gsd-new-milestone`
-Last activity: 2026-04-30
+Status: Defining requirements
+Last activity: 2026-04-30 — PROJECT.md updated with v2 scope; CLAUDE.md rewritten as operator-readable doc
 
-Progress: [░░░░░░░░░░] 0% (v2 not yet scoped)
+Progress: [░░░░░░░░░░] 0% (v2 phases not yet defined)
 
 ## Performance Metrics
 
@@ -63,10 +63,11 @@ None.
 - ING-10/11 — TOS review + courtesy outreach email + `FIRST_SCRAPE_OK` flip
 - CR-01 — `litestream.yml ${VAR}` interpolation bug must be fixed before first deploy
 
-**Pivot decisions to confirm in `/gsd-new-milestone`:**
-- v2 retains: scraper, DAL, store, browse routes, trend chart, compare, /about, email-alerts goal (redesigned triggers)
-- v2 retires: trip picker UI, statistical forecast layer, calendar heatmap
-- v2 keeps existing v1 code in `src/` until v2 plans explicitly retire it (no premature deletion)
+**v2 scope locked (see PROJECT.md Current Milestone block):**
+- Retains: scraper, DAL, historical store, basic browse routes
+- Retires (during v2 retirement phase): picker UI, forecast layer + `forecasts` table, calendar heatmap, 3-file allowlist lint, row-count <50% silent-failure alert
+- Adds: explorer (3 ticker layouts), 1M–All range selector, moon-phase overlay, share-URL state, CSV export, redesigned email alerts
+- Phase 4 (Email Alerts) implementation preserved at git tag `phase-4-shipped` for cherry-pick reference during v2 alerts phase
 
 ## Deferred Items
 

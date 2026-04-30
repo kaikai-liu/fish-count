@@ -2,15 +2,15 @@
 
 ## What This Is
 
-FishCount is a public web app for San Diego recreational anglers, built around publicly-scraped charter boat catch data from `sandiegofishreports.com/dock_totals/boats.php`. v1.0 shipped a browse + trip-picker + statistical-forecast read surface; **the project pivots in v2 to a multi-axis catch trend explorer** — pick a species, boat, or landing as your "ticker"; overlay comparisons across the others — moving away from the picker/forecast direction toward an explorer-style UX.
+FishCount is a public web app for San Diego recreational anglers, built around publicly-scraped charter boat catch data from `sandiegofishreports.com/dock_totals/boats.php`. **v2 builds a multi-axis catch trend explorer** — pick a boat (default), species, or landing as your "ticker"; see catch history with comparison overlays across a chosen time range; optional moon-phase markers. Pure historical, no projections.
 
-The v1.0 codebase remains in `src/` after milestone close; the picker and forecast routes are deliberately-retired v1 features that may or may not survive the v2 redesign. The scraper, DAL, and historical store are the load-bearing foundation that carries forward.
+v1.0 shipped a browse + trip-picker + statistical-forecast read surface and is retiring with the pivot — picker, forecasts, and the calendar heatmap come out during v2. The scraper, database, and basic browse routes carry forward unchanged.
 
 ## Core Value
 
-**v1.0 (shipped, retired):** Given a date and a target species, help an angler pick the charter boat with the best historical odds.
+**v2:** Pick a boat, species, or landing as a "ticker" and see SD charter boat catch history with comparison overlays across a chosen time range — like exploring a stock-market chart. Optional moon-phase markers on the time axis. Email alerts when a followed boat or species hits an unusual day. Pure historical — no forecasts, no picker, no heatmap.
 
-**v2 (TBD via `/gsd-new-milestone`):** Visualise SD charter boat catch over time across multiple comparison axes (species across boats / landings; boat or landing performance across species), like exploring a stock-market chart. Email alerts retained on top. Pure historical — no forecasts, no picker, no heatmap.
+**v1.0 (shipped, retiring):** Given a date and a target species, help an angler pick the charter boat with the best historical odds.
 
 ## Requirements
 
@@ -35,13 +35,40 @@ The v1.0 codebase remains in `src/` after milestone close; the picker and foreca
 - ✓ "About the data" page explaining source + scrape cadence + per-angler caveat — *v1.0 (Phase 2)*
 - ✓ Statistical forecast layer (seasonal-naïve baseline + 80% PI + n + n<5 refusal + 30-day horizon cap) — *v1.0 (Phase 3) — slated for retirement in v2*
 
-### Active (v2 — pending `/gsd-new-milestone`)
+## Current Milestone: v2 Multi-Axis Trend Explorer
 
-<!-- v2 scope is anticipated but not yet locked. /gsd-new-milestone will redo this section. -->
+**Goal:** Replace v1's picker/forecast surface with a "stock-chart for fish" explorer. Pick a ticker (boat / species / landing), see catch history with comparison overlays. Pure historical, no projections. Email alerts redesigned for the explorer mental model.
 
-- [ ] Multi-axis trend explorer: pick a species, boat, or landing as the "ticker"; overlay comparison series across the others
-- [ ] Email signup + abuse-safe alerts (carried from retired v1 Phase 4 with redesigned trigger logic)
-- [ ] Polish for "shareable with friends" finish (carried from retired v1 Phase 5)
+**Target features:**
+- Explorer route with three layouts:
+  - **Boat ticker** (default landing) — trip-type series overlaid on the same chart, plus species breakdown
+  - **Species ticker** — boats overlay
+  - **Landing ticker** — species overlay
+- Range selector: 1M / 3M / 6M / 1Y / 2Y / 5Y / All
+- Always show `n` (sample size) alongside per-angler numbers — anglers judge thin data themselves
+- Moon-phase chart overlay (background markers / icons on time axis — no aggregates, no predictions)
+- Share-this-chart URL state
+- CSV export for the active chart's underlying rows
+- Email alerts (redesigned for explorer mental model; cherry-pick from `phase-4-shipped` git tag where useful)
+- v1 retirement phase: delete `src/routes/picker/`, `src/lib/forecast/`, `forecasts` table + recompute pipeline, calendar heatmap component, related tests; remove the 3-file allowlist lint that enforced the now-deleted trip-type segmentation rule; relax silent-failure alerts to scraper/parser failure (drop the row-count <50% rule that would false-positive every winter); update `/about` copy
+- Polish to "shareable with friends" finish
+
+**Operator punch list (carries forward, not v2 dev work):**
+- OPS-02 — Fly.io live deploy + 5 drills
+- ING-10/11 — TOS review + courtesy outreach + `FIRST_SCRAPE_OK` flip
+- CR-01 — `litestream.yml ${VAR}` interpolation bug must be fixed before first deploy
+
+### Active (v2)
+
+<!-- Current scope. Building toward these. Detailed REQ-IDs in REQUIREMENTS.md once defined. -->
+
+- [ ] Multi-axis trend explorer (boat / species / landing ticker; overlay comparison series; range selector 1M–All)
+- [ ] Moon-phase chart overlay (markers on time axis)
+- [ ] Share-this-chart URL state
+- [ ] CSV export for active chart's underlying rows
+- [ ] Email alerts redesigned for explorer mental model
+- [ ] v1 retirement (picker, forecast layer, heatmap, related lints + alerts)
+- [ ] Polish to "shareable with friends" finish
 
 ### Out of Scope
 
@@ -103,7 +130,10 @@ The v1.0 codebase remains in `src/` after milestone close; the picker and foreca
 | Statistical projection (PIs + n + refusal) over ML | Transparent math, fits scope | ⚠️ Revisited — retired in v2 (operator: "too hectic seems"). Pure historical preferred |
 | Trip picker ships with all three views (ranked list, avg/angler numbers, heatmap) | Multiple lenses for different decision styles | ⚠️ Revisited — only the trend view direction survives to v2 |
 | Anonymous browse + email-only signup for alerts | Low friction, alerts only need email | — Pending v2 (alerts feature carries forward; redesigned triggers) |
-| Email alerts on day 1 with anti-abuse + deliverability | 10× retrofit cost per CLAUDE.md non-negotiable #5 | — Pending v2 (carries forward as planned-but-unbuilt requirement) |
+| Email alerts on day 1 with anti-abuse + deliverability | Email law (CAN-SPAM, RFC 8058) + sender reputation; cheaper to build correct from start | — Pending v2 (Phase 4 implementation exists at git tag `phase-4-shipped` for cherry-pick reference) |
+| Removed CLAUDE.md "Non-Negotiable Rules" block (v2 kickoff) | Block conflated external requirements with Claude-recommended tactical defaults; presented Claude's opinions as operator decrees. Operator pushback: too specific, several rules paternalistic toward a sophisticated audience (off-season zero days are normal; anglers know trip-type duration differences) | ✓ Good — CLAUDE.md rewritten as operator-readable plain-English doc; legal/compliance constraints will be re-derived per phase from research and operator input |
+| v2 trusts the audience | SD anglers know trip-type duration, off-season patterns, what thin samples look like. v1's paternalistic refuse-to-render gates and mandatory segmentation lints created copy debt for no benefit | — Pending v2 (load-bearing for explorer UX choices: overlay on shared per-angler axis OK, no n<5 refusal, always show n for context) |
+| Moon-phase as pure chart overlay (not aggregate, not predictor) | Anglers want to eyeball moon vs catch correlation; aggregates risk implying a pattern that isn't there; predictions cross into "ML bite forecaster" anti-feature territory | — Pending v2 (Level 1 only; revisit aggregates in v2.x or v3 if there's appetite) |
 
 ## Evolution
 
@@ -123,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-30 after v1.0 milestone close. v1.0 shipped early at 4 of 6 planned phases due to scope pivot. v2 direction (multi-axis trend explorer) anticipated but pending /gsd-new-milestone.*
+*Last updated: 2026-04-30 — v2 milestone kickoff. Pivot scope locked: multi-axis trend explorer (boat / species / landing ticker), moon-phase overlay, share-URL + CSV export, email alerts redesigned, v1 retirement, polish. CLAUDE.md "Non-Negotiable Rules" block removed in favor of plain-English operator guidance. v1.0 ended at Phases 0–3; Phase 4 (Email Alerts) implementation preserved at git tag `phase-4-shipped` for v2 cherry-pick reference.*
