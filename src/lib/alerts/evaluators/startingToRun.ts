@@ -23,6 +23,7 @@
 import type Database from 'better-sqlite3';
 import * as alertEval from '$lib/db/queries/alertEval';
 import type { ActiveSubscriberWithFollows } from '$lib/db/subscribers';
+import { addDays } from '$lib/shared/dates';
 
 export const RUN_RATIO = 1.5;
 export const RUN_BASELINE_MIN_TRIPS = 5;
@@ -42,24 +43,25 @@ export interface RunCandidate {
 }
 
 /**
- * Returns the Monday (UTC) of the ISO-8601 week containing `today`.
+ * Returns the Monday of the ISO-8601 week containing `today`.
  *
  * Pure function. today=YYYY-MM-DD (Pacific). For ISO-week purposes we treat
  * the date as a calendar date — TZ shifts within the day do not move the
- * ISO week, so UTC arithmetic is safe here.
+ * ISO week, so the day-of-week calculation runs in UTC, then the final
+ * YYYY-MM-DD string is produced via addDays() from src/lib/shared/dates.ts
+ * (STO-04 single-producer rule + CLAUDE.md Architecture Rules).
  *
  * Algorithm: getUTCDay returns 0=Sun..6=Sat; convert to 1=Mon..7=Sun (ISO);
- * subtract (isoDow - 1) days to land on the ISO Monday.
+ * subtract (isoDow - 1) days from the input date string via addDays().
  *
- * Year-boundary: handled implicitly by Date's UTC arithmetic. Verified by
+ * Year-boundary: handled implicitly by addDays' UTC arithmetic. Verified by
  * the "Sunday Jan 3 2027 -> Mon Dec 28 2026" test case.
  */
 export function isoWeekMonday(today: string): string {
   const d = new Date(`${today}T00:00:00Z`);
   const dow = d.getUTCDay(); // 0=Sun..6=Sat
   const isoDow = dow === 0 ? 7 : dow; // 1=Mon..7=Sun (ISO)
-  d.setUTCDate(d.getUTCDate() - (isoDow - 1));
-  return d.toISOString().slice(0, 10);
+  return addDays(today, -(isoDow - 1));
 }
 
 export function evaluateStartingToRun(args: {
