@@ -36,14 +36,6 @@ Confirmed by `.planning/research/STACK.md` (verified 2026-04-22):
 - **All dates are `YYYY-MM-DD` in `America/Los_Angeles`.** A single `lib/shared/dates.ts` module is the sole producer of date strings.
 - **Backfill is a CLI, not a cron route.** Cron/function timeouts can't cover hours-long polite-rate-limited backfill.
 
-## Non-Negotiable Rules (retrofitting any of these costs 10–100×)
-
-1. **Polite scraping.** Rate limit ≤ 1 req per 5s shared between backfill + incremental. Custom User-Agent with contact link. Honor `robots.txt`. Review TOS in writing before first production scrape. Email source-site operator proactively.
-2. **Silent-failure detection.** Row-count SLA alert (<50% of rolling 7-day average fires). Freshness alert (>36h = dead-man's switch). Zod validation on every record. Gzipped raw-HTML snapshots for replay.
-3. **Forecast honesty.** Always show prediction intervals. Always show sample size `n`. Hard floor: `n<5` renders "not enough history" (no point estimate). Beat seasonal-naïve on held-out validation or ship the baseline. Integers only — no false-precision decimals. Horizon capped at 30 days.
-4. **Per-angler metric framing.** The metric is a **derived boat-aggregate average**, never an individual attribution. Mandatory trip-type segmentation — cross-trip-type comparison must be impossible in UI. Inline disclaimer (not tooltip-only). `About the data` page exists and is linked from every per-angler number.
-5. **Email compliance (all, not a subset).** Double opt-in. Per-IP rate limit. Honeypot. Disposable-email rejection. Suppression list that cannot be re-subscribed. `List-Unsubscribe` header + one-click unsubscribe. Physical postal address. SPF + DKIM + DMARC before first production send. Warm-up schedule (50/day → 200/day → full).
-
 ## Anti-Features (never build)
 
 Per-angler individual attribution · social feed / comments / photos · leaderboards / gamification · ML-based bite-time forecasts · push/SMS (v1) · mandatory account to browse · booking / payment integration · bait/tackle recs · GPS catch-spot maps · personal catch logbook · AI-generated reports · "ON FIRE" hype badges · paywalls · sponsored boat slots in rankings · fake-precision projections · manual scrape trigger in UI · non-San-Diego data.
