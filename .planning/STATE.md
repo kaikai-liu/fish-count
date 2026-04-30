@@ -1,102 +1,72 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 03-forecast-layer complete (all 6 plans done; FCT-01..07 + FCT-04 honesty artifact landed)
-last_updated: "2026-04-26T20:39:07.068Z"
-last_activity: 2026-04-26
+milestone: v2
+milestone_name: pending-new-milestone
+status: between_milestones
+stopped_at: v1.0 milestone closed 2026-04-30 — pivot to v2 multi-axis trend explorer pending /gsd-new-milestone
+last_updated: "2026-04-30T00:00:00Z"
+last_activity: 2026-04-30
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 29
-  completed_plans: 28
-  percent: 67
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-22)
+See: .planning/PROJECT.md (updated 2026-04-30)
 
-**Core value:** Given a date (or range) and a target species, help an angler pick the charter boat with the best historical odds.
-**Current focus:** Phase 03 — forecast-layer
+**Core value (v2, anticipated):** Visualise SD charter boat catch over time across multiple comparison axes (species across boats / landings; boat or landing performance across species), like exploring a stock-market chart.
+**Current focus:** Define v2 milestone via `/gsd-new-milestone`.
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-26
+Milestone: v2 (not yet defined)
+Phase: —
+Plan: —
+Status: Between milestones — awaiting `/gsd-new-milestone`
+Last activity: 2026-04-30
 
-Progress: [██████████] 97%
+Progress: [░░░░░░░░░░] 0% (v2 not yet scoped)
 
 ## Performance Metrics
 
-**Velocity:**
-
-- Total plans completed: 22
-- Average duration: —
-- Total execution time: 0 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| — | — | — | — |
-| 01 | 9 | - | - |
-| 02 | 7 | - | - |
-| 03 | 6 | - | - |
-
-**Recent Trend:**
-
-- Last 5 plans: —
-- Trend: —
-
-*Updated after each plan completion*
-| Phase 03 P01 | 5min | 3 tasks | 10 files |
-| Phase 03 P02 | 7min | 3 tasks | 9 files |
-| Phase 03 P03 | 9min | 2 tasks | 5 files |
-| Phase 03 P04 | 6min | 3 tasks | 6 files |
-| Phase 03 P05 | 7min | 3 tasks | 6 files |
-| Phase 03 P06 | 5min | 2 tasks | 5 files |
+v1.0 metrics archived to `milestones/v1.0-ROADMAP.md`. v2 metrics populate from first plan.
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Project-level decisions are logged in PROJECT.md Key Decisions table. v1.0 decisions and outcomes (✓ Good / ⚠️ Revisit) are archived there.
 
-- Phase 0 precedes Phase 1 — no scraping into the cloud without billing alerts, kill switch, dead-man's switch, and Litestream backups in place.
-- Backfill is a Phase 1 exit criterion (not a v2 follow-up) so the forecast layer has real history to chew on.
-- Credibility guardrails ship with the surfaces they protect: per-angler framing with Phase 2, forecast honesty (PI + n + refusal) with Phase 3, email anti-abuse + deliverability with Phase 4.
-- Followed catchReports.ts upsertMany pattern verbatim — single transaction, prepared statement with named bindings, ON CONFLICT DO UPDATE
-- pruneBeforeHorizon shipped as v1 no-op stub returning 0 (D-16: past forecast rows retained indefinitely)
-- Returned sum_species + sum_anglers from getRatiosForWindow alongside ratio so compute.ts derives exact fleet-wide SUM/SUM (not mean-of-ratios)
-- Pure-math forecast engine follows parser.ts purity contract: no SQL, no module-scope getDb, db handle injected as parameter; per-cell try/catch in recomputeForecasts means one bad cell never aborts the nightly recompute
-- Phase 3 hybrid heatmap composer: past cells from heatmapForQuery (catch_reports) + today/future cells from forecastHeatmapForQuery (forecasts), merged by date. Single today() call per request feeds both horizon check and split (RESEARCH §4).
-- FCT-07 horizon gate: when target_date - today > 30, /picker returns horizonTooFar:true with heatmap:null and the verbatim message 'horizon too far — historical data only'; rankings continue to render (historical actuals are unaffected by the cap).
-- forecastHeatmapForQuery preserves Phase 2 D-15 shape contract ({date, value, n}) so buildHeatmapOption needs only a tooltip-formatter branch (Plan 03-04), not a rendering rewrite. Additive fields (pi_low, pi_high, gap_present, gap_expected) discriminate forecast-vs-actual at tooltip time via 'pi_low' in cell.
-- Phase 3 forecast UI surfaces locked: PerAnglerMetric kind='historical'|'forecast' with /about#forecasts anchor; heatmap tooltip formatter discriminates via 'pi_low' in cell; verbatim copy constants (FORECAST_LABEL, NOT_ENOUGH_HISTORY, PI_LABEL) live in src/lib/copy/metrics.ts as single source of truth
-- /about page Forecasts section anchored at #forecasts documents the seasonal-naïve baseline, 80% PI, n<5 refusal, 30-day horizon cap, gap-aware aggregation, and benchmark validation — fulfills CLAUDE.md non-negotiable #3 'beat seasonal-naïve OR ship the baseline labeled' on the user-visible side
-- PerAnglerMetric kind defaults to 'historical' so all 7+ Phase 2 callers (/, /date/[date], /picker, /boats/[id], /compare, /trends, BoatCard) keep working without changes; only future /picker forecast-cell wiring opts into kind='forecast' explicitly
-- Phase 3 FCT-06 wired in three places: _scrapeTick inline (success/empty gate, non-fatal try/catch), scripts/backfill.ts final step, and scripts/forecasts-rebuild.ts ad-hoc operator CLI. Recompute failure never blocks pingHealthcheck('success') — OPS-04 owns ingestion liveness; forecast pipeline is a secondary tripwire.
-- vi.doMock with $lib alias paths must use the alias specifier the consumer imports with, not the equivalent relative path. Relative-path mocks for $lib aliases silently fall through to the real module. Recorded as a pattern for future tests.
-- scripts/forecasts-rebuild.ts deliberately omits --from / --to range flags per RESEARCH §9. Operator use case is 'fix it now', full window is bounded (~3,720 cells) and idempotent (UPSERT). Range mode would be a YAGNI flag.
-- Plan 03-06 ships forecast-benchmark CLI as the FCT-04 honesty artifact: tsx-runnable script comparing seasonal-naïve baseline vs fleet-mean baseline on a held-out year, reporting MAE / median absolute error / 80% PI coverage, with all SQL routed through src/lib/db/queries/benchmark.ts to preserve DAL boundary.
-- Did NOT inline dev-fixture benchmark numbers into /about — synthetic round-robin replay produces unrealistically smooth distributions; Status note in 03-VALIDATION-BENCHMARK.md flags the dev-fixture origin and points operators at production rerun.
+Carry-forward structural decisions still binding in v2:
+- Modular monolith; one SvelteKit deployment, one SQLite database
+- DAL is the only module that issues SQL (`lib/db/`)
+- Single date producer (`lib/shared/dates.ts`), all dates `YYYY-MM-DD` in `America/Los_Angeles`
+- Idempotent upsert on `(date, boat_id, trip_type, species)`
+- Per-angler framing inline (not tooltip-only); mandatory trip-type segmentation
+- Backfill is a CLI, not a cron route
+- All credibility guardrails ship with the surfaces they protect (per CLAUDE.md non-negotiable rules)
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- Source TOS + robots.txt still need written review — this is a Phase 1 prerequisite (blocking first production scrape).
-- Hosting finalization (Fly.io vs Render vs VPS) — to be decided inside Phase 0.
-- Forecast method (bootstrap PI vs log-t) — Phase 3 picks and documents.
+**Operator-gated (carried from v1.0):**
+- OPS-02 — Fly.io live deploy + 5 drills (Plan 00-06 autonomous: false)
+- ING-10/11 — TOS review + courtesy outreach email + `FIRST_SCRAPE_OK` flip
+- CR-01 — `litestream.yml ${VAR}` interpolation bug must be fixed before first deploy
+
+**Pivot decisions to confirm in `/gsd-new-milestone`:**
+- v2 retains: scraper, DAL, store, browse routes, trend chart, compare, /about, email-alerts goal (redesigned triggers)
+- v2 retires: trip picker UI, statistical forecast layer, calendar heatmap
+- v2 keeps existing v1 code in `src/` until v2 plans explicitly retire it (no premature deletion)
 
 ## Deferred Items
 
@@ -112,12 +82,10 @@ Items acknowledged and deferred at v1.0 milestone close on 2026-04-30:
 | unsatisfied_phase | Phase 04 Email Alerts (ALT-01..12) | never planned — pivot to v2 | 2026-04-30 |
 | unsatisfied_phase | Phase 05 Polish (POL-01..03) | never planned — pivot to v2 | 2026-04-30 |
 
-Reason for deferral: v1.0 closed early at 4 of 6 phases due to deliberate scope pivot. Operator-gated items (Phase 0 live deploy, Phase 1 source-site outreach) remain on the operator's punch list; the unsatisfied phases (4, 5) will be reconsidered in v2 against the new core value. See `.planning/v1.0-MILESTONE-AUDIT.md` for full provenance.
+Reason for deferral: v1.0 closed early at 4 of 6 phases due to deliberate scope pivot. Operator-gated items (Phase 0 live deploy, Phase 1 source-site outreach) remain on the operator's punch list; the unsatisfied phases (4, 5) will be reconsidered in v2 against the new core value. See `.planning/milestones/v1.0-MILESTONE-AUDIT.md` for full provenance.
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:39:07.065Z
-Stopped at: Phase 03-forecast-layer complete (all 6 plans done; FCT-01..07 + FCT-04 honesty artifact landed)
+Last session: 2026-04-30 (v1.0 milestone close)
+Stopped at: v1.0 archived; ready for `/gsd-new-milestone`
 Resume file: None
-
-**Planned Phase:** 03 (forecast-layer) — 6 plans — 2026-04-26T18:49:59.158Z
