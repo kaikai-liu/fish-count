@@ -105,22 +105,57 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Which phases cover which requirements. Empty until ROADMAP.md is created — populated by the roadmapper.
+Which phases cover which requirements. Populated by the roadmapper on 2026-04-30.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXPL-01..14 | TBD | Pending |
-| MOON-01..03 | TBD | Pending |
-| SHR-01..02 | TBD | Pending |
-| ALT-01..08 | TBD | Pending |
-| RTR-01..09 | TBD | Pending |
-| POL-01..05 | TBD | Pending |
+| EXPL-01 | Phase 6: Explorer Foundation | Pending |
+| EXPL-02 | Phase 6: Explorer Foundation | Pending |
+| EXPL-03 | Phase 6: Explorer Foundation | Pending |
+| EXPL-04 | Phase 6: Explorer Foundation | Pending |
+| EXPL-05 | Phase 6: Explorer Foundation | Pending |
+| EXPL-06 | Phase 6: Explorer Foundation | Pending |
+| EXPL-07 | Phase 6: Explorer Foundation | Pending |
+| EXPL-08 | Phase 6: Explorer Foundation | Pending |
+| EXPL-09 | Phase 6: Explorer Foundation | Pending |
+| EXPL-10 | Phase 6: Explorer Foundation | Pending |
+| EXPL-11 | Phase 6: Explorer Foundation | Pending |
+| EXPL-12 | Phase 6: Explorer Foundation | Pending |
+| EXPL-13 | Phase 6: Explorer Foundation | Pending |
+| EXPL-14 | Phase 6: Explorer Foundation | Pending |
+| MOON-01 | Phase 7: Moon-phase Overlay | Pending |
+| MOON-02 | Phase 7: Moon-phase Overlay | Pending |
+| MOON-03 | Phase 7: Moon-phase Overlay | Pending |
+| SHR-01 | Phase 8: Sharing | Pending |
+| SHR-02 | Phase 8: Sharing | Pending |
+| ALT-01 | Phase 9: Email Alerts | Pending |
+| ALT-02 | Phase 9: Email Alerts | Pending |
+| ALT-03 | Phase 9: Email Alerts | Pending |
+| ALT-04 | Phase 9: Email Alerts | Pending |
+| ALT-05 | Phase 9: Email Alerts | Pending |
+| ALT-06 | Phase 9: Email Alerts | Pending |
+| ALT-07 | Phase 9: Email Alerts | Pending |
+| ALT-08 | Phase 9: Email Alerts | Pending |
+| RTR-01 | Phase 10: v1 Retirement | Pending |
+| RTR-02 | Phase 10: v1 Retirement | Pending |
+| RTR-03 | Phase 10: v1 Retirement | Pending |
+| RTR-04 | Phase 10: v1 Retirement | Pending |
+| RTR-05 | Phase 10: v1 Retirement | Pending |
+| RTR-06 | Phase 10: v1 Retirement | Pending |
+| RTR-07 | Phase 10: v1 Retirement | Pending |
+| RTR-08 | Phase 10: v1 Retirement | Pending |
+| RTR-09 | Phase 10: v1 Retirement | Pending |
+| POL-01 | Phase 11: Polish & Dark Mode | Pending |
+| POL-02 | Phase 11: Polish & Dark Mode | Pending |
+| POL-03 | Phase 11: Polish & Dark Mode | Pending |
+| POL-04 | Phase 11: Polish & Dark Mode | Pending |
+| POL-05 | Phase 11: Polish & Dark Mode | Pending |
 
 **Coverage:**
 - v2 requirements: 41 total (14 EXPL + 3 MOON + 2 SHR + 8 ALT + 9 RTR + 5 POL)
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 41 ⚠️
+- Mapped to phases: 41 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-30*
-*Last updated: 2026-04-30 after initial v2 milestone definition*
+*Last updated: 2026-04-30 — traceability filled by roadmapper; all 41 requirements mapped across Phases 6–11*
