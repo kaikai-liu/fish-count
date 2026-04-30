@@ -124,3 +124,69 @@ export function renderRunStartEmail(args: {
     manageUrl: args.manageUrl
   };
 }
+
+// ---------- Phase 4 Plan 07 dispatcher-facing aliases ----------
+//
+// Plan 07 dispatcher imports `hotDayEmail` and `startingToRunEmail` directly.
+// Plan 03 already shipped renderHotDayEmail / renderRunStartEmail with a
+// caller-friendly arg shape (boatName, species). The dispatcher (Task 3)
+// builds candidates as HotDayCandidate / RunCandidate (boatDisplayName,
+// subscriberEmail). These aliases adapt the candidate shape to the existing
+// renderers so we keep ONE escape-hardened body builder per email template
+// (no T-04-A9 surface drift) and one source of UI-SPEC-verbatim copy.
+
+/** Alias: build a hot-day email from a HotDayCandidate-shaped args object. */
+export function hotDayEmail(args: {
+  subscriberEmail: string; // not rendered; kept for caller-side logging only
+  boatDisplayName: string; // RAW — escapeHtml inside renderHotDayEmail
+  boatId: number;
+  tripType: string;
+  todayValue: number;
+  todayAnglers: number;
+  trailingAvg: number;
+  multiplier: number;
+  speciesList: string[];
+  signupDate: string;
+  unsubscribeUrl: string;
+  manageUrl: string;
+}): BuildEmailArgs {
+  return renderHotDayEmail({
+    boatName: args.boatDisplayName,
+    boatId: args.boatId,
+    tripType: args.tripType,
+    todayValue: args.todayValue,
+    todayAnglers: args.todayAnglers,
+    trailingAvg: args.trailingAvg,
+    multiplier: args.multiplier,
+    speciesList: args.speciesList,
+    signupDate: args.signupDate,
+    unsubscribeUrl: args.unsubscribeUrl,
+    manageUrl: args.manageUrl
+  });
+}
+
+/** Alias: build a starting-to-run email from a RunCandidate-shaped args object. */
+export function startingToRunEmail(args: {
+  subscriberEmail: string;
+  species: string; // RAW — escapeHtml inside renderRunStartEmail
+  tripType: string;
+  rolling7Avg: number;
+  yearAgoAvg: number;
+  multiplier: number;
+  nBoats: number;
+  signupDate: string;
+  unsubscribeUrl: string;
+  manageUrl: string;
+}): BuildEmailArgs {
+  return renderRunStartEmail({
+    species: args.species,
+    tripType: args.tripType,
+    rolling7Avg: args.rolling7Avg,
+    yearAgoAvg: args.yearAgoAvg,
+    multiplier: args.multiplier,
+    nBoats: args.nBoats,
+    signupDate: args.signupDate,
+    unsubscribeUrl: args.unsubscribeUrl,
+    manageUrl: args.manageUrl
+  });
+}

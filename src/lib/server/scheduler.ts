@@ -25,6 +25,7 @@ import { scrapeDate } from '$lib/scraper/pipeline';
 import { today } from '$lib/shared/dates';
 import { checkSlaAndAlert } from '$lib/scraper/sla';
 import { recomputeForecasts } from '$lib/forecast/compute';
+import { dispatchAlerts } from '$lib/alerts/dispatch';
 import { getDb } from '$lib/db/client';
 
 const jobs: Cron[] = [];
@@ -93,6 +94,26 @@ export async function _scrapeTick(): Promise<void> {
         tickLogger.info({ msg: 'forecast_recompute_complete' });
       } catch (err) {
         tickLogger.error({ err, msg: 'forecast_recompute_failed_non_fatal' });
+      }
+    }
+
+    // Phase 4 ALT-09/10/11/12 (Plan 04-07): dispatch alerts after the data state
+    // has been refreshed (catch_reports written by scrapeDate, forecasts refreshed
+    // by recomputeForecasts). Step 5.5 in the scheduler tick — between forecast
+    // recompute (step 5) and pingHealthcheck close (step 6).
+    //
+    // Non-fatal: a Resend outage (or any dispatch-side error) MUST never block
+    // pingHealthcheck('success'). OPS-04 dead-man's switch owns "is ingestion
+    // alive"; alert dispatch is a quaternary tripwire (after SLA + forecast
+    // recompute). Same try/catch discipline as the SLA check + forecast recompute
+    // above. Outcome gate matches recomputeForecasts: only run when the data
+    // state may have changed.
+    if (result.outcome === 'success' || result.outcome === 'empty') {
+      try {
+        await dispatchAlerts(date, getDb());
+        tickLogger.info({ msg: 'alerts_dispatch_complete' });
+      } catch (err) {
+        tickLogger.error({ err, msg: 'alerts_dispatch_failed_non_fatal' });
       }
     }
 
