@@ -86,10 +86,22 @@ export function recordQueued(db: Database.Database, k: DedupKey): void {
 /**
  * ALT-12 warm-up cap denominator: count of 'sent' rows since `sinceIso`.
  * The route layer compares this to the day's cap before flushing the queue.
+ *
+ * Comparison MUST go through SQLite's `datetime()` so the cutoff (ISO-8601
+ * `YYYY-MM-DDTHH:MM:SS.sssZ` from JS) and `sent_at` (SQLite's space-separated
+ * `YYYY-MM-DD HH:MM:SS` from `datetime('now')`) are both normalized to the
+ * same internal form. A naïve string `>=` would silently return 0 because
+ * `' '` (0x20) lexicographically sorts before `'T'` (0x54), excluding every
+ * same-day row and quietly disabling the warm-up cap (#CR-01).
  */
 export function countSentSince(db: Database.Database, sinceIso: string): number {
   const row = db
-    .prepare(`SELECT COUNT(*) AS c FROM alerts_sent WHERE sent_at >= ? AND status = 'sent'`)
+    .prepare(
+      `SELECT COUNT(*) AS c
+         FROM alerts_sent
+        WHERE datetime(sent_at) >= datetime(?)
+          AND status = 'sent'`
+    )
     .get(sinceIso) as { c: number };
   return row.c;
 }

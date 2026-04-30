@@ -164,8 +164,14 @@ describe('dispatchAlerts', () => {
     const ins = db.prepare(
       `INSERT INTO alerts_sent (subscriber_id, kind, trigger_key, trigger_date, status, sent_at, resend_message_id) VALUES (?, 'hot_day', ?, ?, 'sent', ?, 'm')`
     );
-    for (let i = 0; i < 50; i++)
-      ins.run(dummySid, `dummy:${i}`, TODAY, `${TODAY}T${String(i).padStart(2, '0')}:00:00.000Z`);
+    // Spread 50 sends across the first 50 minutes of today (hours 00..23 only —
+    // invalid hours like T49:00:00.000Z get NULL'd by SQLite's datetime() and
+    // would silently drop out of the warm-up cap denominator.
+    for (let i = 0; i < 50; i++) {
+      const hh = String(Math.floor(i / 60)).padStart(2, '0');
+      const mm = String(i % 60).padStart(2, '0');
+      ins.run(dummySid, `dummy:${i}`, TODAY, `${TODAY}T${hh}:${mm}:00.000Z`);
+    }
     await dispatchAlerts(TODAY, db);
     expect(sendMock).not.toHaveBeenCalled();
     const queuedRow = db

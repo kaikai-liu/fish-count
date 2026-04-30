@@ -83,6 +83,25 @@ describe('alertsSent DAL', () => {
     expect(sent.countSentSince(db, '2026-01-01 00:00:00')).toBe(0);
   });
 
+  it('countSentSince accepts ISO-8601 cutoff (warm-up cap regression #CR-01)', () => {
+    // Production callers (src/lib/alerts/dispatch.ts) build the cutoff via
+    // `new Date(...).toISOString()` → `YYYY-MM-DDTHH:MM:SS.sssZ`, while
+    // sent_at is written as `YYYY-MM-DD HH:MM:SS` by SQLite's datetime('now').
+    // A naïve string `>=` returns 0 because space (0x20) sorts before 'T' (0x54).
+    // The fix routes both sides through `datetime()` so the formats normalize.
+    db = freshDb();
+    const sid = seedSubscriber(db, { email: 'a@b.com', boats: [1] });
+    sent.recordSent(
+      db,
+      { subscriberId: sid, kind: 'hot_day', triggerKey: 'k-iso', triggerDate: '2026-04-27' },
+      'm-iso'
+    );
+    // ISO-8601 cutoff at midnight of a prior day must return 1, not 0.
+    expect(sent.countSentSince(db, '2026-04-27T00:00:00.000Z')).toBe(1);
+    // ISO-8601 cutoff well in the future must return 0.
+    expect(sent.countSentSince(db, '2099-01-01T00:00:00.000Z')).toBe(0);
+  });
+
   it('listQueued returns queued rows in queued_at ASC order', () => {
     db = freshDb();
     const sid = seedSubscriber(db, { email: 'a@b.com', boats: [1] });
