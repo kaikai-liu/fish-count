@@ -94,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-26 after Phase 3 (Forecast Layer) complete — 3/6 phases done. Forecast layer ships seasonal-naïve baseline labeled as such per ROADMAP success criterion #2; FCT-04 honesty benchmark documents calibration; n<5 hard floor + 80% PI + 30-day horizon enforced.*
+*Last updated: 2026-04-29 after Phase 4 (Email Alerts) complete — 4/6 phases done. Double opt-in signup, lifecycle routes (confirm/manage/unsubscribe with RFC 8058 one-click), hot-day + starting-to-run evaluators, dispatcher with dedup + warm-up cap, scheduler hook all shipping. ALT-01..ALT-12 functional. Operator deliverability close-out (DMARC DNS, mail-tester score, real-mailbox drill) lives in 04-HUMAN-UAT.md and docs/runbooks/email-deliverability.md.*
