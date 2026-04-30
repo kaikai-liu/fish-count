@@ -100,11 +100,19 @@ None yet.
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and deferred at v1.0 milestone close on 2026-04-30:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| verification_gap | Phase 00 verification | gaps_found (OPS-02 deferred live deploy + CR-01 litestream env-var bug) | 2026-04-30 |
+| verification_gap | Phase 01 verification | human_needed (TOS review + outreach email + FIRST_SCRAPE_OK gate flip) | 2026-04-30 |
+| uat_gap | Phase 01 HUMAN-UAT | partial — 5 pending operator scenarios | 2026-04-30 |
+| uat_gap | Phase 03 HUMAN-UAT | partial (0 open scenarios; flagged by frontmatter parser) | 2026-04-30 |
+| integration_defect | picker/+page.svelte:180 rankings short-circuit blocks heatmap render for low-data future combos (TRP-08, FCT-05, FCT-07 partial) | unfixed; v2 may retire this route | 2026-04-30 |
+| unsatisfied_phase | Phase 04 Email Alerts (ALT-01..12) | never planned — pivot to v2 | 2026-04-30 |
+| unsatisfied_phase | Phase 05 Polish (POL-01..03) | never planned — pivot to v2 | 2026-04-30 |
+
+Reason for deferral: v1.0 closed early at 4 of 6 phases due to deliberate scope pivot. Operator-gated items (Phase 0 live deploy, Phase 1 source-site outreach) remain on the operator's punch list; the unsatisfied phases (4, 5) will be reconsidered in v2 against the new core value. See `.planning/v1.0-MILESTONE-AUDIT.md` for full provenance.
 
 ## Session Continuity
 
