@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v2
-milestone_name: multi-axis-trend-explorer
-status: ready_to_plan
-stopped_at: v2 roadmap created 2026-04-30 — 6 phases (6–11), 41 requirements mapped; ready for /gsd-discuss-phase 6
-last_updated: "2026-04-30T00:00:00Z"
-last_activity: 2026-04-30
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Phase 6 context gathered
+last_updated: "2026-05-01T02:59:58.378Z"
+last_activity: 2026-04-30 — v2 ROADMAP.md written; 41 requirements mapped across 6 phases (6–11); REQUIREMENTS.md traceability filled.
 progress:
   total_phases: 6
   completed_phases: 0
@@ -44,6 +44,7 @@ v1.0 metrics archived to `milestones/v1.0-ROADMAP.md`. v2 metrics populate from 
 Project-level decisions are logged in PROJECT.md Key Decisions table. v1.0 decisions and outcomes (✓ Good / ⚠️ Revisit) are archived there.
 
 Carry-forward structural decisions still binding in v2:
+
 - Modular monolith; one SvelteKit deployment, one SQLite database
 - DAL is the only module that issues SQL (`lib/db/`)
 - Single date producer (`lib/shared/dates.ts`), all dates `YYYY-MM-DD` in `America/Los_Angeles`
@@ -51,6 +52,7 @@ Carry-forward structural decisions still binding in v2:
 - Backfill is a CLI, not a cron route
 
 v2-specific principles (load-bearing for upcoming phases):
+
 - Trust the audience — show `n` next to per-angler numbers, no refuse-to-render gates
 - Moon-phase overlay is pure visual layer (no aggregates, no predictions)
 - Email alerts deep-link back to the explorer view they're about (so Phase 9 depends on Phase 8's URL contract)
@@ -63,11 +65,13 @@ None.
 ### Blockers/Concerns
 
 **Operator-gated (carried from v1.0 — tracked in ROADMAP.md operator punch list, not v2 dev work):**
+
 - OPS-02 — Fly.io live deploy + 5 drills (Plan 00-06 autonomous: false)
 - ING-10/11 — TOS review + courtesy outreach email + `FIRST_SCRAPE_OK` flip
 - CR-01 — `litestream.yml ${VAR}` interpolation bug must be fixed before first deploy
 
 **v2 phase mapping:**
+
 - Phase 6: Explorer Foundation — EXPL-01..14 (14 reqs)
 - Phase 7: Moon-phase Overlay — MOON-01..03 (3 reqs)
 - Phase 8: Sharing — SHR-01..02 (2 reqs)
@@ -95,6 +99,6 @@ Reason for deferral: v1.0 closed early at 4 of 6 phases due to deliberate scope 
 
 ## Session Continuity
 
-Last session: 2026-04-30 (v2 roadmap created)
-Stopped at: v2 ROADMAP.md + REQUIREMENTS.md traceability written; ready for `/gsd-discuss-phase 6`
-Resume file: None
+Last session: --stopped-at
+Stopped at: Phase 6 context gathered
+Resume file: --resume-file
