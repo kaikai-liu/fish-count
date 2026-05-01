@@ -6,8 +6,18 @@
     option,
     height = '320px',
     ariaLabel,
-    loading = false
-  }: { option: EChartsOption; height?: string; ariaLabel: string; loading?: boolean } = $props();
+    loading = false,
+    tooltipFormatter
+  }: {
+    option: EChartsOption;
+    height?: string;
+    ariaLabel: string;
+    loading?: boolean;
+    // Optional client-side tooltip formatter. Functions can't survive SSR JSON serialization,
+    // so the loader returns plain chartOption without a formatter; the page passes this prop
+    // to attach the formatter client-side (T-06-24: HTML-escaped by caller).
+    tooltipFormatter?: (params: unknown[]) => string;
+  } = $props();
 
   let chartEl: HTMLDivElement;
   let chart: any = null;
@@ -37,7 +47,11 @@
       // Honor reduced-motion preference (UI-SPEC §Accessibility)
       const reducedMotion = typeof window !== 'undefined'
         && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      chart.setOption({ ...option, animation: !reducedMotion });
+      // Merge optional client-side tooltipFormatter (functions don't survive SSR serialization)
+      const finalOption = tooltipFormatter
+        ? { ...option, tooltip: { ...(option.tooltip ?? {}), formatter: tooltipFormatter } }
+        : option;
+      chart.setOption({ ...finalOption, animation: !reducedMotion });
       ro = new ResizeObserver(() => chart?.resize());
       ro.observe(chartEl);
       mounted = true;
@@ -56,7 +70,10 @@
     if (chart && option) {
       const reducedMotion = typeof window !== 'undefined'
         && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      chart.setOption({ ...option, animation: !reducedMotion }, true /* notMerge */);
+      const finalOption = tooltipFormatter
+        ? { ...option, tooltip: { ...(option.tooltip ?? {}), formatter: tooltipFormatter } }
+        : option;
+      chart.setOption({ ...finalOption, animation: !reducedMotion }, true /* notMerge */);
     }
   });
 </script>

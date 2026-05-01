@@ -290,6 +290,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       const parts: string[] = [];
       if (clampedFrom !== fromDate) parts.push('Start date adjusted to earliest available data.');
       if (clampedTo !== toDate) parts.push('End date adjusted to today.');
+      // Also ensure fromDate <= toDate after clamping (e.g. entire range is in future)
+      if (clampedFrom > clampedTo) {
+        clampedFrom = clampedTo;
+        parts.push('Date range adjusted to available data window.');
+      }
       clampNote = parts.join(' ');
       fromDate = clampedFrom;
       toDate = clampedTo;
