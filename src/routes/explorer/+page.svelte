@@ -42,24 +42,26 @@
   }
 
   function onTickerChange(next: ExplorerFilters['ticker']) {
-    // D-08: ticker switch — range stays, selection resolves cross-axis default loader-side
-    goto(`/explorer?ticker=${next}&range=${formRange}`, { keepFocus: true, replaceState: true, noScroll: true });
+    // D-08: ticker switch — range stays, selection resolves cross-axis default loader-side.
+    // Phase 7 (MOON-01): preserve moon flag across ticker switch.
+    const moonParam = filters.moon ? '&moon=1' : '';
+    goto(`/explorer?ticker=${next}&range=${formRange}${moonParam}`, { keepFocus: true, replaceState: true, noScroll: true });
   }
 
   function onRangeChange(next: ExplorerFilters['range']) {
     if (next === 'custom') return; // wait for CustomDateInputs onSubmit
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: next }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: next };
+        ? { ticker: 'boat', slug: formSelection ?? '', range: next, moon: filters.moon }
+        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: next, moon: filters.moon };
     navigate(f);
   }
 
   function onCustomDates(dates: { fromDate: string; toDate: string }) {
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate };
+        ? { ticker: 'boat', slug: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate, moon: filters.moon }
+        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate, moon: filters.moon };
     navigate(f);
   }
 
@@ -67,8 +69,8 @@
     const val = (e.target as HTMLSelectElement).value;
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: val, range: formRange, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) }
-        : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) };
+        ? { ticker: 'boat', slug: val, range: formRange, moon: filters.moon, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) }
+        : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, moon: filters.moon, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) };
     navigate(f);
   }
 

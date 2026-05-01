@@ -241,10 +241,24 @@ const TickerVariant = z.discriminatedUnion('ticker', [
   LandingTickerSchema
 ]);
 
+// boolFlagField — accepts URL-style boolean flags `1|0|true|false`. Used by Phase 7
+// `moon` field on ExplorerFiltersSchema. Distinct from boolStringField (which only
+// accepts `true|false`) because UI-SPEC §URL State Contract requires `?moon=1`
+// shorthand to be valid in addition to `?moon=true`.
+//
+// Note: `.default('false')` is applied BEFORE `.transform()` so that the default
+// value flows through the transform (yielding `false`). Putting `.default()`
+// after `.transform()` would yield the raw string `'false'` on missing input.
+const boolFlagField = z
+  .enum(['true', 'false', '1', '0'])
+  .default('false')
+  .transform((s) => s === 'true' || s === '1');
+
 const RangeBase = z.object({
   range: z.enum(RANGE_PRESETS).default('1y'),
   fromDate: dateField.optional(),
-  toDate: dateField.optional()
+  toDate: dateField.optional(),
+  moon: boolFlagField // Phase 7 (MOON-01) — default off; URL omits param when off (D-04 clean-URL)
 });
 
 // D-19: custom range requires both dates; fromDate <= toDate (T-06-10).
@@ -289,5 +303,9 @@ export function serializeExplorerFilters(filters: ExplorerFilters): URLSearchPar
     if (filters.fromDate) sp.set('fromDate', filters.fromDate);
     if (filters.toDate) sp.set('toDate', filters.toDate);
   }
+  // Phase 7 (MOON-01) — emit moon=1 ONLY when on. UI-SPEC §URL State Contract
+  // "Serialization rule": "When moon is off, the param is omitted entirely. This
+  // preserves D-04 (clean URL on default landing) and the off-state guarantee."
+  if (filters.moon) sp.set('moon', '1');
   return sp;
 }
