@@ -59,9 +59,9 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
   2. The markers stay correctly positioned when the angler changes the time range or the ticker — no extra page load or API call needed.
   3. With moon overlay off, the chart looks identical to Phase 6 (no leftover artifacts).
 **Plans**: 3 plans
-- [ ] 07-01-PLAN.md — Pure moon-illumination module (`src/lib/shared/moon.ts`) + unit tests against NASA/USNO anchor dates (MOON-03)
-- [ ] 07-02-PLAN.md — `ExplorerFiltersSchema` `moon` flag with clean-URL serialization + `src/lib/copy/moon.ts` constants (MOON-01)
-- [ ] 07-03-PLAN.md — Loader emits `moonChartOption`; ExplorerHeader MoonToggle (role=switch); +page.svelte sub-chart + integration tests (MOON-01, MOON-02)
+- [x] 07-01-PLAN.md — Pure moon-illumination module (`src/lib/shared/moon.ts`) + unit tests against NASA/USNO anchor dates (MOON-03)
+- [x] 07-02-PLAN.md — `ExplorerFiltersSchema` `moon` flag with clean-URL serialization + `src/lib/copy/moon.ts` constants (MOON-01)
+- [x] 07-03-PLAN.md — Loader emits `moonChartOption`; ExplorerHeader MoonToggle (role=switch); +page.svelte sub-chart + integration tests (MOON-01, MOON-02)
 **UI hint**: yes
 
 ### Phase 8: Sharing

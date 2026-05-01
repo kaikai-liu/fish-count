@@ -1,9 +1,11 @@
 ---
 phase: 07-moon-phase-overlay
 verified: 2026-05-01T21:15:00Z
-status: human_needed
+status: passed
 score: 8/8 must-haves verified
 overrides_applied: 0
+human_verification_resolved: 2026-05-01
+human_verification_artifact: 07-HUMAN-UAT.md
 human_verification:
   - test: "Click 'Moon' toggle on /explorer; verify the URL gains ?moon=1 and a 36px sine-curve row renders flush below the catch chart"
     expected: "URL becomes /explorer?ticker=boat&slug=...&range=1y&moon=1; second chart row visible immediately below catch chart with no gap; sine curve has thin slate line + light shading; toggle button shows accent (filled) state"
