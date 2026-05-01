@@ -86,7 +86,8 @@ describe('rangeToDates — preset ranges', () => {
   it('2y: fromDate = today-730d, toDate = today, granularity = monthly, includesToday = true', () => {
     const result = rangeToDates('2y');
     expect(result.toDate).toBe('2026-04-30');
-    expect(result.fromDate).toBe('2024-05-01');
+    // 730 days back from 2026-04-30 (UTC arithmetic via addDays): 2024-04-30
+    expect(result.fromDate).toBe('2024-04-30');
     expect(result.granularity).toBe('monthly');
     expect(result.includesToday).toBe(true);
   });
@@ -94,7 +95,8 @@ describe('rangeToDates — preset ranges', () => {
   it('5y: fromDate = today-1825d, toDate = today, granularity = monthly, includesToday = true', () => {
     const result = rangeToDates('5y');
     expect(result.toDate).toBe('2026-04-30');
-    expect(result.fromDate).toBe('2021-04-30');
+    // 1825 days back from 2026-04-30: 2021-05-01 (includes leap year 2024)
+    expect(result.fromDate).toBe('2021-05-01');
     expect(result.granularity).toBe('monthly');
     expect(result.includesToday).toBe(true);
   });
@@ -102,8 +104,8 @@ describe('rangeToDates — preset ranges', () => {
   it('all: fromDate = today-(365*15)d, toDate = today, granularity = monthly, includesToday = true (T-02-31 bounded sentinel)', () => {
     const result = rangeToDates('all');
     expect(result.toDate).toBe('2026-04-30');
-    // 365 * 15 = 5475 days back from 2026-04-30
-    expect(result.fromDate).toBe('2011-04-24');
+    // 5475 days back from 2026-04-30: 2011-05-04 (includes 4 leap years: 2012,2016,2020,2024)
+    expect(result.fromDate).toBe('2011-05-04');
     expect(result.granularity).toBe('monthly');
     expect(result.includesToday).toBe(true);
   });
@@ -128,9 +130,21 @@ describe('rangeToDates — custom range', () => {
   });
 
   it('custom ≤2y span → granularity weekly', () => {
+    // 2025-01-01 to 2026-06-01 = 516 days (> 45, <= 730 → weekly)
+    // 2026-06-01 > today (2026-04-30) → includesToday = true
     const result = rangeToDates('custom', { fromDate: '2025-01-01', toDate: '2026-06-01' });
     expect(result.fromDate).toBe('2025-01-01');
     expect(result.toDate).toBe('2026-06-01');
+    expect(result.granularity).toBe('weekly');
+    expect(result.includesToday).toBe(true);
+  });
+
+  it('custom ≤2y span in the past → granularity weekly, includesToday = false', () => {
+    // 2024-01-01 to 2025-01-01 = 366 days (> 45, <= 730 → weekly)
+    // 2025-01-01 < today (2026-04-30) → includesToday = false
+    const result = rangeToDates('custom', { fromDate: '2024-01-01', toDate: '2025-01-01' });
+    expect(result.fromDate).toBe('2024-01-01');
+    expect(result.toDate).toBe('2025-01-01');
     expect(result.granularity).toBe('weekly');
     expect(result.includesToday).toBe(false);
   });
