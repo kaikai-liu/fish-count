@@ -86,6 +86,8 @@ Color tokens come from `src/app.css` `@theme`. No new tokens are added in Phase 
 | Text subtle | `--color-text-subtle` | `#64748b` | Auto-widen note text, date clamp inline note, "+N more" pill label |
 | Border | `--color-border` | `#e2e8f0` | Sticky bar bottom border, `<select>` border, range button border (inactive), species breakdown table border |
 | Border strong | `--color-border-strong` | `#cbd5e1` | Focused `<select>` border, range button active border |
+| Surface sunken | `--color-surface-sunken` | `#f1f5f9` | "+N more" overflow pill background (collapsed state) |
+| Low-data background | `--color-lowdata-bg` | `#e5e7eb` | "+N more" overflow pill expanded background; thin-data legend chip background |
 | Destructive | `--color-destructive` | `#b91c1c` | Not used in Phase 6 (no destructive actions) |
 
 **Accent reserved for:**
@@ -97,6 +99,14 @@ Color tokens come from `src/app.css` `@theme`. No new tokens are added in Phase 
 **Chart series colors:** ECharts categorical default palette (`option.color` not overridden). First 6 colors are used for visible series; series 7+ are hidden behind the "+N more" overflow mechanism. The ECharts default palette is accessibility-vetted and color-blind-friendly per D-21.
 
 **Source:** `src/app.css` @theme block — all tokens read 2026-04-30.
+
+---
+
+## Visual Hierarchy
+
+**Primary visual anchor:** the chart container is the focal point of the Explorer page. All `ExplorerHeader` controls (ticker pills, selector, range strip) serve to configure it; the species breakdown table (boat ticker only) and the chart caption are secondary context that reads below the chart. Page-load eye flow: page title → ticker pills → chart → caption → breakdown table.
+
+On mobile (<768px), the sticky header occupies ~144px (3 rows × 48px each); the 280px chart anchors the visible viewport on first paint. On desktop (≥768px), the sticky header collapses to 1–2 rows (~64px) and the chart grows to 360px.
 
 ---
 
