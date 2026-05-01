@@ -185,7 +185,7 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
     // We seeded 2 trip types (1/2 Day AM, Full Day) → 2 series
     expect(result.chartOption.series.length).toBe(2);
     // Series names should contain verbatim trip type names
-    const names = result.chartOption.series.map((s: { name: string }) => s.name.split(' · n=')[0]);
+    const names = result.chartOption.series.map((s: { name: string }) => s.name.replace(/ · [\d,]+ trips?$/, ''));
     expect(names).toContain('1/2 Day AM');
     expect(names).toContain('Full Day');
 

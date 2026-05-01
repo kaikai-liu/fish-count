@@ -278,7 +278,7 @@ describe('/explorer +page.server.ts load()', () => {
     );
   });
 
-  it('6. series legend label format: "name · n=NN"', async () => {
+  it('6. series legend label format: "name · NN trips"', async () => {
     const db = openTestDb();
     setTestDb(db);
 
@@ -291,9 +291,9 @@ describe('/explorer +page.server.ts load()', () => {
     expect(result.empty).toBeNull();
     const series = result.chartOption.series;
     expect(series.length).toBeGreaterThan(0);
-    // Each series name must match format "label · n=NN"
+    // Each series name must match format "label · N trips" (or "1 trip" when singular)
     for (const s of series) {
-      expect(s.name).toMatch(/^.+ · n=\d+$/);
+      expect(s.name).toMatch(/^.+ · [\d,]+ trips?$/);
     }
   });
 
@@ -315,7 +315,7 @@ describe('/explorer +page.server.ts load()', () => {
     const result = await load(makeEvent(`ticker=boat&slug=${slug}&range=1y`));
 
     expect(result.empty).toBeNull();
-    const seriesNames = result.chartOption.series.map((s: { name: string }) => s.name.split(' · n=')[0]);
+    const seriesNames = result.chartOption.series.map((s: { name: string }) => s.name.replace(/ · [\d,]+ trips?$/, ''));
     expect(seriesNames).toContain('1/2 Day AM');
     expect(seriesNames).toContain('Full Day Coronado Islands');
     expect(seriesNames).toContain('Overnight');

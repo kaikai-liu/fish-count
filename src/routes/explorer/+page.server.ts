@@ -543,24 +543,27 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // Step 8: Build chartOption (plain JSON — no echarts import, Pitfall 2 / T-06-30)
   // -------------------------------------------------------------------------
 
+  // Legend label: angler-readable "trips" instead of statistician shorthand "n="
+  // (operator override of original D-16 spec after seeing the rendered chart).
+  const legendNameFor = (s: SeriesData): string =>
+    `${s.label} · ${s.totalN.toLocaleString()} ${s.totalN === 1 ? 'trip' : 'trips'}`;
+
   // D-15: series 7+ get legendSelected: false ("+N more" collapse)
   const legendSelected: Record<string, boolean> = {};
   seriesList.forEach((s, i) => {
-    const legendName = `${s.label} · n=${s.totalN}`;
-    legendSelected[legendName] = i < 6;
+    legendSelected[legendNameFor(s)] = i < 6;
   });
 
   // nByBucketBySeries: per-bucket trip counts keyed by legend name, consumed by the
-  // client-side tooltip formatter (T-06-24 XSS mitigation; D-16 / D-22 per-bucket n reveal).
+  // client-side tooltip formatter (T-06-24 XSS mitigation; per-bucket trip-count reveal).
   const nByBucketBySeries: Record<string, Record<string, number>> = {};
   for (const s of seriesList) {
-    const legendName = `${s.label} · n=${s.totalN}`;
-    nByBucketBySeries[legendName] = s.nByBucket;
+    nByBucketBySeries[legendNameFor(s)] = s.nByBucket;
   }
 
   // Build chart series from seriesList
   const chartSeries = seriesList.map((s) => ({
-    name: `${s.label} · n=${s.totalN}`, // D-16 legend label format
+    name: legendNameFor(s),
     type: 'line' as const,
     connectNulls: false, // D-17: gaps render as line breaks
     data: s.data

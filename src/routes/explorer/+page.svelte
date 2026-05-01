@@ -11,49 +11,51 @@
 
   let { data }: { data: PageData } = $props();
 
-  // Form state seeded from loader-resolved filters (D-04: clean URL, server resolves defaults)
-  // Cast ticker — loader always returns a valid ticker but TypeScript can't narrow from PageData
-  const initFilters = data.filters as ExplorerFilters;
-  let formTicker = $state<ExplorerFilters['ticker']>(initFilters.ticker);
-  let formRange = $state<ExplorerFilters['range']>(initFilters.range);
-  let formFromDate = $state(initFilters.range === 'custom' ? (initFilters.fromDate ?? '') : '');
-  let formToDate = $state(initFilters.range === 'custom' ? (initFilters.toDate ?? '') : '');
-
-  // Selection identifier (slug or name) per ticker
-  let formSelection = $state(
-    initFilters.ticker === 'boat' ? initFilters.slug : (initFilters as { name: string }).name
+  // Form values derived from loader-resolved filters — re-evaluate on every SPA
+  // navigation so the dropdown, range strip, and ticker pills reflect the
+  // server's cross-axis defaults (D-04, D-08).
+  const filters = $derived(data.filters as ExplorerFilters);
+  const formTicker = $derived(filters.ticker);
+  const formRange = $derived(filters.range);
+  const formSelection = $derived(
+    filters.ticker === 'boat' ? filters.slug : (filters as { name: string }).name
   );
 
-  function navigate(filters: ExplorerFilters) {
-    const sp = serializeExplorerFilters(filters);
+  // Custom date inputs need writable state for the bind on CustomDateInputs.
+  // The $effect below seeds and re-syncs them from the loader on every navigation.
+  let formFromDate = $state('');
+  let formToDate = $state('');
+  $effect(() => {
+    if (filters.range === 'custom') {
+      formFromDate = filters.fromDate ?? '';
+      formToDate = filters.toDate ?? '';
+    } else {
+      formFromDate = '';
+      formToDate = '';
+    }
+  });
+
+  function navigate(next: ExplorerFilters) {
+    const sp = serializeExplorerFilters(next);
     // T-06-28: URL built only from typed ExplorerFilters — no open redirect
     goto(`/explorer?${sp.toString()}`, { keepFocus: true, replaceState: true, noScroll: true });
   }
 
   function onTickerChange(next: ExplorerFilters['ticker']) {
-    formTicker = next;
     // D-08: ticker switch — range stays, selection resolves cross-axis default loader-side
-    // Send only ticker + range. Loader resolves the default selection for the new ticker.
     goto(`/explorer?ticker=${next}&range=${formRange}`, { keepFocus: true, replaceState: true, noScroll: true });
   }
 
   function onRangeChange(next: ExplorerFilters['range']) {
-    formRange = next;
-    if (next !== 'custom') {
-      formFromDate = '';
-      formToDate = '';
-      const f: ExplorerFilters =
-        formTicker === 'boat'
-          ? { ticker: 'boat', slug: formSelection ?? '', range: next }
-          : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: next };
-      navigate(f);
-    }
-    // For 'custom', wait for CustomDateInputs onSubmit
+    if (next === 'custom') return; // wait for CustomDateInputs onSubmit
+    const f: ExplorerFilters =
+      formTicker === 'boat'
+        ? { ticker: 'boat', slug: formSelection ?? '', range: next }
+        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: next };
+    navigate(f);
   }
 
   function onCustomDates(dates: { fromDate: string; toDate: string }) {
-    formFromDate = dates.fromDate;
-    formToDate = dates.toDate;
     const f: ExplorerFilters =
       formTicker === 'boat'
         ? { ticker: 'boat', slug: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate }
@@ -63,7 +65,6 @@
 
   function onSelectorChange(e: Event) {
     const val = (e.target as HTMLSelectElement).value;
-    formSelection = val;
     const f: ExplorerFilters =
       formTicker === 'boat'
         ? { ticker: 'boat', slug: val, range: formRange, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) }
@@ -97,7 +98,8 @@
       const n = seriesNByBucket[p.axisValue] ?? 0;
       const v = p.value == null ? '—' : p.value < 10 ? p.value.toFixed(1) : Math.round(p.value).toString();
       const unit = v === '—' ? '' : ` ${FISH_PER_ANGLER_TOOLTIP_UNIT}`;
-      return `${p.marker} ${escapeHtml(p.seriesName)}: ${v}${unit} (n=${n})`;
+      const tripWord = n === 1 ? 'trip' : 'trips';
+      return `${p.marker} ${escapeHtml(p.seriesName)}: ${v}${unit} (${n.toLocaleString()} ${tripWord})`;
     }).join('<br/>');
     return `${header}<br/>${rows}`;
   }

@@ -13,7 +13,7 @@
       {#each rows as row (row.species)}
         <div class="flex justify-between rounded border border-(--color-border) bg-(--color-surface-muted) px-3 py-2 text-sm">
           <span class="text-(--color-text)">{row.species}</span>
-          <span class="tabular-nums text-(--color-text-muted)">{row.total_catch.toLocaleString()} total · n={row.n_trips}</span>
+          <span class="tabular-nums text-(--color-text-muted)">{row.total_catch.toLocaleString()} total · {row.n_trips.toLocaleString()} {row.n_trips === 1 ? 'trip' : 'trips'}</span>
         </div>
       {/each}
     </div>
