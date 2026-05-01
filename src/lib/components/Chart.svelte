@@ -65,16 +65,21 @@
     };
   });
 
-  // Re-apply option on prop change (D-19 filter changes)
+  // Re-apply option on prop change (D-19 filter changes).
+  // Read reactive props unconditionally so Svelte 5 tracks them as dependencies
+  // even on the first run when `chart` is still null (ECharts is initialized in
+  // an async onMount IIFE). Without this, the && short-circuit skipped the
+  // option read and the effect never re-fired on subsequent prop changes.
   $effect(() => {
-    if (chart && option) {
-      const reducedMotion = typeof window !== 'undefined'
-        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const finalOption = tooltipFormatter
-        ? { ...option, tooltip: { ...(option.tooltip ?? {}), formatter: tooltipFormatter } }
-        : option;
-      chart.setOption({ ...finalOption, animation: !reducedMotion }, true /* notMerge */);
-    }
+    const opt = option;
+    const tf = tooltipFormatter;
+    if (!chart || !opt) return;
+    const reducedMotion = typeof window !== 'undefined'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finalOption = tf
+      ? { ...opt, tooltip: { ...(opt.tooltip ?? {}), formatter: tf } }
+      : opt;
+    chart.setOption({ ...finalOption, animation: !reducedMotion }, true /* notMerge */);
   });
 </script>
 
