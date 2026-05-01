@@ -188,6 +188,14 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
     const names = result.chartOption.series.map((s: { name: string }) => s.name.split(' · n=')[0]);
     expect(names).toContain('1/2 Day AM');
     expect(names).toContain('Full Day');
+
+    // EXPL-10 / D-16 / D-22: per-bucket n must be populated, not always 0
+    expect(result.nByBucketBySeries).toBeDefined();
+    const nMaps = Object.values(result.nByBucketBySeries) as Record<string, number>[];
+    expect(nMaps.length).toBe(2);
+    const allCounts = nMaps.flatMap((m) => Object.values(m));
+    expect(allCounts.length).toBeGreaterThan(0);
+    expect(allCounts.every((n) => Number.isInteger(n) && n >= 1)).toBe(true);
   });
 
   it('3. ?ticker=species&name=bluefin&range=1y → chartOption series count <= 6', async () => {

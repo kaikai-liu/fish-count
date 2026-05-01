@@ -343,7 +343,19 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // Prepare selector options (for the <select> dropdown)
   let selectorOptions: Array<{ value: string; label: string }> = [];
 
-  type SeriesData = { label: string; data: (number | null)[]; totalN: number };
+  type SeriesData = {
+    label: string;
+    data: (number | null)[];
+    totalN: number;
+    nByBucket: Record<string, number>;
+  };
+  const buildNByBucket = <T extends { bucket_key: string; n_trips: number }>(
+    buckets: T[]
+  ): Record<string, number> => {
+    const map: Record<string, number> = {};
+    for (const b of buckets) map[b.bucket_key] = b.n_trips;
+    return map;
+  };
   let seriesList: SeriesData[] = [];
   let breakdownRows: SpeciesBreakdownRow[] | null = null;
   let totalTrips = 0;
@@ -383,7 +395,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         seriesList.push({
           label: tripType, // verbatim, CLAUDE.md domain language
           data: alignSeries(buckets, expectedKeys),
-          totalN: seriesN
+          totalN: seriesN,
+          nByBucket: buildNByBucket(buckets)
         });
       }
 
@@ -435,7 +448,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         seriesList.push({
           label: boat.display_name, // verbatim
           data: alignSeries(buckets, expectedKeys),
-          totalN: seriesN
+          totalN: seriesN,
+          nByBucket: buildNByBucket(buckets)
         });
       }
     }
@@ -482,7 +496,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
           seriesList.push({
             label: species, // verbatim, CLAUDE.md domain language
             data: alignSeries(buckets, expectedKeys),
-            totalN: seriesN
+            totalN: seriesN,
+            nByBucket: buildNByBucket(buckets)
           });
         }
       }
@@ -535,30 +550,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     legendSelected[legendName] = i < 6;
   });
 
-  // nByBucketBySeries: passed to page for client-side tooltip formatter (T-06-24 XSS mitigation)
+  // nByBucketBySeries: per-bucket trip counts keyed by legend name, consumed by the
+  // client-side tooltip formatter (T-06-24 XSS mitigation; D-16 / D-22 per-bucket n reveal).
   const nByBucketBySeries: Record<string, Record<string, number>> = {};
   for (const s of seriesList) {
     const legendName = `${s.label} · n=${s.totalN}`;
-    // We need per-bucket n from the raw data — rebuild from the series info
-    // Since alignSeries only has nulls/values, we need per-bucket n.
-    // Re-fetch per-bucket n by aligning n_trips from raw series buckets.
-    // This is already done per-ticker above. We'll compute it below via a second pass.
-    nByBucketBySeries[legendName] = {};
+    nByBucketBySeries[legendName] = s.nByBucket;
   }
-
-  // Build per-bucket n-map for tooltip (re-process raw buckets per ticker)
-  // We need to rebuild the n-maps from the raw data. The simplest approach:
-  // - Boat: re-query boatExplorerSeries and build n maps per trip_type
-  // - Species: already have result.series with per-bucket n_trips
-  // - Landing: already have result.series with per-bucket n_trips
-  // To avoid re-querying, let's restructure: build nByBucketBySeries inline during
-  // series construction (refactor the series-building above to also capture n_trips).
-  // Since we already processed seriesList, we need the raw bucket data.
-  // The cleanest solution: build nByBucketBySeries during the per-ticker processing.
-  // This requires a refactor of the conditional blocks above.
-  // For now, we'll pass an empty map and compute per-bucket n client-side from nByBucketBySeries.
-  // IMPORTANT: The plan specifies nByBucketBySeries should have per-bucket counts.
-  // We'll refactor by returning series with embedded n data and building the map here.
 
   // Build chart series from seriesList
   const chartSeries = seriesList.map((s) => ({
