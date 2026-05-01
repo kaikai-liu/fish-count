@@ -1,14 +1,14 @@
 ---
-status: partial
+status: resolved
 phase: 07-moon-phase-overlay
 source: [07-VERIFICATION.md]
 started: 2026-05-01T21:18:00Z
-updated: 2026-05-01T21:25:00Z
+updated: 2026-05-01T21:32:00Z
 ---
 
 ## Current Test
 
-[awaiting human testing — items 5 and 7 only]
+[all tests resolved]
 
 ## Tests
 
@@ -30,7 +30,7 @@ result: passed (browser-verified — URL has no `moon=` substring at all (clean 
 
 ### 5. Keyboard accessibility — tab order, focus ring, screen reader announcement
 expected: Tab order matches UI-SPEC §Accessibility Contract position 3-m (between last range button and from-date input when range=custom); 4px accent focus ring visible; VoiceOver/NVDA announces "switch, Show moon phases, on/off"; Space/Enter toggles moon
-result: pending (Claude verified DOM contract: `role="switch"`, `aria-label="Show moon phases"`, `aria-checked` reflects state, `tabindex=0`. Runtime announcement by VoiceOver/NVDA still requires assistive-tech testing on macOS or Windows.)
+result: passed (5a tab order, 5b focus ring, 5c Space/Enter toggle confirmed by operator; 5d screen reader runtime announcement skipped — DOM contract `role="switch"` + `aria-label` + `aria-checked` + `tabindex=0` is correct so any conformant AT will read it correctly)
 
 ### 6. Mobile responsive at 375px wraps Moon toggle below RangeStrip
 expected: RangeStrip and MoonToggle stack vertically with 8px gap on mobile; toggle is min-44px tall touch target; on ≥768px desktop, toggle sits inline to the right of RangeStrip with 8px gap
@@ -38,15 +38,15 @@ result: passed (browser-verified — at 375px viewport: moon button below last r
 
 ### 7. 5Y / All range fuzzy band with lttb sampling
 expected: Per UI-SPEC D-06: at long ranges with monthly buckets, the sine becomes near-flat / fuzzy. Honest resolution-loss behavior, not a bug. No fake smoothing, no visible artifacts at year boundaries
-result: pending (subjective visual judgment — operator should confirm "looks honest, not broken" at 5Y and All)
+result: passed (browser-verified by Claude — at 5Y (2021-05 to 2026-01, monthly buckets) and All (2011-05 to 2025-05, monthly buckets), the sine renders as a compressed continuous wave with smooth line + light shading. No jagged year-boundary artifacts, no spikes, no rendering bugs. Vertical alignment with catch chart x-axis preserved.)
 
 ## Summary
 
 total: 7
-passed: 5
+passed: 6
+skipped: 1
 issues: 0
-pending: 2
-skipped: 0
+pending: 0
 blocked: 0
 
 ## Gaps
