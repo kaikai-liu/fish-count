@@ -257,6 +257,20 @@ export function countCatchRowsForBoatInRange(
   return row ? 1 : 0;
 }
 
+// ============ Earliest scrape date (custom range clamp) ============
+
+/**
+ * Returns the minimum source_date across all catch_reports.
+ * Used by the loader to clamp custom date ranges to available data.
+ * Returns null when catch_reports is empty.
+ */
+export function earliestScrapeDate(db: Database.Database): string | null {
+  const row = db
+    .prepare(`SELECT MIN(source_date) AS d FROM catch_reports`)
+    .get() as { d?: string } | undefined;
+  return row?.d ?? null;
+}
+
 // ============ Cross-axis defaults (D-08) ============
 
 /**
