@@ -2,16 +2,21 @@
 
 ## Idea
 
-Inform Phase 7.5 (Home & Discovery) scope by exploring the actual scraped
-catch data before plan-phase. Designing "top boats per trip type" lists
-without first looking at real data distributions risks shipping a list with
-2 boats in it because some trip types only run twice a week. Each spike
-answers concrete questions whose answers shape the home page.
+Inform Phase 8 (Home, Retire, Polish — originally scoped as "Phase 7.5
+Home & Discovery" before v2 was restructured on 2026-05-01) by exploring
+the actual scraped catch data before plan-phase. Designing "top boats per
+trip type" lists without first looking at real data distributions risks
+shipping a list with 2 boats in it because some trip types only run twice
+a week. Each spike answers concrete questions whose answers shape the
+home page.
+
+The spike directory keeps its `phase-7.5-data-exploration` name as a
+historical artifact — the work was done under that label.
 
 ## Requirements
 
 Design decisions that emerged from the spikes. Non-negotiable for the
-Phase 7.5 build.
+Phase 8 build.
 
 - **Viable-trip-type filter:** the home page must filter trip types by a
   minimum trip count in the chosen window. Sparse trip types (1-3 trips/7d)

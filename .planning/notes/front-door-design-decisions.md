@@ -98,19 +98,72 @@ streaks / hype badges) out of scope.
 
 ## What this means for upcoming phases
 
-- **Phase 7.5: Home & Discovery** — implements the above. Inserts between
-  Phase 7 (shipped) and Phase 8 (Sharing) so that Sharing's URL-roundtrip
-  contract can include any home-page filter state from the start, not be
-  retrofitted.
-- **Phase 8: Sharing** — should round-trip home-page state, not just explorer
-  state.
-- **Phase 11: Polish & Dark Mode** — already carries the chart-axis switch
-  (`category` → `time`) and the explicit granularity selector; this note
-  doesn't add new polish items.
+**Update 2026-05-01 (post-spike):** the data spike (`spikes/001-phase-7.5-data-exploration/`)
+ran and surfaced source-label drift as a real, just-happened issue. The
+operator then expanded Phase 7.5's scope: it now absorbs Phase 10 (v1
+Retirement) and Phase 11 (Polish & Dark Mode) entirely, plus the `/compare`
+boat-ID picker fix and a new trip-type alias mapping table. The roadmap
+collapses from 6 v2 phases to 4. See "Final Phase 7.5 scope" below for the
+authoritative list.
+
+- **Phase 7.5 → renumbered to Phase 8: Home, Retire, Polish** (the big phase) —
+  implements all the above plus everything previously in Phases 10 and 11.
+- **Old Phase 8: Sharing → renumbered to Phase 9** — should round-trip
+  home-page state, not just explorer state.
+- **Old Phase 9: Email Alerts → renumbered to Phase 10** — unchanged scope.
+- **Phase 10 (v1 Retirement) and Phase 11 (Polish & Dark Mode): removed** —
+  all scope absorbed into the new Phase 8.
+
+## Final Phase 7.5 / Phase 8 scope (decided 2026-05-01)
+
+The big phase. Plan-phase will likely wave-split it; this is the
+authoritative scope list, not a plan.
+
+**Home & Discovery (original 7.5):**
+- New home page: top boats per viable trip type, past 7 days, fish/angler.
+- Per-trip-type bar normalization (~30× scale variance — see spike).
+- "New label" indicator for trip types that just appeared.
+- No "top species" section in v1 (spike showed weekly membership is too
+  stable to be interesting; revisit as rank-shift later).
+- Skunked-trip / zero-angler defensive code NOT needed (zero such cases
+  in 14 months of data).
+
+**Trip-type alias mapping (added today):**
+- New table the operator can edit when the source renames a trip type
+  ("Full Day" → "Full Day Coronado Islands" on 2026-04-27 was the
+  triggering case).
+- Home-page query + explorer queries consult the alias table so renamed
+  series stay continuous.
+
+**v1 retirement (pulled forward from old Phase 10):**
+- Delete `/picker` route + calendar heatmap → 301 redirect to `/explorer`.
+- Delete `/trends` route → 301 redirect to `/explorer`.
+- Drop v1 forecast pipeline: `forecasts` table migration drop, delete
+  `src/lib/forecast/`, remove nightly recompute cron, delete
+  `scripts/forecast-benchmark.ts`, delete forecast UI surfaces.
+- Remove the 3-file allowlist lint (no longer applicable per v2
+  trust-the-audience principle).
+- Replace row-count <50% silent-failure alert with scraper/parser-failure-only
+  alerting (off-season zero-row days don't false-positive).
+- Clean `/about` page — no leftover picker/forecast/heatmap references.
+- Delete v1-only test files for retired surfaces.
+
+**`/compare` fix (folded in):**
+- Replace boat-ID input with a typeahead/picker like the explorer's
+  (`.planning/todos/pending/compare-page-boat-id-picker.md`).
+
+**Polish & Dark Mode (pulled forward from old Phase 11):**
+- Friendly error pages on every route (no stack traces, no blank screens).
+- Loading skeletons / spinners while charts fetch.
+- Empty-state copy when a ticker has no data.
+- Descriptive `<title>` per route.
+- Light / dark / follow-system theme toggle, persisted across visits.
+- Carry-forward Phase 7 polish: chart x-axis `category` → `time`;
+  explicit Daily / Weekly / Monthly granularity selector for ranges ≥3M.
 
 ## Process note
 
-Phase 7.5 is NOT to be plan-phased directly. A `/gsd-spike` data-exploration
+Phase 7.5 / Phase 8 is NOT to be plan-phased directly. A `/gsd-spike` data-exploration
 session must run first (see `phase-7.5-data-spike-prompt.md`) so that the
 phase plan is grounded in actual data distributions, not speculation about
 what trip types have enough volume etc.

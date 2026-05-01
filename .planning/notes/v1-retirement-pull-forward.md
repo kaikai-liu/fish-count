@@ -2,8 +2,8 @@
 title: Pull v1 /picker + /trends retirement forward
 date: 2026-05-01
 context: /gsd-explore session after Phase 7 ship — operator decided to retire v1 surfaces earlier than the original Phase 10 plan
-related_phases: [7.5, 10]
-status: decided, awaiting plan-phase placement
+related_phases: [8]
+status: scope-extended 2026-05-01 — entire Phase 10 scope (incl. forecast pipeline) folded into renumbered Phase 8 (was 7.5); old Phase 10 removed from roadmap
 ---
 
 # Pull v1 /picker + /trends retirement forward
@@ -43,9 +43,11 @@ Pull `/picker` and `/trends` retirement **forward**. Reasons:
 
 **Stays in original Phase 10 scope (NOT pulled forward):**
 
-- v1 forecast pipeline — DAL tables (`forecasts`, `forecast_runs`), recompute
+- ~~v1 forecast pipeline — DAL tables (`forecasts`, `forecast_runs`), recompute
   cron, `forecast-benchmark` script, any forecast UI surfaces. Separate concern;
-  retire as planned.
+  retire as planned.~~ **Superseded 2026-05-01:** operator extended scope to
+  fold the entire Phase 10 (incl. forecast pipeline) into the renumbered
+  Phase 8. See "Final placement decision" below.
 
 ## Risks to address
 
@@ -88,22 +90,31 @@ Phase 10's plan will have removed test files for `/picker` and `/trends`
 already — pull those test removals into the same phase as the route removal
 to keep the build green.
 
-## Probable phase placement
+## Final placement decision (2026-05-01)
 
-Three options for packaging:
+Picked option **(a) extended**: fold the entire Phase 10 (`/picker`, `/trends`,
+calendar heatmap, forecast pipeline, lints, alert rule cleanup, `/about` page
+cleanup, v1 test removals) into the renumbered **Phase 8** alongside the
+new home page, the trip-type alias mapping, the `/compare` boat-ID picker
+fix, and the entirety of old Phase 11 (Polish & Dark Mode).
 
-- **(a) Folded into Phase 7.5 (Home & Discovery)** — coherent because the new
-  home page is what replaces `/picker`. Bigger phase but atomic.
-- **(b) Its own small phase 7.6 (Retire `/picker` + `/trends`)** — smaller,
-  easier review. Adds an extra phase boundary.
-- **(c) Reduced Phase 10 pulled forward** — Phase 10 originally covered
-  picker, trends, AND forecast pipeline. Pull forward only the picker/trends
-  half, leave the forecast pipeline retirement at its original Phase 10 slot.
+Rationale:
+- The home page is what replaces `/picker` as the landing — retiring at the
+  same time the new home lands is more coherent than splitting.
+- Forecast pipeline retirement is mostly DB and cron work — it doesn't
+  conflict with home-page UI work; running them together saves a phase
+  boundary.
+- v2 is small enough (4 phases after the merge) that one big "ship the v2
+  story" phase is reviewable if the plan wave-splits the work.
 
-Decision deferred to the eventual plan-phase session. Operator preference
-reads as "ship small things, polish later" — that argues for (b) or (c).
+Plan-phase will likely produce 3-5 plans wave-split as: (1) alias table +
+home-page query, (2) home-page UI + per-section bar normalization, (3) v1
+route retirement + 301 redirects + forecast pipeline drop, (4) `/compare`
+fix + dark mode + error/loading/empty states.
 
-## Carry-forward into Phase 8 (Sharing)
+## Carry-forward into renumbered Phase 9 (Sharing — was Phase 8)
 
-When Phase 8's URL-roundtrip contract is designed, it should NOT include any
+When the URL-roundtrip contract is designed, it should NOT include any
 `/picker`- or `/trends`-style URL formats. Only `/explorer` URLs round-trip.
+Home-page filter state (e.g. window selector, if added later) should also
+round-trip — see `front-door-design-decisions.md`.

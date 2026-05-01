@@ -180,10 +180,22 @@
   },
   "q4_surprising_trip_types": [
     {
-      "trip_type": "2.5 Day",
+      "trip_type": "3/4 Day Local",
+      "trip_count": 1,
+      "first_seen": "2024-09-05",
+      "last_seen": "2024-09-05"
+    },
+    {
+      "trip_type": "5 Day",
+      "trip_count": 1,
+      "first_seen": "2024-09-18",
+      "last_seen": "2024-09-18"
+    },
+    {
+      "trip_type": "4 Day",
       "trip_count": 3,
-      "first_seen": "2025-03-02",
-      "last_seen": "2025-04-23"
+      "first_seen": "2024-10-18",
+      "last_seen": "2024-11-12"
     }
   ],
   "q5_q6_distributions_7d": {
@@ -591,20 +603,20 @@
   "q14_half_day_variants": [
     {
       "trip_type": "1/2 Day AM",
-      "trip_count": 1641,
-      "first_seen": "2025-02-26",
+      "trip_count": 2213,
+      "first_seen": "2024-08-26",
       "last_seen": "2026-04-30"
     },
     {
       "trip_type": "1/2 Day PM",
-      "trip_count": 628,
-      "first_seen": "2025-02-28",
+      "trip_count": 860,
+      "first_seen": "2024-08-26",
       "last_seen": "2026-04-30"
     },
     {
       "trip_type": "1/2 Day Twilight",
-      "trip_count": 379,
-      "first_seen": "2025-02-28",
+      "trip_count": 477,
+      "first_seen": "2024-08-29",
       "last_seen": "2026-04-29"
     }
   ],

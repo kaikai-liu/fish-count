@@ -1,13 +1,24 @@
-# Phase 7.5 data-exploration spike report
+# Phase 7.5 / Phase 8 data-exploration spike report
+
+> **Note:** v2 was restructured 2026-05-01 — the work this spike informed
+> moved from "Phase 7.5 (Home & Discovery)" to a merged **Phase 8
+> (Home, Retire, Polish)** that absorbed the former Phases 10 (v1
+> Retirement) and 11 (Polish & Dark Mode). The spike's findings remain
+> valid for the home-page portion of Phase 8. Filename and directory keep
+> the original "phase-7.5" label as a historical artifact.
 
 **Spike:** `001-phase-7.5-data-exploration`
 **Run:** 2026-05-01 against `data/dev.sqlite3` (17,337 catch_reports rows,
 2025-02-26 → 2026-04-30)
+**Backfill addendum:** 2026-05-01 added 6 months of earlier history
+(2024-08-26 → 2025-02-25, +4,968 rows = 22,305 total). See "Addendum"
+section at the end for findings that change once the historical window is
+wider.
 **Source prompt:** `.planning/notes/phase-7.5-data-spike-prompt.md`
 
 This report answers the 17 questions in the spike prompt. Raw numbers live
 in `data.json`; this file is for human reading and is the input artifact
-for Phase 7.5 plan-phase.
+for Phase 8 plan-phase.
 
 ---
 
@@ -378,3 +389,65 @@ Notes for the design phase:
    leaderboard. Or skip it entirely for v1.
 6. **Skunked-trip handling can wait** — zero such trips in 14 months.
    Don't overbuild for cases that don't exist.
+
+---
+
+## Addendum: findings after 6-month backfill (2026-05-01)
+
+After the initial spike ran, we backfilled 6 months of earlier history
+(2024-08-26 → 2025-02-25, +4,968 rows). The expanded dataset doesn't
+change the past-7-day numbers (those windows are recent), but it changes
+the **all-history** picture in three meaningful ways for Phase 8.
+
+### "3/4 Day" and "2.5 Day" are real seasonal trip types
+
+| Trip type | All-history trips (was) | All-history trips (now) | First seen | Last seen |
+|---|---:|---:|---|---|
+| 3/4 Day | 18 | **123** | 2024-08-30 | 2026-04-27 |
+| 2.5 Day | 3 | **97** | 2024-08-28 | 2025-04-23 |
+
+The original spike framed both as "rounding-error trip types." That was
+wrong — they're seasonal Aug-Oct trip types that happen not to run in
+April-May. Phase 8 should treat them as full-fledged trip types in the
+alias / viability logic, not edge cases.
+
+### Four additional trip-type labels surfaced in 2024 fall season
+
+| Trip type | Trips | First seen | Last seen | Status |
+|---|---:|---|---|---|
+| 3/4 Day Islands | 4 | 2024-09-02 | 2024-10-04 | brief 2024 fall variant |
+| 4 Day | 3 | 2024-10-18 | 2024-11-12 | brief 2024 fall variant |
+| 5 Day | 1 | 2024-09-18 | 2024-09-18 | one-off |
+| 3/4 Day Local | 1 | 2024-09-05 | 2024-09-05 | one-off |
+
+The total distinct trip-type count for **all-history** is now **16**
+(was 12). The 7d / 30d / 90d windows still show 11 because the new labels
+are dormant — but the alias mapping table needs to cover all 16, plus
+"Full Day Coronado Islands," plus whatever the source site invents next.
+
+**Implication for Phase 8:** the trip-type alias mapping is more important
+than the original spike framing implied. The source site has had multiple
+label variants in the last 18 months — "3/4 Day Islands" vs "Full Day
+Coronado Islands" might be the same thing under different names. Operator
+needs an aliasing UI good enough to handle this kind of drift, not just a
+one-off rename.
+
+### "Long Range" still absent — confirmed
+
+With the wider window, "Long Range" still does not appear under any
+obvious variant. Per operator decision (2026-05-01), CLAUDE.md keeps the
+term in the vocabulary list in case it surfaces in even older data or a
+future season, but Phase 8 does not need to plan for an "LR" home-page
+section.
+
+### Headline answers unchanged
+
+The past-7-day analysis (Q1-Q3, Q5-Q11, Q12-Q17) is unchanged because
+those windows don't reach into the backfilled period. Recommendations
+stand:
+
+- 7 viable trip types at 7d/≥5
+- per-trip-type bar normalization required
+- skunked-trip / zero-angler defensive code unnecessary
+- top-species-this-week dull as leaderboard
+- 30-row home page composition
