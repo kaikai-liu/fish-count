@@ -35,6 +35,7 @@ import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, clampDate } from '$lib/shared/dates';
 import { parseExplorerFilters, type ExplorerFilters } from '$lib/shared/urlState';
 import { rangeToDates } from '$lib/shared/range';
+import { moonIllumination } from '$lib/shared/moon';
 import { FISH_PER_ANGLER_AXIS, FISH_PER_ANGLER_ARIA } from '$lib/copy/metrics';
 import {
   eachDayOfInterval,
@@ -133,6 +134,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         autoWidenNote: null,
         clampNote: null,
         chartOption: null,
+        moonChartOption: null,
         nByBucketBySeries: {},
         caption: '',
         ariaLabel: '',
@@ -183,6 +185,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             autoWidenNote: null,
             clampNote: null,
             chartOption: null,
+            moonChartOption: null,
             nByBucketBySeries: {},
             caption: '',
             ariaLabel: '',
@@ -207,6 +210,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             autoWidenNote: null,
             clampNote: null,
             chartOption: null,
+            moonChartOption: null,
             nByBucketBySeries: {},
             caption: '',
             ariaLabel: '',
@@ -229,6 +233,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             autoWidenNote: null,
             clampNote: null,
             chartOption: null,
+            moonChartOption: null,
             nByBucketBySeries: {},
             caption: '',
             ariaLabel: '',
@@ -249,6 +254,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
           autoWidenNote: null,
           clampNote: null,
           chartOption: null,
+          moonChartOption: null,
           nByBucketBySeries: {},
           caption: '',
           ariaLabel: '',
@@ -526,6 +532,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       ticker: filters.ticker,
       identifier: filters.ticker === 'boat' ? filters.slug : filters.name,
       range: filters.range,
+      moon: filters.moon,
       granularity,
       bucketCount: 0,
       empty: true
@@ -535,6 +542,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       autoWidenNote,
       clampNote,
       chartOption: null,
+      moonChartOption: null,
       nByBucketBySeries: {},
       caption: '',
       ariaLabel: '',
@@ -597,6 +605,89 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   };
 
   // -------------------------------------------------------------------------
+  // Step 8b: Moon overlay (Phase 7, MOON-01 + MOON-02).
+  // UI-SPEC §Component Anatomy 2 — emit a SECOND chart option only when
+  // filters.moon === true. Plain JSON (no echarts import — Pitfall 2 / T-06-30
+  // carry-forward). grid.left/right MUST match the catch chart's grid exactly
+  // (alignment guarantee). expectedKeys is the catch chart's xAxis.data — reused
+  // for bucket alignment. Each bucket key is a YYYY-MM-DD (daily) or YYYY-Wxx /
+  // YYYY-MM (weekly/monthly) string. We map only the YYYY-MM-DD form directly to
+  // moonIllumination; for weekly/monthly buckets we synthesize a representative
+  // start-of-bucket date (UI-SPEC D-06 accepts the fuzzy band on long ranges).
+  let moonChartOption: object | null = null;
+  if (filters.moon) {
+    // Map an expectedKey string to a YYYY-MM-DD date for moon illumination lookup.
+    // - Daily (YYYY-MM-DD): use as-is.
+    // - Weekly (YYYY-Www, ISO week per date-fns format "RRRR-'W'II"): convert to
+    //   the Monday of that ISO week.
+    // - Monthly (YYYY-MM): use the first of the month.
+    function bucketKeyToDate(key: string): string {
+      // YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(key)) return key;
+      // YYYY-MM
+      if (/^\d{4}-\d{2}$/.test(key)) return `${key}-01`;
+      // YYYY-Www (ISO week — Monday of week)
+      const m = /^(\d{4})-W(\d{2})$/.exec(key);
+      if (m) {
+        const year = Number(m[1]);
+        const week = Number(m[2]);
+        // ISO week 1 = the week containing Jan 4. Monday of week 1:
+        const jan4 = new Date(Date.UTC(year, 0, 4));
+        const jan4Dow = jan4.getUTCDay() || 7; // Mon=1..Sun=7
+        const week1Monday = new Date(jan4);
+        week1Monday.setUTCDate(jan4.getUTCDate() - (jan4Dow - 1));
+        const target = new Date(week1Monday);
+        target.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+        const yy = target.getUTCFullYear();
+        const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(target.getUTCDate()).padStart(2, '0');
+        return `${yy}-${mm}-${dd}`;
+      }
+      // Fallback (should never happen given buildExpectedKeys output) — use fromDate
+      return fromDate;
+    }
+    const moonData = expectedKeys.map((key: string) => moonIllumination(bucketKeyToDate(key)));
+    moonChartOption = {
+      grid: {
+        left: (chartOption as { grid?: { left?: string | number } }).grid?.left ?? 'auto',
+        right: (chartOption as { grid?: { right?: string | number } }).grid?.right ?? 'auto',
+        top: 0,
+        bottom: 0
+      },
+      xAxis: {
+        type: 'category' as const,
+        data: expectedKeys,
+        show: false,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false }
+      },
+      yAxis: {
+        type: 'value' as const,
+        min: 0,
+        max: 1,
+        show: false,
+        splitLine: { show: false }
+      },
+      series: [
+        {
+          type: 'line' as const,
+          smooth: true,
+          showSymbol: false,
+          sampling: 'lttb' as const,
+          lineStyle: { color: 'var(--color-text-muted)', width: 1.5 },
+          areaStyle: { color: 'rgba(203, 213, 225, 0.35)' }, // --color-border-strong @ 35%
+          data: moonData,
+          silent: true,
+          animation: false
+        }
+      ],
+      tooltip: { show: false },
+      animation: false
+    };
+  }
+
+  // -------------------------------------------------------------------------
   // Step 9: Logger (T-06-31: no user PII)
   // -------------------------------------------------------------------------
   locals.logger?.info({
@@ -604,6 +695,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     ticker: filters.ticker,
     identifier: filters.ticker === 'boat' ? filters.slug : filters.name,
     range: filters.range,
+    moon: filters.moon,
     granularity,
     bucketCount: expectedKeys.length
   });
@@ -613,6 +705,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     autoWidenNote,
     clampNote,
     chartOption,
+    moonChartOption,
     nByBucketBySeries,
     caption: captionText,
     ariaLabel,
