@@ -486,7 +486,7 @@ describe('ExplorerFiltersSchema', () => {
   // ---- round-trip property tests ----
 
   it('round-trip: boat ticker parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = { ticker: 'boat', slug: 'pacific-voyager', range: '1y' };
+    const f: ExplorerFilters = { ticker: 'boat', slug: 'pacific-voyager', range: '1y', moon: false };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
     expect('error' in result).toBe(false);
@@ -496,7 +496,7 @@ describe('ExplorerFiltersSchema', () => {
   });
 
   it('round-trip: species ticker parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = { ticker: 'species', name: 'yellowtail', range: '3m' };
+    const f: ExplorerFilters = { ticker: 'species', name: 'yellowtail', range: '3m', moon: false };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
     expect('error' in result).toBe(false);
@@ -506,7 +506,7 @@ describe('ExplorerFiltersSchema', () => {
   });
 
   it('round-trip: landing ticker parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = { ticker: 'landing', name: "Fisherman's Landing", range: 'all' };
+    const f: ExplorerFilters = { ticker: 'landing', name: "Fisherman's Landing", range: 'all', moon: false };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
     expect('error' in result).toBe(false);
@@ -521,7 +521,8 @@ describe('ExplorerFiltersSchema', () => {
       slug: 'pacific-voyager',
       range: 'custom',
       fromDate: '2025-01-01',
-      toDate: '2025-06-30'
+      toDate: '2025-06-30',
+      moon: false
     };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
@@ -529,5 +530,77 @@ describe('ExplorerFiltersSchema', () => {
     if (!('error' in result)) {
       expect(result).toEqual(f);
     }
+  });
+});
+
+describe('ExplorerFiltersSchema — moon field (Phase 7, MOON-01)', () => {
+  const baseBoat = { ticker: 'boat', slug: 'pacific-voyager', range: '1y' };
+
+  it('defaults moon to false when param absent', () => {
+    const result = parseExplorerFilters(new URLSearchParams(baseBoat));
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.moon).toBe(false);
+    }
+  });
+
+  it('parses moon=1 as true', () => {
+    const result = parseExplorerFilters(new URLSearchParams({ ...baseBoat, moon: '1' }));
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.moon).toBe(true);
+  });
+
+  it('parses moon=true as true', () => {
+    const result = parseExplorerFilters(new URLSearchParams({ ...baseBoat, moon: 'true' }));
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.moon).toBe(true);
+  });
+
+  it('parses moon=0 as false', () => {
+    const result = parseExplorerFilters(new URLSearchParams({ ...baseBoat, moon: '0' }));
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.moon).toBe(false);
+  });
+
+  it('parses moon=false as false', () => {
+    const result = parseExplorerFilters(new URLSearchParams({ ...baseBoat, moon: 'false' }));
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) expect(result.moon).toBe(false);
+  });
+
+  it('rejects moon=garbage', () => {
+    const result = parseExplorerFilters(new URLSearchParams({ ...baseBoat, moon: 'garbage' }));
+    expect('error' in result).toBe(true);
+  });
+
+  it('serializeExplorerFilters omits moon param when off', () => {
+    const sp = serializeExplorerFilters({
+      ticker: 'boat', slug: 'pacific-voyager', range: '1y', moon: false
+    });
+    expect(sp.toString()).not.toContain('moon=');
+  });
+
+  it('serializeExplorerFilters emits moon=1 when on', () => {
+    const sp = serializeExplorerFilters({
+      ticker: 'boat', slug: 'pacific-voyager', range: '1y', moon: true
+    });
+    expect(sp.get('moon')).toBe('1');
+  });
+
+  it('round-trips moon=true', () => {
+    const original = { ticker: 'boat' as const, slug: 'pacific-voyager', range: '1y' as const, moon: true };
+    const sp = serializeExplorerFilters(original);
+    const parsed = parseExplorerFilters(sp);
+    expect('error' in parsed).toBe(false);
+    if (!('error' in parsed)) expect(parsed.moon).toBe(true);
+  });
+
+  it('round-trips moon=false (omitted on serialize, defaults to false on parse)', () => {
+    const original = { ticker: 'boat' as const, slug: 'pacific-voyager', range: '1y' as const, moon: false };
+    const sp = serializeExplorerFilters(original);
+    expect(sp.toString()).not.toContain('moon=');
+    const parsed = parseExplorerFilters(sp);
+    expect('error' in parsed).toBe(false);
+    if (!('error' in parsed)) expect(parsed.moon).toBe(false);
   });
 });

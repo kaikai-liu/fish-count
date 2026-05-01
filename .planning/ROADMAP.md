@@ -58,7 +58,10 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
   1. An angler sees a moon-phase toggle on the explorer; turning it on adds markers (icons or background shading) for new, first-quarter, full, and last-quarter moons on the chart's time axis.
   2. The markers stay correctly positioned when the angler changes the time range or the ticker — no extra page load or API call needed.
   3. With moon overlay off, the chart looks identical to Phase 6 (no leftover artifacts).
-**Plans**: TBD
+**Plans**: 3 plans
+- [x] 07-01-PLAN.md — Pure moon-illumination module (`src/lib/shared/moon.ts`) + unit tests against NASA/USNO anchor dates (MOON-03)
+- [x] 07-02-PLAN.md — `ExplorerFiltersSchema` `moon` flag with clean-URL serialization + `src/lib/copy/moon.ts` constants (MOON-01)
+- [x] 07-03-PLAN.md — Loader emits `moonChartOption`; ExplorerHeader MoonToggle (role=switch); +page.svelte sub-chart + integration tests (MOON-01, MOON-02)
 **UI hint**: yes
 
 ### Phase 8: Sharing
@@ -105,6 +108,11 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
   3. Each route has a descriptive browser tab title (so a pinned tab or shared link looks right, not a generic "FishCount").
   4. The angler can toggle between light, dark, and follow-system color themes; the choice persists across visits.
 **Plans**: TBD
+
+**Carry-forward polish from Phase 7 (added 2026-05-01):**
+  - **Chart x-axis: category → time.** Catch chart x-axis is currently a `category` axis using raw bucket keys (`2025-W18`, `2025-MM`), which (a) reads as engineering output rather than a stock-chart-style date axis, and (b) forces moon-overlay sampling at one date per bucket → aliased "wobbly" curve at weekly+ ranges. Switching to a `time` axis fixes both: ECharts auto-formats human-readable date labels, and the moon row can render a true daily-sampled sine across the full date range and still align with the catch chart's bucket positions.
+  - **Granularity selector for ranges ≥ 3M.** Today granularity is auto-derived from range (1M→daily, 3M–1Y→weekly, 2Y+→monthly). Add explicit Daily / Weekly / Monthly buttons (with a sensible default per range) so an angler can override. New URL param, new header control, loader override.
+
 **UI hint**: yes
 
 ## Operator Punch List (carry-forward, not v2 dev work)
@@ -126,7 +134,7 @@ These items remain on the operator's plate from v1.0. They are not assigned to a
 | 4. Email Alerts | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 9) | — |
 | 5. Polish | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 11) | — |
 | 6. Explorer Foundation | v2 | 0/5 | Planned | — |
-| 7. Moon-phase Overlay | v2 | 0/TBD | Not started | — |
+| 7. Moon-phase Overlay | v2 | 0/3 | Planned | — |
 | 8. Sharing | v2 | 0/TBD | Not started | — |
 | 9. Email Alerts | v2 | 0/TBD | Not started | — |
 | 10. v1 Retirement | v2 | 0/TBD | Not started | — |
@@ -137,4 +145,5 @@ These items remain on the operator's plate from v1.0. They are not assigned to a
 *Roadmap created: 2026-04-22*
 *v1.0 milestone closed: 2026-04-30*
 *v2 milestone roadmapped: 2026-04-30 — 6 phases (6–11), 41 requirements mapped*
-*Next: `/gsd-discuss-phase 6` (Explorer Foundation)*
+*Phase 7 planned: 2026-05-01 — 3 plans*
+*Next: `/gsd-execute-phase 7` (Moon-phase Overlay)*

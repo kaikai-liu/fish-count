@@ -62,8 +62,8 @@ v1.0 shipped a browse + trip-picker + statistical-forecast read surface and is r
 
 <!-- Current scope. Building toward these. Detailed REQ-IDs in REQUIREMENTS.md once defined. -->
 
-- [ ] Multi-axis trend explorer (boat / species / landing ticker; overlay comparison series; range selector 1M–All)
-- [ ] Moon-phase chart overlay (markers on time axis)
+- [x] Multi-axis trend explorer (boat / species / landing ticker; overlay comparison series; range selector 1M–All) — *v2 (Phase 6)*
+- [x] Moon-phase chart overlay (markers on time axis) — *v2 (Phase 7)*
 - [ ] Share-this-chart URL state
 - [ ] CSV export for active chart's underlying rows
 - [ ] Email alerts redesigned for explorer mental model
@@ -153,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-30 — v2 milestone kickoff. Pivot scope locked: multi-axis trend explorer (boat / species / landing ticker), moon-phase overlay, share-URL + CSV export, email alerts redesigned, v1 retirement, polish. CLAUDE.md "Non-Negotiable Rules" block removed in favor of plain-English operator guidance. v1.0 ended at Phases 0–3; Phase 4 (Email Alerts) implementation preserved at git tag `phase-4-shipped` for v2 cherry-pick reference.*
+*Last updated: 2026-05-01 — Phase 7 (Moon-phase Overlay) shipped. Explorer foundation (Phase 6) and moon overlay (Phase 7) now both validated. 8/8 must-haves verified, 6/7 UAT items passed (1 skipped: screen-reader runtime announcement). Active scope remaining: Phases 8–11 (sharing/CSV, email alerts, v1 retirement, polish).*
