@@ -486,7 +486,7 @@ describe('ExplorerFiltersSchema', () => {
   // ---- round-trip property tests ----
 
   it('round-trip: boat ticker parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = { ticker: 'boat', slug: 'pacific-voyager', range: '1y' };
+    const f: ExplorerFilters = { ticker: 'boat', slug: 'pacific-voyager', range: '1y', moon: false };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
     expect('error' in result).toBe(false);
@@ -496,7 +496,7 @@ describe('ExplorerFiltersSchema', () => {
   });
 
   it('round-trip: species ticker parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = { ticker: 'species', name: 'yellowtail', range: '3m' };
+    const f: ExplorerFilters = { ticker: 'species', name: 'yellowtail', range: '3m', moon: false };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
     expect('error' in result).toBe(false);
@@ -506,7 +506,7 @@ describe('ExplorerFiltersSchema', () => {
   });
 
   it('round-trip: landing ticker parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = { ticker: 'landing', name: "Fisherman's Landing", range: 'all' };
+    const f: ExplorerFilters = { ticker: 'landing', name: "Fisherman's Landing", range: 'all', moon: false };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);
     expect('error' in result).toBe(false);
@@ -521,7 +521,8 @@ describe('ExplorerFiltersSchema', () => {
       slug: 'pacific-voyager',
       range: 'custom',
       fromDate: '2025-01-01',
-      toDate: '2025-06-30'
+      toDate: '2025-06-30',
+      moon: false
     };
     const sp = serializeExplorerFilters(f);
     const result = parseExplorerFilters(sp);

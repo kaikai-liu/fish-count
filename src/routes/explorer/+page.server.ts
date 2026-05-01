@@ -129,7 +129,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       // No scrape data at all — return empty state
       setHeaders({ 'cache-control': 'public, max-age=60' });
       return {
-        filters: { ticker: 'boat' as const, slug: '', range: '1y' as const },
+        filters: { ticker: 'boat' as const, slug: '', range: '1y' as const, moon: false },
         autoWidenNote: null,
         clampNote: null,
         chartOption: null,
@@ -145,7 +145,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         }
       };
     }
-    filters = { ticker: 'boat', slug: defaultBoat.slug, range: '1y' };
+    filters = { ticker: 'boat', slug: defaultBoat.slug, range: '1y', moon: false };
     usingDefaults = true;
   } else {
     // Try to parse ticker from URL. Special case: ticker param present but slug/name absent
@@ -155,6 +155,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     const rawSlug = url.searchParams.get('slug');
     const rawName = url.searchParams.get('name');
     const rawRange = url.searchParams.get('range') ?? '1y';
+    // Phase 7 (MOON-01): preserve moon flag through cross-axis default resolution.
+    // Loose check (not Zod) — only used as a literal pass-through when client sends
+    // ?ticker=X&range=Y&moon=1 from a ticker-switch in +page.svelte. Full Zod
+    // validation runs in the parseExplorerFilters branch below.
+    const rawMoonStr = url.searchParams.get('moon');
+    const rawMoon = rawMoonStr === '1' || rawMoonStr === 'true';
 
     // Cross-axis default resolution (D-08): if ticker is present but identifier is absent
     if (
@@ -169,11 +175,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       if (rawTicker === 'boat') {
         const defaultBoat = mostActiveBoatLast30Days(db);
         if (defaultBoat) {
-          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'] };
+          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
-            filters: { ticker: 'boat', slug: '', range: rawRange as ExplorerFilters['range'] },
+            filters: { ticker: 'boat', slug: '', range: rawRange as ExplorerFilters['range'], moon: rawMoon },
             autoWidenNote: null,
             clampNote: null,
             chartOption: null,
@@ -197,7 +203,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         if (!speciesName) {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
-            filters: { ticker: 'species', name: '', range: rawRange as ExplorerFilters['range'] },
+            filters: { ticker: 'species', name: '', range: rawRange as ExplorerFilters['range'], moon: rawMoon },
             autoWidenNote: null,
             clampNote: null,
             chartOption: null,
@@ -210,16 +216,16 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             empty: { heading: 'No data yet', body: 'No species data available.' }
           };
         }
-        filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'] };
+        filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
       } else {
         // landing ticker
         const defaultLanding = mostRecentlyActiveLanding(db);
         if (defaultLanding) {
-          filters = { ticker: 'landing', name: defaultLanding.display_name, range: rawRange as ExplorerFilters['range'] };
+          filters = { ticker: 'landing', name: defaultLanding.display_name, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
-            filters: { ticker: 'landing', name: '', range: rawRange as ExplorerFilters['range'] },
+            filters: { ticker: 'landing', name: '', range: rawRange as ExplorerFilters['range'], moon: rawMoon },
             autoWidenNote: null,
             clampNote: null,
             chartOption: null,
@@ -239,7 +245,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       if ('error' in parseResult) {
         setHeaders({ 'cache-control': 'public, max-age=300' });
         return {
-          filters: { ticker: 'boat' as const, slug: '', range: '1y' as const },
+          filters: { ticker: 'boat' as const, slug: '', range: '1y' as const, moon: false },
           autoWidenNote: null,
           clampNote: null,
           chartOption: null,
