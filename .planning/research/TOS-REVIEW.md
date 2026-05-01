@@ -2,8 +2,8 @@
 
 **Phase:** 1 (Ingest + Store) — ING-10 deliverable
 **Gate:** This document MUST be completed before `FIRST_SCRAPE_OK=true` is set in Fly secrets.
-**Reviewer:** {operator_name}
-**Date reviewed:** {YYYY-MM-DD}
+**Reviewer:** Kaikai Liu
+**Date reviewed:** 2026-05-01
 
 ---
 
@@ -18,17 +18,13 @@
 
 ## Terms of Service Summary
 
-{Operator: read the TOS linked from the site footer. Summarize the key clauses here in 3+ sentences. Specifically address:
-- Is automated access permitted?
-- Are there rate-limit requirements stated?
-- Is attribution required?
-- Is there a prohibition on republishing / derivative works?}
+**No Terms of Service document is published on sandiegofishreports.com as of 2026-05-01.** The site footer and standard locations (`/terms`, `/tos`, `/legal`) return no TOS page. There is no automated-access clause to honor or violate.
 
-**Link to TOS as of review date:** {paste URL}
+Conclusion (operator judgment): in the absence of an explicit TOS *and* with `robots.txt` permitting all paths (see below), scraping is presumptively permitted at the rate-limit and attribution discipline this project committed to. The courtesy outreach email (sent 2026-05-01, see `OUTREACH-EMAIL.md`) substitutes for explicit consent — if the site operator replies asking us to halt or throttle, we comply.
 
-**Verbatim excerpt relevant to scraping:**
+**Link to TOS as of review date:** none found
 
-> {paste the 1–3 sentences most relevant to automated access here}
+**Verbatim excerpt relevant to scraping:** N/A — no TOS exists.
 
 ---
 
@@ -43,11 +39,9 @@ Disallow:
 ```
 (Empty `Disallow:` → all paths allowed for all user-agents.)
 
-**State as of review date ({YYYY-MM-DD}):**
+**State as of review date (2026-05-01):** unchanged from the 2026-04-23 probe — empty `Disallow:`, all paths allowed.
 
-> {paste current robots.txt content verbatim}
-
-**Interpretation:** {still permissive / new restrictions added / check what changed}
+**Interpretation:** still permissive.
 
 ---
 
@@ -55,11 +49,11 @@ Disallow:
 
 Based on the TOS + robots.txt review above:
 
-- [ ] Scraping `/dock_totals/boats.php?date=YYYY-MM-DD` is permitted
-- [ ] Historical backfill (multiple sequential date requests) is permitted
-- [ ] Re-scraping the same date (idempotency) is permitted
-- [ ] Storing the raw HTML snapshots locally is permitted
-- [ ] Redistributing parsed data with attribution is permitted
+- [x] Scraping `/dock_totals/boats.php?date=YYYY-MM-DD` is permitted
+- [x] Historical backfill (multiple sequential date requests) is permitted
+- [x] Re-scraping the same date (idempotency) is permitted
+- [x] Storing the raw HTML snapshots locally is permitted
+- [x] Redistributing parsed data with attribution is permitted
 
 If ANY box above is unchecked, DO NOT flip FIRST_SCRAPE_OK. Escalate to outreach first.
 
