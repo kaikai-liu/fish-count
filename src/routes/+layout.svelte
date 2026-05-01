@@ -5,6 +5,7 @@
 
   const navItems = [
     { href: '/', label: 'Home' },
+    { href: '/explorer', label: 'Explorer' },
     { href: '/picker', label: 'Picker' },
     { href: '/trends', label: 'Trends' },
     { href: '/compare', label: 'Compare' },
