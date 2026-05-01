@@ -3,6 +3,7 @@
   import TickerPills from './TickerPills.svelte';
   import RangeStrip from './RangeStrip.svelte';
   import CustomDateInputs from './CustomDateInputs.svelte';
+  import { MOON_TOGGLE_LABEL, MOON_TOGGLE_ARIA } from '$lib/copy/moon';
 
   type Ticker = 'boat' | 'species' | 'landing';
   type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all' | 'custom';
@@ -17,7 +18,10 @@
     onCustomDates,
     autoWidenNote,
     clampNote,
-    selector
+    selector,
+    // Phase 7 (MOON-01)
+    moon,
+    onMoonChange
   }: {
     ticker: Ticker;
     range: Range;
@@ -29,6 +33,9 @@
     autoWidenNote?: string | null;
     clampNote?: string | null;
     selector: Snippet;
+    // Phase 7 (MOON-01)
+    moon: boolean;
+    onMoonChange: (next: boolean) => void;
   } = $props();
 </script>
 
@@ -44,9 +51,25 @@
       {@render selector()}
     </div>
 
-    <!-- Row 3: Range strip -->
+    <!-- Row 3: Range strip + Moon toggle (Phase 7, MOON-01) -->
     <div class="py-2 md:py-3">
-      <RangeStrip value={range} onChange={onRangeChange} />
+      <div class="md:flex md:items-start md:gap-2">
+        <RangeStrip value={range} onChange={onRangeChange} />
+        <div class="mt-2 md:mt-0 inline-flex">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={moon}
+            aria-label={MOON_TOGGLE_ARIA}
+            onclick={() => onMoonChange(!moon)}
+            class="min-h-11 shrink-0 rounded border px-3 py-2 text-sm font-semibold transition-colors {moon
+              ? 'bg-(--color-accent) text-white border-(--color-accent) hover:bg-(--color-accent-hover) hover:border-(--color-accent-hover)'
+              : 'bg-(--color-surface) text-(--color-text-muted) border-(--color-border) hover:bg-(--color-accent-bg) hover:text-(--color-accent) hover:border-(--color-accent)'}"
+          >
+            {MOON_TOGGLE_LABEL}
+          </button>
+        </div>
+      </div>
       {#if range === 'custom'}
         <CustomDateInputs
           bind:fromDate

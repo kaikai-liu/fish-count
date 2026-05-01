@@ -8,6 +8,8 @@
   import SpeciesBreakdownTable from '$lib/components/SpeciesBreakdownTable.svelte';
   import { serializeExplorerFilters, type ExplorerFilters } from '$lib/shared/urlState';
   import { FISH_PER_ANGLER_TOOLTIP_UNIT } from '$lib/copy/metrics';
+  import { MOON_ROW_ARIA } from '$lib/copy/moon';
+  import type { EChartsOption } from 'echarts';
 
   let { data }: { data: PageData } = $props();
 
@@ -20,6 +22,7 @@
   const formSelection = $derived(
     filters.ticker === 'boat' ? filters.slug : (filters as { name: string }).name
   );
+  const formMoon = $derived(filters.moon ?? false);
 
   // Custom date inputs need writable state for the bind on CustomDateInputs.
   // The $effect below seeds and re-syncs them from the loader on every navigation.
@@ -54,6 +57,19 @@
       formTicker === 'boat'
         ? { ticker: 'boat', slug: formSelection ?? '', range: next, moon: filters.moon }
         : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: next, moon: filters.moon };
+    navigate(f);
+  }
+
+  function onMoonChange(next: boolean) {
+    // Phase 7 (MOON-01) — flip moon while preserving every other filter exactly.
+    // Custom-date filters carry through if range === 'custom'.
+    const customDates = formRange === 'custom' && formFromDate && formToDate
+      ? { fromDate: formFromDate, toDate: formToDate }
+      : {};
+    const f: ExplorerFilters =
+      formTicker === 'boat'
+        ? { ticker: 'boat', slug: formSelection ?? '', range: formRange, ...customDates, moon: next }
+        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: formRange, ...customDates, moon: next };
     navigate(f);
   }
 
@@ -131,9 +147,11 @@
   range={formRange}
   bind:fromDate={formFromDate}
   bind:toDate={formToDate}
+  moon={formMoon}
   {onTickerChange}
   {onRangeChange}
   {onCustomDates}
+  {onMoonChange}
   autoWidenNote={data.autoWidenNote}
   clampNote={data.clampNote}
 >
@@ -166,6 +184,13 @@
         ariaLabel={data.ariaLabel}
         {tooltipFormatter}
       />
+      {#if data.moonChartOption}
+        <Chart
+          option={data.moonChartOption as EChartsOption}
+          height="36px"
+          ariaLabel={MOON_ROW_ARIA}
+        />
+      {/if}
       <p class="mt-2 text-sm text-(--color-text-muted)">{data.caption}</p>
     </section>
     {#if data.breakdownRows && data.breakdownRows.length > 0}
