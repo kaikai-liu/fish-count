@@ -42,7 +42,12 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
   3. An angler can change the time range using preset buttons (1M / 3M / 6M / 1Y / 2Y / 5Y / All) or by entering a custom start/end date, and the chart updates without a noticeable stall even at All.
   4. Per-angler numbers always appear next to the sample size `n`, and every chart series shows its trip-type label in the legend so the angler always knows what they're looking at.
   5. The explorer is usable on a phone at 375px width (single-column layout, readable chart, working selectors).
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 06-01-PLAN.md — Slug schema migration + slugify util + boats DAL extensions
+- [ ] 06-02-PLAN.md — ExplorerFilters URL contract (Zod) + range/granularity mapper
+- [ ] 06-03-PLAN.md — Explorer DAL queries (boat/species/landing tickers) + trends.ts daily granularity
+- [ ] 06-04-PLAN.md — Sticky ExplorerHeader + TickerPills/RangeStrip/CustomDateInputs/SpeciesBreakdownTable
+- [ ] 06-05-PLAN.md — /explorer route loader + page + nav update + integration tests
 **UI hint**: yes
 
 ### Phase 7: Moon-phase Overlay
@@ -120,7 +125,7 @@ These items remain on the operator's plate from v1.0. They are not assigned to a
 | 3. Forecast Layer | v1.0 | 6/6 | Complete (retired in v2) | 2026-04-26 |
 | 4. Email Alerts | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 9) | — |
 | 5. Polish | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 11) | — |
-| 6. Explorer Foundation | v2 | 0/TBD | Not started | — |
+| 6. Explorer Foundation | v2 | 0/5 | Planned | — |
 | 7. Moon-phase Overlay | v2 | 0/TBD | Not started | — |
 | 8. Sharing | v2 | 0/TBD | Not started | — |
 | 9. Email Alerts | v2 | 0/TBD | Not started | — |

@@ -204,3 +204,90 @@ export function serializeTrendsFilters(filters: TrendsFilters): URLSearchParams 
   if (filters.granularity) sp.set('granularity', filters.granularity);
   return sp;
 }
+
+// ---------------------------------------------------------------------------
+// Explorer filters ( /explorer )
+// Phase 6: D-12 (boat → slug), D-14 (species/landing → plain name), D-19 (custom range).
+// Trust boundary: URLSearchParams is fully untrusted client input (T-06-07..T-06-13).
+// Discriminated union on `ticker` field ensures correct fields per ticker type.
+// ---------------------------------------------------------------------------
+
+import { RANGE_PRESETS } from '$lib/shared/range';
+
+// D-12: slug is lowercase alphanumeric + hyphens, bounded to 80 chars.
+// Rejects uppercase, spaces, and overly long values (T-06-07, T-06-09).
+const slugField = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'invalid slug').max(80);
+
+const BoatTickerSchema = z.object({
+  ticker: z.literal('boat'),
+  slug: slugField
+});
+
+const SpeciesTickerSchema = z.object({
+  ticker: z.literal('species'),
+  name: z.string().min(1).max(80)
+});
+
+const LandingTickerSchema = z.object({
+  ticker: z.literal('landing'),
+  name: z.string().min(1).max(120)
+});
+
+// z.discriminatedUnion enforces ticker=boat REQUIRES slug; ticker=species/landing REQUIRES name.
+// Cross-field mixing is a parse error (T-06-12).
+const TickerVariant = z.discriminatedUnion('ticker', [
+  BoatTickerSchema,
+  SpeciesTickerSchema,
+  LandingTickerSchema
+]);
+
+const RangeBase = z.object({
+  range: z.enum(RANGE_PRESETS).default('1y'),
+  fromDate: dateField.optional(),
+  toDate: dateField.optional()
+});
+
+// D-19: custom range requires both dates; fromDate <= toDate (T-06-10).
+export const ExplorerFiltersSchema = z
+  .intersection(TickerVariant, RangeBase)
+  .superRefine((v, ctx) => {
+    if (v.range === 'custom') {
+      if (!v.fromDate || !v.toDate) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'fromDate and toDate required when range=custom'
+        });
+        return;
+      }
+      if (v.fromDate > v.toDate) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'fromDate must be <= toDate'
+        });
+      }
+    }
+  });
+
+export type ExplorerFilters = z.infer<typeof ExplorerFiltersSchema>;
+
+export function parseExplorerFilters(sp: URLSearchParams): ExplorerFilters | { error: ZodError } {
+  const result = ExplorerFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
+  if (!result.success) return { error: result.error };
+  return result.data;
+}
+
+export function serializeExplorerFilters(filters: ExplorerFilters): URLSearchParams {
+  const sp = new URLSearchParams();
+  sp.set('ticker', filters.ticker);
+  if (filters.ticker === 'boat') {
+    sp.set('slug', filters.slug);
+  } else {
+    sp.set('name', filters.name);
+  }
+  sp.set('range', filters.range);
+  if (filters.range === 'custom') {
+    if (filters.fromDate) sp.set('fromDate', filters.fromDate);
+    if (filters.toDate) sp.set('toDate', filters.toDate);
+  }
+  return sp;
+}

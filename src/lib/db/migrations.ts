@@ -7,6 +7,7 @@
 //
 // All DDL uses IF NOT EXISTS — migrations are idempotent on every boot.
 import type Database from 'better-sqlite3';
+import { slugify, uniqueSlug } from '$lib/shared/slug';
 
 // Phase 0 scaffolding table name. Held in a constant so the DAL boundary /
 // "no Phase 0 surface area" greps don't trip on the SQL literal. Only the
@@ -111,6 +112,37 @@ const SCHEMA_SQL = `
 `;
 
 /**
+ * Guard: returns true if boats already has a slug column.
+ * Used to prevent re-running the ALTER TABLE on already-migrated DBs.
+ */
+function hasSlugColumn(db: Database.Database): boolean {
+  const cols = db.prepare(`PRAGMA table_info(boats)`).all() as Array<{ name: string }>;
+  return cols.some((c) => c.name === 'slug');
+}
+
+/**
+ * Backfill slug values for all boats that currently have slug IS NULL.
+ * Reads all (id, display_name) rows in id-ascending order, builds a taken Set
+ * accumulating as it goes, and issues UPDATE inside a single transaction.
+ * D-13: never overwrites an existing non-null slug.
+ */
+function backfillSlugs(db: Database.Database): void {
+  const rows = db
+    .prepare(`SELECT id, display_name FROM boats WHERE slug IS NULL ORDER BY id ASC`)
+    .all() as Array<{ id: number; display_name: string }>;
+  const taken = new Set<string>();
+  const upd = db.prepare(`UPDATE boats SET slug = ? WHERE id = ?`);
+  const tx = db.transaction((items: Array<{ id: number; display_name: string }>) => {
+    for (const row of items) {
+      const slug = uniqueSlug(slugify(row.display_name), taken);
+      taken.add(slug);
+      upd.run(slug, row.id);
+    }
+  });
+  tx(rows);
+}
+
+/**
  * Apply the canonical Phase 1 schema. Idempotent — safe to call on every boot.
  *
  * Also drops the Phase 0 scaffolding table (assumption A6 in 01-RESEARCH.md)
@@ -120,4 +152,19 @@ const SCHEMA_SQL = `
 export function runMigrations(db: Database.Database): void {
   db.exec(`DROP TABLE IF EXISTS ${LEGACY_PHASE0_TABLE}`);
   db.exec(SCHEMA_SQL);
+
+  // Phase 6 additive migration: boats.slug column + covering indexes (D-12, D-20)
+  if (!hasSlugColumn(db)) {
+    db.exec(`ALTER TABLE boats ADD COLUMN slug TEXT`);
+    backfillSlugs(db);
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_boats_slug ON boats(slug) WHERE slug IS NOT NULL`
+    );
+  }
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_catch_species_date ON catch_reports(species, source_date)`
+  );
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_catch_landing_date ON catch_reports(landing_id, source_date)`
+  );
 }
