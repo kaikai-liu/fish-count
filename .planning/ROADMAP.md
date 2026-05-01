@@ -58,7 +58,10 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
   1. An angler sees a moon-phase toggle on the explorer; turning it on adds markers (icons or background shading) for new, first-quarter, full, and last-quarter moons on the chart's time axis.
   2. The markers stay correctly positioned when the angler changes the time range or the ticker — no extra page load or API call needed.
   3. With moon overlay off, the chart looks identical to Phase 6 (no leftover artifacts).
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 07-01-PLAN.md — Pure moon-illumination module (`src/lib/shared/moon.ts`) + unit tests against NASA/USNO anchor dates (MOON-03)
+- [ ] 07-02-PLAN.md — `ExplorerFiltersSchema` `moon` flag with clean-URL serialization + `src/lib/copy/moon.ts` constants (MOON-01)
+- [ ] 07-03-PLAN.md — Loader emits `moonChartOption`; ExplorerHeader MoonToggle (role=switch); +page.svelte sub-chart + integration tests (MOON-01, MOON-02)
 **UI hint**: yes
 
 ### Phase 8: Sharing
@@ -126,7 +129,7 @@ These items remain on the operator's plate from v1.0. They are not assigned to a
 | 4. Email Alerts | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 9) | — |
 | 5. Polish | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 11) | — |
 | 6. Explorer Foundation | v2 | 0/5 | Planned | — |
-| 7. Moon-phase Overlay | v2 | 0/TBD | Not started | — |
+| 7. Moon-phase Overlay | v2 | 0/3 | Planned | — |
 | 8. Sharing | v2 | 0/TBD | Not started | — |
 | 9. Email Alerts | v2 | 0/TBD | Not started | — |
 | 10. v1 Retirement | v2 | 0/TBD | Not started | — |
@@ -137,4 +140,5 @@ These items remain on the operator's plate from v1.0. They are not assigned to a
 *Roadmap created: 2026-04-22*
 *v1.0 milestone closed: 2026-04-30*
 *v2 milestone roadmapped: 2026-04-30 — 6 phases (6–11), 41 requirements mapped*
-*Next: `/gsd-discuss-phase 6` (Explorer Foundation)*
+*Phase 7 planned: 2026-05-01 — 3 plans*
+*Next: `/gsd-execute-phase 7` (Moon-phase Overlay)*
