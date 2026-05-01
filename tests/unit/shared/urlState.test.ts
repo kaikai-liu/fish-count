@@ -12,7 +12,10 @@ import {
   parseCompareFilters,
   serializeCompareFilters,
   parseTrendsFilters,
-  serializeTrendsFilters
+  serializeTrendsFilters,
+  parseExplorerFilters,
+  serializeExplorerFilters,
+  type ExplorerFilters
 } from '../../../src/lib/shared/urlState';
 
 // ---------------------------------------------------------------------------
@@ -321,6 +324,210 @@ describe('urlState.parseTrendsFilters', () => {
       expect(parsed.boatId).toBe(original.boatId);
       expect(parsed.range).toBe(original.range);
       expect(parsed.granularity).toBe(original.granularity);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Explorer filters ( /explorer )
+// Discriminated union: boat | species | landing ticker.
+// ---------------------------------------------------------------------------
+
+describe('ExplorerFiltersSchema', () => {
+  // ---- valid inputs ----
+
+  it('parses boat ticker with valid slug and range', () => {
+    const sp = toSp({ ticker: 'boat', slug: 'pacific-voyager', range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.ticker).toBe('boat');
+      if (result.ticker === 'boat') {
+        expect(result.slug).toBe('pacific-voyager');
+      }
+      expect(result.range).toBe('1y');
+    }
+  });
+
+  it('parses species ticker with name and range', () => {
+    const sp = toSp({ ticker: 'species', name: 'bluefin', range: '3m' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.ticker).toBe('species');
+      if (result.ticker === 'species') {
+        expect(result.name).toBe('bluefin');
+      }
+      expect(result.range).toBe('3m');
+    }
+  });
+
+  it('parses landing ticker with URL-encoded name', () => {
+    const sp = new URLSearchParams("ticker=landing&name=Fisherman's+Landing&range=all");
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.ticker).toBe('landing');
+      if (result.ticker === 'landing') {
+        expect(result.name).toBe("Fisherman's Landing");
+      }
+    }
+  });
+
+  it('defaults range to 1y when not provided (boat ticker)', () => {
+    const sp = toSp({ ticker: 'boat', slug: 'my-boat' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.range).toBe('1y');
+    }
+  });
+
+  it('parses custom range with valid fromDate and toDate', () => {
+    const sp = toSp({
+      ticker: 'boat',
+      slug: 'pacific-voyager',
+      range: 'custom',
+      fromDate: '2025-01-01',
+      toDate: '2025-06-30'
+    });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.range).toBe('custom');
+      expect(result.fromDate).toBe('2025-01-01');
+      expect(result.toDate).toBe('2025-06-30');
+    }
+  });
+
+  // ---- invalid inputs — should return {error} ----
+
+  it('returns {error} for empty URLSearchParams (ticker is required)', () => {
+    const result = parseExplorerFilters(new URLSearchParams());
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when ticker=boat has no slug', () => {
+    const sp = toSp({ ticker: 'boat', range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when ticker=species has no name', () => {
+    const sp = toSp({ ticker: 'species', range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when ticker=unknown (invalid discriminant)', () => {
+    const sp = toSp({ ticker: 'unknown', slug: 'pacific-voyager', range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when slug has uppercase letters (regex violation)', () => {
+    // ticker=boat&slug=Pacific%20Voyager → uppercase + space → invalid
+    const sp = new URLSearchParams('ticker=boat&slug=Pacific+Voyager&range=1y');
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when slug has spaces', () => {
+    const sp = toSp({ ticker: 'boat', slug: 'pacific voyager', range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when slug exceeds 80 chars', () => {
+    const slug = 'a'.repeat(81);
+    const sp = toSp({ ticker: 'boat', slug, range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('accepts slug at exactly 80 chars', () => {
+    // Max length slug: must match ^[a-z0-9]+(-[a-z0-9]+)*$ AND be ≤80 chars
+    const slug = 'a'.repeat(80);
+    const sp = toSp({ ticker: 'boat', slug, range: '1y' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+  });
+
+  it('returns {error} when range=custom but no fromDate/toDate', () => {
+    const sp = toSp({ ticker: 'boat', slug: 'pacific-voyager', range: 'custom' });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when range=custom and fromDate > toDate', () => {
+    const sp = toSp({
+      ticker: 'boat',
+      slug: 'pacific-voyager',
+      range: 'custom',
+      fromDate: '2025-02-01',
+      toDate: '2025-01-01'
+    });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('returns {error} when date format is invalid', () => {
+    const sp = toSp({
+      ticker: 'boat',
+      slug: 'valid-slug',
+      range: 'custom',
+      fromDate: '01-01-2025',
+      toDate: '2025-06-30'
+    });
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  // ---- round-trip property tests ----
+
+  it('round-trip: boat ticker parse(serialize(f)) == f', () => {
+    const f: ExplorerFilters = { ticker: 'boat', slug: 'pacific-voyager', range: '1y' };
+    const sp = serializeExplorerFilters(f);
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result).toEqual(f);
+    }
+  });
+
+  it('round-trip: species ticker parse(serialize(f)) == f', () => {
+    const f: ExplorerFilters = { ticker: 'species', name: 'yellowtail', range: '3m' };
+    const sp = serializeExplorerFilters(f);
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result).toEqual(f);
+    }
+  });
+
+  it('round-trip: landing ticker parse(serialize(f)) == f', () => {
+    const f: ExplorerFilters = { ticker: 'landing', name: "Fisherman's Landing", range: 'all' };
+    const sp = serializeExplorerFilters(f);
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result).toEqual(f);
+    }
+  });
+
+  it('round-trip: custom range parse(serialize(f)) == f', () => {
+    const f: ExplorerFilters = {
+      ticker: 'boat',
+      slug: 'pacific-voyager',
+      range: 'custom',
+      fromDate: '2025-01-01',
+      toDate: '2025-06-30'
+    };
+    const sp = serializeExplorerFilters(f);
+    const result = parseExplorerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result).toEqual(f);
     }
   });
 });
