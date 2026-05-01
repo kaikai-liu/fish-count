@@ -108,6 +108,11 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
   3. Each route has a descriptive browser tab title (so a pinned tab or shared link looks right, not a generic "FishCount").
   4. The angler can toggle between light, dark, and follow-system color themes; the choice persists across visits.
 **Plans**: TBD
+
+**Carry-forward polish from Phase 7 (added 2026-05-01):**
+  - **Chart x-axis: category → time.** Catch chart x-axis is currently a `category` axis using raw bucket keys (`2025-W18`, `2025-MM`), which (a) reads as engineering output rather than a stock-chart-style date axis, and (b) forces moon-overlay sampling at one date per bucket → aliased "wobbly" curve at weekly+ ranges. Switching to a `time` axis fixes both: ECharts auto-formats human-readable date labels, and the moon row can render a true daily-sampled sine across the full date range and still align with the catch chart's bucket positions.
+  - **Granularity selector for ranges ≥ 3M.** Today granularity is auto-derived from range (1M→daily, 3M–1Y→weekly, 2Y+→monthly). Add explicit Daily / Weekly / Monthly buttons (with a sensible default per range) so an angler can override. New URL param, new header control, loader override.
+
 **UI hint**: yes
 
 ## Operator Punch List (carry-forward, not v2 dev work)
