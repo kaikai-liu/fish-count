@@ -79,7 +79,7 @@ v1.0 shipped a browse + trip-picker + statistical-forecast read surface and is r
 - **Calendar heatmap** — retired in v2. The picker's 30-day heatmap was one of the consumers; without the picker it doesn't carry obvious value.
 - Individual per-angler tracking — source data is boat-aggregate only; per-angler numbers are derived averages, not real people.
 - Social feed / posts / comments / photos — orthogonal to "explore the data."
-- Leaderboards / gamification — incentivises meatlocker-boat metrics over quality fishing.
+- Gamification (points / levels / achievements / streaks) — engagement-bait off-mission for a data-aggregation tool. Honest top-performer rankings on the home page (most fish caught last week, etc.) are core value, not gamification.
 - ML-based forecast models — data-hungry, opaque, not honestly achievable on one upstream source.
 - Web push / SMS / in-app notifications — email is sufficient.
 - Mandatory account / login to browse — explorer stays anonymous; signup exists only to receive alerts.

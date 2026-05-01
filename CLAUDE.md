@@ -33,8 +33,9 @@ The scraper, database, and basic browse routes carry forward.
 ## What we're NOT building
 
 Per-angler individual tracking · social feed / posts / comments / photos ·
-leaderboards or gamification · ML or AI-generated fishing forecasts · push or
-SMS notifications · mandatory accounts to browse · booking or payment
+gamification (points / levels / achievements) · ML or AI-generated fishing
+forecasts · push or SMS notifications · mandatory accounts to browse · booking
+or payment
 integration · bait / tackle / technique recommendations · GPS catch maps ·
 personal catch logbooks · "on fire" hype badges · paywalls · sponsored boat
 slots in rankings · manual scrape triggers in the UI · non–San Diego data.
