@@ -34,7 +34,7 @@ export interface SpeciesTrendArgs {
   tripType: string;
   fromDate: string;
   toDate: string;
-  granularity: 'weekly' | 'monthly';
+  granularity: 'daily' | 'weekly' | 'monthly';
 }
 
 /**
@@ -43,9 +43,11 @@ export interface SpeciesTrendArgs {
  */
 export function speciesTrend(db: Database.Database, args: SpeciesTrendArgs): TrendBucket[] {
   const bucketExpr =
-    args.granularity === 'weekly'
-      ? "strftime('%G-W%V', source_date)"
-      : "strftime('%Y-%m', source_date)";
+    args.granularity === 'daily'
+      ? "strftime('%Y-%m-%d', source_date)"
+      : args.granularity === 'weekly'
+        ? "strftime('%G-W%V', source_date)"
+        : "strftime('%Y-%m', source_date)";
 
   return db
     .prepare(
@@ -73,7 +75,7 @@ export interface BoatTrendArgs {
   tripType: string;
   fromDate: string;
   toDate: string;
-  granularity: 'weekly' | 'monthly';
+  granularity: 'daily' | 'weekly' | 'monthly';
 }
 
 /**
@@ -92,9 +94,11 @@ export interface BoatTrendArgs {
  */
 export function boatTrend(db: Database.Database, args: BoatTrendArgs): TrendBucket[] {
   const bucketExpr =
-    args.granularity === 'weekly'
-      ? "strftime('%G-W%V', source_date)"
-      : "strftime('%Y-%m', source_date)";
+    args.granularity === 'daily'
+      ? "strftime('%Y-%m-%d', source_date)"
+      : args.granularity === 'weekly'
+        ? "strftime('%G-W%V', source_date)"
+        : "strftime('%Y-%m', source_date)";
 
   if (args.species !== undefined) {
     // Per-species bucket

@@ -216,3 +216,88 @@ describe('trends.boatTrend WITHOUT species (all-species aggregate)', () => {
     expect(buckets).toEqual([]);
   });
 });
+
+describe('trends daily granularity (Phase 6 extension)', () => {
+  let db: Database.Database | null = null;
+  afterEach(() => {
+    if (db) { db.close(); db = null; }
+  });
+
+  it('speciesTrend daily: bucket_key matches YYYY-MM-DD format', () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, { boatName: 'Grande', landingName: 'Point Loma Sportfishing' });
+    seedTrip(db, { boatId, landingId, date: '2024-06-15', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
+
+    const buckets = speciesTrend(db, {
+      species: 'yellowtail',
+      tripType: 'Full Day',
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'daily'
+    });
+
+    expect(buckets).toHaveLength(1);
+    expect(buckets[0].bucket_key).toBe('2024-06-15');
+    expect(buckets[0].bucket_key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(buckets[0].value).toBeCloseTo(10 / 20, 3);
+  });
+
+  it('speciesTrend daily: returns exactly the dates with rows (3 distinct dates)', () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, { boatName: 'Grande', landingName: 'Point Loma Sportfishing' });
+    seedTrip(db, { boatId, landingId, date: '2024-06-10', tripType: 'Full Day', species: 'yellowtail', anglers: 10, count: 5 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-15', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 8 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-25', tripType: 'Full Day', species: 'yellowtail', anglers: 15, count: 6 });
+    // Out-of-window trip (should be excluded)
+    seedTrip(db, { boatId, landingId, date: '2024-07-05', tripType: 'Full Day', species: 'yellowtail', anglers: 10, count: 3 });
+
+    const buckets = speciesTrend(db, {
+      species: 'yellowtail',
+      tripType: 'Full Day',
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'daily'
+    });
+
+    expect(buckets).toHaveLength(3);
+    expect(buckets.map(b => b.bucket_key)).toEqual(['2024-06-10', '2024-06-15', '2024-06-25']);
+  });
+
+  it('boatTrend daily: bucket_key matches YYYY-MM-DD format', () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, { boatName: 'Pacific Voyager', landingName: 'H&M Landing' });
+    seedTrip(db, { boatId, landingId, date: '2024-06-12', tripType: '1/2 Day AM', species: 'bluefin', anglers: 25, count: 15 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-18', tripType: '1/2 Day AM', species: 'bluefin', anglers: 20, count: 10 });
+
+    const buckets = boatTrend(db, {
+      boatId,
+      species: 'bluefin',
+      tripType: '1/2 Day AM',
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'daily'
+    });
+
+    expect(buckets).toHaveLength(2);
+    expect(buckets[0].bucket_key).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(buckets[0].bucket_key).toBe('2024-06-12');
+    expect(buckets[1].bucket_key).toBe('2024-06-18');
+  });
+
+  it('existing weekly callers still work after daily extension', () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, { boatName: 'Grande', landingName: 'Point Loma Sportfishing' });
+    seedTrip(db, { boatId, landingId, date: '2024-06-15', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
+
+    const buckets = speciesTrend(db, {
+      species: 'yellowtail',
+      tripType: 'Full Day',
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'weekly'
+    });
+
+    expect(buckets).toHaveLength(1);
+    expect(buckets[0].bucket_key).toMatch(/^\d{4}-W\d{2}$/);
+  });
+});

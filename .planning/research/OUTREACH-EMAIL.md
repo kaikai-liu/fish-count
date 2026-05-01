@@ -2,9 +2,9 @@
 
 **Phase:** 1 (Ingest + Store) — ING-11 deliverable
 **Gate:** This email MUST be sent before `FIRST_SCRAPE_OK=true` is set in Fly secrets.
-**Sent date:** {YYYY-MM-DD} (operator fills after sending)
-**Recipient:** {operator_contact_email — e.g. info@sandiegofishreports.com or whatever contact the site lists}
-**Reply received:** {yes / no / no-reply-after-7-days}
+**Sent date:** 2026-05-01
+**Recipient:** sandiegofishreports.com site operator
+**Reply received:** pending — proceeding under presumed permissive consent (no TOS, permissive robots.txt; will halt if reply asks us to)
 
 ---
 
