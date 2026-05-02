@@ -58,7 +58,7 @@ created: 2026-05-02
 
 - [ ] `tests/unit/db/aliases.test.ts` — alias DAL: lookup-by-source, list-with-status, upsert, delete
 - [ ] `tests/unit/db/aliases-translation.test.ts` — read-time COALESCE/CASE pattern preserves history across renames
-- [ ] `tests/unit/db/migrations-aliases.test.ts` — idempotent CREATE + idempotent seed + idempotent forecasts DROP
+- [ ] `tests/unit/db/migrations-aliases.test.ts` — idempotent CREATE + idempotent seed + idempotent forecasts DROP (combined per Plan 01; covers the RTR forecasts-drop behaviors that originally had a separate file slot)
 - [ ] `tests/integration/admin/trip-types.test.ts` — admin auth gate, list, alias, accept, leave-pending flows
 
 ### Home page (HOME-*)
@@ -88,14 +88,14 @@ created: 2026-05-02
 
 - [ ] `tests/integration/redirects.test.ts` — `/picker`, `/picker?...`, `/trends`, `/trends?...` → 301 to `/explorer`
 - [ ] `tests/integration/scheduler.test.ts` — scheduler does NOT call removed forecast hook
-- [ ] `tests/unit/lib/db/migrations-drop-forecasts.test.ts` — drop is idempotent and gone-from-schema after run
+- [ ] forecasts DROP behavior is covered by `tests/unit/db/migrations-aliases.test.ts` above (kept here as a coverage marker, not a separate file)
 - [ ] `tests/static/no-picker-trends-references.test.ts` — static-grep test fails if `/picker` or `/trends` resurface
 
 ### Polish (POL-*)
 
 - [ ] `tests/integration/error-boundary.test.ts` — `+error.svelte` renders friendly copy, no stack
 - [ ] `tests/integration/empty-states.test.ts` — explorer/compare/home empty cases render explanatory copy
-- [ ] `tests/unit/lib/copy/empty-states.test.ts` — copy module shape
+- [ ] `tests/unit/copy/empty-states.test.ts` — copy module shape
 
 ### Framework / install
 
