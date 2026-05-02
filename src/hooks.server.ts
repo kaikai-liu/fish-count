@@ -12,6 +12,7 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { runStartup } from '$lib/server/startup';
 import { logger } from '$lib/server/logger';
+import { validateTheme, THEME_COOKIE } from '$lib/shared/theme';
 
 // Run startup hooks exactly once on module load (first request warms this up).
 // Plan 03 fills runStartup() to start the croner scheduler.
@@ -38,11 +39,22 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.logger = reqLogger;
   event.locals.requestId = requestId;
 
+  // Phase 8 Plan 04 (THM-02, D-28). Resolve the validated theme from the
+  // fc_theme cookie and stash on locals BEFORE calling resolve(event) so
+  // server load functions can read it via locals.theme. transformPageChunk
+  // substitutes the validated value into <html data-theme="%fc_theme%">,
+  // never the raw cookie (T-08-04-01 / Pitfall 2).
+  const theme = validateTheme(event.cookies.get(THEME_COOKIE));
+  event.locals.theme = theme;
+
   const start = performance.now();
   reqLogger.info({ method: event.request.method }, 'request:start');
 
   try {
-    const response = await resolve(event);
+    const response = await resolve(event, {
+      transformPageChunk: ({ html }) =>
+        html.replace('data-theme="%fc_theme%"', `data-theme="${theme}"`)
+    });
     reqLogger.info(
       { status: response.status, durationMs: Math.round(performance.now() - start) },
       'request:end'

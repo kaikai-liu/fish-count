@@ -1,7 +1,10 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/state';
-  let { children } = $props();
+  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+  import type { LayoutData } from './$types';
+
+  let { children, data }: { children: import('svelte').Snippet; data: LayoutData } = $props();
 
   // Phase 8 Plan 03 (D-22, RTR-08): /picker and /trends retired; nav drops them.
   const navItems = [
@@ -16,20 +19,24 @@
 
 <nav class="border-b border-(--color-border) bg-(--color-surface) md:sticky md:top-0 md:z-10">
   <div class="mx-auto max-w-6xl px-4 py-3 md:px-8">
-    <ul class="flex flex-wrap gap-x-6 gap-y-2 text-base">
-      {#each navItems as item}
-        <li>
-          <a
-            href={item.href}
-            class={page.url.pathname === item.href || (item.href !== '/' && page.url.pathname.startsWith(item.href))
-              ? 'text-(--color-accent) font-semibold'
-              : 'text-(--color-text-muted) hover:underline'}
-          >
-            {item.label}
-          </a>
-        </li>
-      {/each}
-    </ul>
+    <div class="flex items-center justify-between gap-4">
+      <ul class="flex flex-wrap gap-x-6 gap-y-2 text-base">
+        {#each navItems as item}
+          <li>
+            <a
+              href={item.href}
+              class={page.url.pathname === item.href || (item.href !== '/' && page.url.pathname.startsWith(item.href))
+                ? 'text-(--color-accent) font-semibold'
+                : 'text-(--color-text-muted) hover:underline'}
+            >
+              {item.label}
+            </a>
+          </li>
+        {/each}
+      </ul>
+      <!-- Phase 8 Plan 04 (THM-01) -->
+      <ThemeToggle theme={data.theme} />
+    </div>
   </div>
 </nav>
 
