@@ -126,36 +126,45 @@ Which phases cover which requirements. Populated by the roadmapper on 2026-04-30
 | MOON-01 | Phase 7: Moon-phase Overlay | Pending |
 | MOON-02 | Phase 7: Moon-phase Overlay | Pending |
 | MOON-03 | Phase 7: Moon-phase Overlay | Pending |
-| SHR-01 | Phase 8: Sharing | Pending |
-| SHR-02 | Phase 8: Sharing | Pending |
-| ALT-01 | Phase 9: Email Alerts | Pending |
-| ALT-02 | Phase 9: Email Alerts | Pending |
-| ALT-03 | Phase 9: Email Alerts | Pending |
-| ALT-04 | Phase 9: Email Alerts | Pending |
-| ALT-05 | Phase 9: Email Alerts | Pending |
-| ALT-06 | Phase 9: Email Alerts | Pending |
-| ALT-07 | Phase 9: Email Alerts | Pending |
-| ALT-08 | Phase 9: Email Alerts | Pending |
-| RTR-01 | Phase 10: v1 Retirement | Pending |
-| RTR-02 | Phase 10: v1 Retirement | Pending |
-| RTR-03 | Phase 10: v1 Retirement | Pending |
-| RTR-04 | Phase 10: v1 Retirement | Pending |
-| RTR-05 | Phase 10: v1 Retirement | Pending |
-| RTR-06 | Phase 10: v1 Retirement | Pending |
-| RTR-07 | Phase 10: v1 Retirement | Pending |
-| RTR-08 | Phase 10: v1 Retirement | Pending |
-| RTR-09 | Phase 10: v1 Retirement | Pending |
-| POL-01 | Phase 11: Polish & Dark Mode | Pending |
-| POL-02 | Phase 11: Polish & Dark Mode | Pending |
-| POL-03 | Phase 11: Polish & Dark Mode | Pending |
-| POL-04 | Phase 11: Polish & Dark Mode | Pending |
-| POL-05 | Phase 11: Polish & Dark Mode | Pending |
+| RTR-01 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-02 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-03 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-04 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-05 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-06 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-07 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-08 | Phase 8: Home, Retire, Polish | Pending |
+| RTR-09 | Phase 8: Home, Retire, Polish | Pending |
+| POL-01 | Phase 8: Home, Retire, Polish | Pending |
+| POL-02 | Phase 8: Home, Retire, Polish | Pending |
+| POL-03 | Phase 8: Home, Retire, Polish | Pending |
+| POL-04 | Phase 8: Home, Retire, Polish | Pending |
+| POL-05 | Phase 8: Home, Retire, Polish | Pending |
+| SHR-01 | Phase 9: Sharing | Pending |
+| SHR-02 | Phase 9: Sharing | Pending |
+| ALT-01 | Phase 10: Email Alerts | Pending |
+| ALT-02 | Phase 10: Email Alerts | Pending |
+| ALT-03 | Phase 10: Email Alerts | Pending |
+| ALT-04 | Phase 10: Email Alerts | Pending |
+| ALT-05 | Phase 10: Email Alerts | Pending |
+| ALT-06 | Phase 10: Email Alerts | Pending |
+| ALT-07 | Phase 10: Email Alerts | Pending |
+| ALT-08 | Phase 10: Email Alerts | Pending |
+
+**Note (2026-05-01):** Phase 8 (Home, Retire, Polish) absorbed the original
+Phase 10 (v1 Retirement) and Phase 11 (Polish & Dark Mode) entirely, plus
+new home-page work, a trip-type alias mapping table, and the `/compare`
+boat-ID picker fix. New requirements for those additions (HOME-*, ALI-*,
+CMP-*) will be added by `/gsd:plan-phase 8`. Phase 9 (Sharing) and Phase 10
+(Email Alerts) shifted up one number; their requirement IDs (SHR-*, ALT-*)
+are unchanged.
 
 **Coverage:**
 - v2 requirements: 41 total (14 EXPL + 3 MOON + 2 SHR + 8 ALT + 9 RTR + 5 POL)
 - Mapped to phases: 41 ✓
 - Unmapped: 0 ✓
+- New home/alias/compare-fix requirements: deferred to plan-phase
 
 ---
 *Requirements defined: 2026-04-30*
-*Last updated: 2026-04-30 — traceability filled by roadmapper; all 41 requirements mapped across Phases 6–11*
+*Last updated: 2026-05-01 — Phase 8 absorbed old Phases 10 + 11; old Phases 8/9 renumbered to 9/10; v2 collapsed from 6 phases to 4*

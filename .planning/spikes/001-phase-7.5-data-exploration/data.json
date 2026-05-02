@@ -1,0 +1,878 @@
+{
+  "meta": {
+    "today": "2026-05-01",
+    "window_7d_from": "2026-04-24",
+    "window_30d_from": "2026-04-01",
+    "window_90d_from": "2026-01-31"
+  },
+  "q1_q2_trip_type_volume": {
+    "past_7": [
+      {
+        "trip_type": "1/2 Day AM",
+        "trip_count": 17
+      },
+      {
+        "trip_type": "Full Day Coronado Islands",
+        "trip_count": 10
+      },
+      {
+        "trip_type": "1/2 Day PM",
+        "trip_count": 8
+      },
+      {
+        "trip_type": "1.5 Day",
+        "trip_count": 6
+      },
+      {
+        "trip_type": "Full Day",
+        "trip_count": 5
+      },
+      {
+        "trip_type": "3 Day",
+        "trip_count": 5
+      },
+      {
+        "trip_type": "2 Day",
+        "trip_count": 5
+      },
+      {
+        "trip_type": "1/2 Day Twilight",
+        "trip_count": 3
+      },
+      {
+        "trip_type": "Overnight",
+        "trip_count": 2
+      },
+      {
+        "trip_type": "3.5 Day",
+        "trip_count": 2
+      },
+      {
+        "trip_type": "3/4 Day",
+        "trip_count": 1
+      }
+    ],
+    "past_30": [
+      {
+        "trip_type": "1/2 Day AM",
+        "trip_count": 109
+      },
+      {
+        "trip_type": "1.5 Day",
+        "trip_count": 66
+      },
+      {
+        "trip_type": "Full Day",
+        "trip_count": 65
+      },
+      {
+        "trip_type": "3 Day",
+        "trip_count": 65
+      },
+      {
+        "trip_type": "1/2 Day PM",
+        "trip_count": 44
+      },
+      {
+        "trip_type": "Overnight",
+        "trip_count": 26
+      },
+      {
+        "trip_type": "3.5 Day",
+        "trip_count": 26
+      },
+      {
+        "trip_type": "1/2 Day Twilight",
+        "trip_count": 26
+      },
+      {
+        "trip_type": "2 Day",
+        "trip_count": 17
+      },
+      {
+        "trip_type": "Full Day Coronado Islands",
+        "trip_count": 10
+      },
+      {
+        "trip_type": "3/4 Day",
+        "trip_count": 1
+      }
+    ],
+    "past_90": [
+      {
+        "trip_type": "1/2 Day AM",
+        "trip_count": 349
+      },
+      {
+        "trip_type": "1.5 Day",
+        "trip_count": 216
+      },
+      {
+        "trip_type": "Full Day",
+        "trip_count": 215
+      },
+      {
+        "trip_type": "3 Day",
+        "trip_count": 215
+      },
+      {
+        "trip_type": "1/2 Day PM",
+        "trip_count": 134
+      },
+      {
+        "trip_type": "Overnight",
+        "trip_count": 86
+      },
+      {
+        "trip_type": "3.5 Day",
+        "trip_count": 86
+      },
+      {
+        "trip_type": "1/2 Day Twilight",
+        "trip_count": 86
+      },
+      {
+        "trip_type": "2 Day",
+        "trip_count": 47
+      },
+      {
+        "trip_type": "Full Day Coronado Islands",
+        "trip_count": 10
+      },
+      {
+        "trip_type": "3/4 Day",
+        "trip_count": 1
+      }
+    ],
+    "distinct_count_7": 11,
+    "distinct_count_30": 11,
+    "distinct_count_90": 11
+  },
+  "q3_viability_7d": {
+    "viable_threshold_5": [
+      "1/2 Day AM",
+      "Full Day Coronado Islands",
+      "1/2 Day PM",
+      "1.5 Day",
+      "Full Day",
+      "3 Day",
+      "2 Day"
+    ],
+    "sparse_under_5": [
+      {
+        "trip_type": "1/2 Day Twilight",
+        "trip_count": 3
+      },
+      {
+        "trip_type": "Overnight",
+        "trip_count": 2
+      },
+      {
+        "trip_type": "3.5 Day",
+        "trip_count": 2
+      },
+      {
+        "trip_type": "3/4 Day",
+        "trip_count": 1
+      }
+    ],
+    "recommendation_notes": "See report.md"
+  },
+  "q4_surprising_trip_types": [
+    {
+      "trip_type": "3/4 Day Local",
+      "trip_count": 1,
+      "first_seen": "2024-09-05",
+      "last_seen": "2024-09-05"
+    },
+    {
+      "trip_type": "5 Day",
+      "trip_count": 1,
+      "first_seen": "2024-09-18",
+      "last_seen": "2024-09-18"
+    },
+    {
+      "trip_type": "4 Day",
+      "trip_count": 3,
+      "first_seen": "2024-10-18",
+      "last_seen": "2024-11-12"
+    }
+  ],
+  "q5_q6_distributions_7d": {
+    "1/2 Day AM": {
+      "n_trips": 17,
+      "min": 0.36,
+      "median": 4.63,
+      "p90": 9.21,
+      "p95": 11.6,
+      "max": 11.6,
+      "mean": 4.83,
+      "trip_volume_7d": 17
+    },
+    "Full Day Coronado Islands": {
+      "n_trips": 10,
+      "min": 0.18,
+      "median": 1.83,
+      "p90": 4.68,
+      "p95": 4.68,
+      "max": 4.68,
+      "mean": 1.66,
+      "trip_volume_7d": 10
+    },
+    "1/2 Day PM": {
+      "n_trips": 8,
+      "min": 1.17,
+      "median": 5.29,
+      "p90": 8.17,
+      "p95": 8.17,
+      "max": 8.17,
+      "mean": 4.57,
+      "trip_volume_7d": 8
+    },
+    "1.5 Day": {
+      "n_trips": 6,
+      "min": 1.63,
+      "median": 3.25,
+      "p90": 4.38,
+      "p95": 4.38,
+      "max": 4.38,
+      "mean": 3.19,
+      "trip_volume_7d": 6
+    },
+    "Full Day": {
+      "n_trips": 5,
+      "min": 1.25,
+      "median": 2.92,
+      "p90": 3.58,
+      "p95": 3.58,
+      "max": 3.58,
+      "mean": 2.66,
+      "trip_volume_7d": 5
+    },
+    "3 Day": {
+      "n_trips": 5,
+      "min": 7.75,
+      "median": 12.67,
+      "p90": 13.11,
+      "p95": 13.11,
+      "max": 13.11,
+      "mean": 11.28,
+      "trip_volume_7d": 5
+    },
+    "2 Day": {
+      "n_trips": 5,
+      "min": 2.17,
+      "median": 2.39,
+      "p90": 6.95,
+      "p95": 6.95,
+      "max": 6.95,
+      "mean": 3.52,
+      "trip_volume_7d": 5
+    },
+    "1/2 Day Twilight": {
+      "n_trips": 3,
+      "min": 5,
+      "median": 5.25,
+      "p90": 8.86,
+      "p95": 8.86,
+      "max": 8.86,
+      "mean": 6.37,
+      "trip_volume_7d": 3
+    },
+    "Overnight": {
+      "n_trips": 2,
+      "min": 1.15,
+      "median": 1.18,
+      "p90": 1.18,
+      "p95": 1.18,
+      "max": 1.18,
+      "mean": 1.17,
+      "trip_volume_7d": 2
+    },
+    "3.5 Day": {
+      "n_trips": 2,
+      "min": 9.8,
+      "median": 35.43,
+      "p90": 35.43,
+      "p95": 35.43,
+      "max": 35.43,
+      "mean": 22.61,
+      "trip_volume_7d": 2
+    },
+    "3/4 Day": {
+      "n_trips": 1,
+      "min": 9.36,
+      "median": 9.36,
+      "p90": 9.36,
+      "p95": 9.36,
+      "max": 9.36,
+      "mean": 9.36,
+      "trip_volume_7d": 1
+    }
+  },
+  "q7_outlier_trip_types": [
+    {
+      "trip_type": "1/2 Day AM",
+      "n": 17,
+      "median": 4.63,
+      "p90": 9.21,
+      "max": 11.6,
+      "max_to_p90_ratio": 1.26
+    },
+    {
+      "trip_type": "Full Day Coronado Islands",
+      "n": 10,
+      "median": 1.83,
+      "p90": 4.68,
+      "max": 4.68,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "1/2 Day PM",
+      "n": 8,
+      "median": 5.29,
+      "p90": 8.17,
+      "max": 8.17,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "1.5 Day",
+      "n": 6,
+      "median": 3.25,
+      "p90": 4.38,
+      "max": 4.38,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "Full Day",
+      "n": 5,
+      "median": 2.92,
+      "p90": 3.58,
+      "max": 3.58,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "3 Day",
+      "n": 5,
+      "median": 12.67,
+      "p90": 13.11,
+      "max": 13.11,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "2 Day",
+      "n": 5,
+      "median": 2.39,
+      "p90": 6.95,
+      "max": 6.95,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "1/2 Day Twilight",
+      "n": 3,
+      "median": 5.25,
+      "p90": 8.86,
+      "max": 8.86,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "Overnight",
+      "n": 2,
+      "median": 1.18,
+      "p90": 1.18,
+      "max": 1.18,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "3.5 Day",
+      "n": 2,
+      "median": 35.43,
+      "p90": 35.43,
+      "max": 35.43,
+      "max_to_p90_ratio": 1
+    },
+    {
+      "trip_type": "3/4 Day",
+      "n": 1,
+      "median": 9.36,
+      "p90": 9.36,
+      "max": 9.36,
+      "max_to_p90_ratio": 1
+    }
+  ],
+  "q8_q9_species_7d": {
+    "distinct_count": 28,
+    "top_20_by_volume": [
+      {
+        "species": "yellowtail",
+        "row_count": 33,
+        "total_caught": 1495,
+        "trip_count": 32
+      },
+      {
+        "species": "bluefin tuna",
+        "row_count": 18,
+        "total_caught": 1291,
+        "trip_count": 18
+      },
+      {
+        "species": "rockfish",
+        "row_count": 22,
+        "total_caught": 1167,
+        "trip_count": 19
+      },
+      {
+        "species": "calico bass",
+        "row_count": 14,
+        "total_caught": 544,
+        "trip_count": 11
+      },
+      {
+        "species": "calico bass released",
+        "row_count": 4,
+        "total_caught": 340,
+        "trip_count": 3
+      },
+      {
+        "species": "sand bass",
+        "row_count": 7,
+        "total_caught": 238,
+        "trip_count": 7
+      },
+      {
+        "species": "sculpin",
+        "row_count": 15,
+        "total_caught": 210,
+        "trip_count": 15
+      },
+      {
+        "species": "whitefish",
+        "row_count": 11,
+        "total_caught": 190,
+        "trip_count": 10
+      },
+      {
+        "species": "barracuda",
+        "row_count": 8,
+        "total_caught": 117,
+        "trip_count": 7
+      },
+      {
+        "species": "vermilion rockfish",
+        "row_count": 3,
+        "total_caught": 88,
+        "trip_count": 2
+      },
+      {
+        "species": "barred sand bass",
+        "row_count": 2,
+        "total_caught": 70,
+        "trip_count": 2
+      },
+      {
+        "species": "bonito",
+        "row_count": 3,
+        "total_caught": 65,
+        "trip_count": 3
+      },
+      {
+        "species": "bluefin tuna (up to 100 pounds)",
+        "row_count": 1,
+        "total_caught": 49,
+        "trip_count": 1
+      },
+      {
+        "species": "white seabass released",
+        "row_count": 2,
+        "total_caught": 49,
+        "trip_count": 2
+      },
+      {
+        "species": "rock crab",
+        "row_count": 1,
+        "total_caught": 33,
+        "trip_count": 1
+      },
+      {
+        "species": "sheephead",
+        "row_count": 10,
+        "total_caught": 25,
+        "trip_count": 9
+      },
+      {
+        "species": "lingcod",
+        "row_count": 10,
+        "total_caught": 24,
+        "trip_count": 8
+      },
+      {
+        "species": "sanddab",
+        "row_count": 1,
+        "total_caught": 20,
+        "trip_count": 1
+      },
+      {
+        "species": "sand bass released",
+        "row_count": 1,
+        "total_caught": 15,
+        "trip_count": 1
+      },
+      {
+        "species": "spiny lobster released",
+        "row_count": 1,
+        "total_caught": 15,
+        "trip_count": 1
+      }
+    ],
+    "long_tail_count": 6,
+    "zero_release_only": 0
+  },
+  "q10_top_species_stability": {
+    "top10_7d": [
+      "yellowtail",
+      "bluefin tuna",
+      "rockfish",
+      "calico bass",
+      "calico bass released",
+      "sand bass",
+      "sculpin",
+      "whitefish",
+      "barracuda",
+      "vermilion rockfish"
+    ],
+    "top10_30d": [
+      "bluefin tuna",
+      "yellowtail",
+      "calico bass",
+      "calico bass released",
+      "rockfish",
+      "sand bass",
+      "whitefish",
+      "barracuda",
+      "sculpin",
+      "barred sand bass"
+    ],
+    "overlap_count": 9,
+    "meaningful_section": "PROBABLY NOT — top-10 is nearly identical week vs month"
+  },
+  "q11_released_species_7d": [
+    {
+      "released": "calico bass released",
+      "released_caught": 340,
+      "base_species": "calico bass",
+      "base_caught": 544,
+      "released_share": 0.38
+    },
+    {
+      "released": "white seabass released",
+      "released_caught": 49,
+      "base_species": "white seabass",
+      "base_caught": 7,
+      "released_share": 0.88
+    },
+    {
+      "released": "sand bass released",
+      "released_caught": 15,
+      "base_species": "sand bass",
+      "base_caught": 238,
+      "released_share": 0.06
+    },
+    {
+      "released": "spiny lobster released",
+      "released_caught": 15,
+      "base_species": "spiny lobster",
+      "base_caught": 14,
+      "released_share": 0.52
+    },
+    {
+      "released": "halibut released",
+      "released_caught": 1,
+      "base_species": "halibut",
+      "base_caught": 1,
+      "released_share": 0.5
+    }
+  ],
+  "q12_zero_angler_trips_7d": {
+    "count": 0,
+    "examples": []
+  },
+  "q13_zero_catch_trips_7d": {
+    "count": 0,
+    "examples": []
+  },
+  "q14_half_day_variants": [
+    {
+      "trip_type": "1/2 Day AM",
+      "trip_count": 2213,
+      "first_seen": "2024-08-26",
+      "last_seen": "2026-04-30"
+    },
+    {
+      "trip_type": "1/2 Day PM",
+      "trip_count": 860,
+      "first_seen": "2024-08-26",
+      "last_seen": "2026-04-30"
+    },
+    {
+      "trip_type": "1/2 Day Twilight",
+      "trip_count": 477,
+      "first_seen": "2024-08-29",
+      "last_seen": "2026-04-29"
+    }
+  ],
+  "q15_data_quality": {
+    "null_or_empty_species": 0,
+    "whitespace_padded_species": 0,
+    "whitespace_padded_trip_type": 0,
+    "negative_species_count": 0,
+    "huge_anglers": 0,
+    "duplicate_unique_key": 0,
+    "case_variant_species": 0
+  },
+  "q16_window_sizing": [
+    {
+      "window_days": 7,
+      "threshold_trips": 5,
+      "viable_count": 7,
+      "viable": [
+        "1/2 Day AM (17)",
+        "Full Day Coronado Islands (10)",
+        "1/2 Day PM (8)",
+        "1.5 Day (6)",
+        "Full Day (5)",
+        "3 Day (5)",
+        "2 Day (5)"
+      ]
+    },
+    {
+      "window_days": 7,
+      "threshold_trips": 10,
+      "viable_count": 2,
+      "viable": [
+        "1/2 Day AM (17)",
+        "Full Day Coronado Islands (10)"
+      ]
+    },
+    {
+      "window_days": 14,
+      "threshold_trips": 5,
+      "viable_count": 10,
+      "viable": [
+        "1/2 Day AM (45)",
+        "1.5 Day (26)",
+        "Full Day (25)",
+        "3 Day (25)",
+        "1/2 Day PM (20)",
+        "Overnight (10)",
+        "Full Day Coronado Islands (10)",
+        "3.5 Day (10)",
+        "1/2 Day Twilight (10)",
+        "2 Day (9)"
+      ]
+    },
+    {
+      "window_days": 14,
+      "threshold_trips": 10,
+      "viable_count": 9,
+      "viable": [
+        "1/2 Day AM (45)",
+        "1.5 Day (26)",
+        "Full Day (25)",
+        "3 Day (25)",
+        "1/2 Day PM (20)",
+        "Overnight (10)",
+        "Full Day Coronado Islands (10)",
+        "3.5 Day (10)",
+        "1/2 Day Twilight (10)"
+      ]
+    },
+    {
+      "window_days": 30,
+      "threshold_trips": 10,
+      "viable_count": 10,
+      "viable": [
+        "1/2 Day AM (109)",
+        "1.5 Day (66)",
+        "Full Day (65)",
+        "3 Day (65)",
+        "1/2 Day PM (44)",
+        "Overnight (26)",
+        "3.5 Day (26)",
+        "1/2 Day Twilight (26)",
+        "2 Day (17)",
+        "Full Day Coronado Islands (10)"
+      ]
+    }
+  ],
+  "q17_page_composition": {
+    "sections": 7,
+    "total_rows": 30,
+    "preview": {
+      "1/2 Day AM": [
+        {
+          "boat": "Dolphin",
+          "trips": 4,
+          "fpa": 5.96
+        },
+        {
+          "boat": "Premier",
+          "trips": 3,
+          "fpa": 5.79
+        },
+        {
+          "boat": "Southern Cal",
+          "trips": 2,
+          "fpa": 5.39
+        },
+        {
+          "boat": "Chubasco II",
+          "trips": 2,
+          "fpa": 4.29
+        },
+        {
+          "boat": "New Seaforth",
+          "trips": 5,
+          "fpa": 3.11
+        }
+      ],
+      "Full Day Coronado Islands": [
+        {
+          "boat": "San Diego",
+          "trips": 4,
+          "fpa": 2.13
+        },
+        {
+          "boat": "Grande",
+          "trips": 4,
+          "fpa": 1.49
+        },
+        {
+          "boat": "Mission Belle",
+          "trips": 2,
+          "fpa": 0.74
+        }
+      ],
+      "1/2 Day PM": [
+        {
+          "boat": "Dolphin",
+          "trips": 3,
+          "fpa": 5.89
+        },
+        {
+          "boat": "Daily Double",
+          "trips": 1,
+          "fpa": 5.33
+        },
+        {
+          "boat": "New Seaforth",
+          "trips": 4,
+          "fpa": 3.53
+        }
+      ],
+      "1.5 Day": [
+        {
+          "boat": "Voyager",
+          "trips": 1,
+          "fpa": 4.38
+        },
+        {
+          "boat": "Oceanside 95",
+          "trips": 1,
+          "fpa": 4.04
+        },
+        {
+          "boat": "Jig Strike",
+          "trips": 1,
+          "fpa": 3.25
+        },
+        {
+          "boat": "Ocean Odyssey",
+          "trips": 1,
+          "fpa": 3.1
+        },
+        {
+          "boat": "El Capitan",
+          "trips": 1,
+          "fpa": 2.76
+        }
+      ],
+      "Full Day": [
+        {
+          "boat": "Voyager",
+          "trips": 1,
+          "fpa": 3.58
+        },
+        {
+          "boat": "San Diego",
+          "trips": 1,
+          "fpa": 3.31
+        },
+        {
+          "boat": "Sea Watch",
+          "trips": 1,
+          "fpa": 2.92
+        },
+        {
+          "boat": "Mission Belle",
+          "trips": 1,
+          "fpa": 2.24
+        },
+        {
+          "boat": "El Gato Dos",
+          "trips": 1,
+          "fpa": 1.25
+        }
+      ],
+      "3 Day": [
+        {
+          "boat": "New Lo-An",
+          "trips": 1,
+          "fpa": 13.11
+        },
+        {
+          "boat": "Polaris Supreme",
+          "trips": 1,
+          "fpa": 12.7
+        },
+        {
+          "boat": "Pacific Voyager",
+          "trips": 1,
+          "fpa": 12.67
+        },
+        {
+          "boat": "Islander",
+          "trips": 1,
+          "fpa": 10.2
+        },
+        {
+          "boat": "Legend",
+          "trips": 1,
+          "fpa": 7.75
+        }
+      ],
+      "2 Day": [
+        {
+          "boat": "Apollo",
+          "trips": 1,
+          "fpa": 6.95
+        },
+        {
+          "boat": "Pacific Voyager",
+          "trips": 2,
+          "fpa": 3.11
+        },
+        {
+          "boat": "New Lo-An",
+          "trips": 1,
+          "fpa": 2.23
+        },
+        {
+          "boat": "Polaris Supreme",
+          "trips": 1,
+          "fpa": 2.17
+        }
+      ]
+    },
+    "notes": "If \"top-5 per viable trip type, past 7d, fish/angler\" — page is 7 sections × ≤5 rows = 30 rows max."
+  }
+}

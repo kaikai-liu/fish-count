@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v1.0 — Browse + Picker + Forecast** (early-closed) — Phases 0–3 (shipped 2026-04-30) — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
-- 📋 **v2 — Multi-Axis Trend Explorer** (planning) — Phases 6–11 (defined 2026-04-30)
+- 📋 **v2 — Multi-Axis Trend Explorer** (planning) — Phases 6–10 (defined 2026-04-30; restructured 2026-05-01: old Phases 10 + 11 absorbed into Phase 8, old Phases 8 + 9 renumbered to 9 + 10)
 
 ## Phases
 
@@ -14,8 +14,8 @@
 - [x] Phase 1: Ingest + Store (9/9 plans) — completed 2026-04-24
 - [x] Phase 2: Browse + Trip Picker + Trends (7/7 plans) — completed 2026-04-25
 - [x] Phase 3: Forecast Layer (6/6 plans) — completed 2026-04-26
-- [retired] Phase 4: Email Alerts — never executed (carried to v2 as Phase 9, redesigned; implementation preserved at git tag `phase-4-shipped`)
-- [retired] Phase 5: Polish — never executed (carried to v2 as Phase 11)
+- [retired] Phase 4: Email Alerts — never executed (carried to v2 as Phase 10 [renumbered from Phase 9 on 2026-05-01], redesigned; implementation preserved at git tag `phase-4-shipped`)
+- [retired] Phase 5: Polish — never executed (carried to v2 as Phase 8 [renumbered from Phase 11 on 2026-05-01, expanded into the merged Home/Retire/Polish phase])
 
 Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [milestones/v1.0-REQUIREMENTS.md](milestones/v1.0-REQUIREMENTS.md) · [milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md) · [milestones/v1.0-phases/](milestones/v1.0-phases/)
 
@@ -23,12 +23,11 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
 
 ### 📋 v2 — Multi-Axis Trend Explorer
 
-- [ ] **Phase 6: Explorer Foundation** — Build the multi-axis ticker explorer (boat / species / landing) with overlay series and a 1M–All range selector
-- [ ] **Phase 7: Moon-phase Overlay** — Add toggleable moon-phase markers on the explorer's time axis
-- [ ] **Phase 8: Sharing** — Make every explorer view shareable via URL and exportable as CSV
-- [ ] **Phase 9: Email Alerts** — Let anglers follow boats and species and receive hot-day / starting-to-run email alerts
-- [ ] **Phase 10: v1 Retirement** — Remove picker, forecast layer, calendar heatmap, and now-obsolete lints/alerts; redirect the v1 routes the explorer subsumes
-- [ ] **Phase 11: Polish & Dark Mode** — Error/loading/empty states, descriptive page titles, and a dark-mode toggle to hit the "shareable with friends" finish
+- [x] **Phase 6: Explorer Foundation** — Build the multi-axis ticker explorer (boat / species / landing) with overlay series and a 1M–All range selector
+- [x] **Phase 7: Moon-phase Overlay** — Add toggleable moon-phase markers on the explorer's time axis
+- [ ] **Phase 8: Home, Retire, Polish** — New "what's been biting" home page (top boats per trip type, past 7 days, fish/angler) + trip-type alias mapping + `/compare` boat-ID picker fix + retire v1 (`/picker`, `/trends`, calendar heatmap, forecast pipeline) + polish (error/loading/empty states, descriptive titles, dark mode). Absorbs old Phases 10 + 11.
+- [ ] **Phase 9: Sharing** — Make every explorer view (and home-page filter state) shareable via URL and exportable as CSV
+- [ ] **Phase 10: Email Alerts** — Let anglers follow boats and species and receive hot-day / starting-to-run email alerts
 
 ## Phase Details
 
@@ -64,19 +63,34 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
 - [x] 07-03-PLAN.md — Loader emits `moonChartOption`; ExplorerHeader MoonToggle (role=switch); +page.svelte sub-chart + integration tests (MOON-01, MOON-02)
 **UI hint**: yes
 
-### Phase 8: Sharing
-**Goal**: An angler can share any explorer view with a fishing buddy by copying the URL, and can pull the underlying numbers into a spreadsheet via CSV export.
-**Depends on**: Phase 6 (URL-state contract is more useful once the explorer is stable); Phase 7 (so the moon toggle round-trips through the URL too)
+### Phase 8: Home, Retire, Polish
+**Goal**: An angler landing on the site sees a "what's been biting" home page (top boats per viable trip type, past 7 days, fish/angler) instead of today's empty pre-scrape dashboard; v1 surfaces (`/picker`, `/trends`, calendar heatmap, forecast pipeline) are retired with 301 redirects to the explorer; the `/compare` route's boat-ID input is replaced with a name-based picker; and every route has the polish (error / loading / empty states, descriptive titles, dark mode) needed to be "shareable with a fishing buddy."
+**Depends on**: Phase 7 (moon overlay shipped) + the data spike `.planning/spikes/001-phase-7.5-data-exploration/` (run 2026-05-01) which grounds home-page scope in actual data distributions
+**Requirements**: RTR-01..09, POL-01..05, plus new HOME-*, ALI-*, CMP-* requirements added by plan-phase
+**Success Criteria** (what must be TRUE):
+  1. **Home page is the front door.** An angler landing on `/` sees a "what's been biting" page with one section per viable trip type (≥5 trips in past 7 days), top-5 boats per section ranked by fish/angler, with trip count shown alongside each fpa value. Bar widths are normalized per-section (not globally) so trip types with different scales (Overnight ~1 fpa vs. 3.5 Day ~35 fpa) read correctly.
+  2. **Source-label drift is handled.** A trip-type alias mapping table exists and is consulted by home-page and explorer queries so renamed series stay continuous (e.g. "Full Day" → "Full Day Coronado Islands" rename of 2026-04-27 doesn't fragment a boat's history). New labels surface in the UI with a "new" indicator until the operator has aliased or accepted them.
+  3. **v1 retirement is complete.** `/picker`, `/trends` routes deleted (301 redirects to `/explorer`), `src/routes/picker/`, `src/lib/forecast/`, calendar heatmap component, and `scripts/forecast-benchmark.ts` deleted; `forecasts` table dropped via migration; nightly forecast recompute removed from scheduler; 3-file per-angler allowlist lint removed; row-count <50% silent-failure alert replaced with scraper/parser-failure-only alerting; `/about` page no longer references picker/forecast/heatmap; v1-only test files for retired surfaces removed.
+  4. **`/compare` is fixed.** The boat-ID input is replaced with a name-based typeahead picker matching the explorer's pattern. `/compare` stays in v2 scope (NOT retired).
+  5. **Polish hits the "shareable" bar.** Every route has a friendly error boundary (no stack traces, no blank pages), loading skeletons / spinners while charts fetch, explanatory empty states for tickers with no data, descriptive `<title>` per route, and a light / dark / follow-system theme toggle whose choice persists across visits.
+  6. **Carry-forward Phase 7 polish lands here.** Chart x-axis switches from `category` to `time` (ECharts auto-formats date labels, moon overlay aligns at all granularities); explicit Daily / Weekly / Monthly granularity selector for ranges ≥ 3M (with sensible default per range, URL param, header control, loader override).
+**Plans**: TBD — plan-phase will likely wave-split as: (1) alias table + home-page query, (2) home-page UI + per-section bar normalization, (3) v1 retirement + 301 redirects + forecast pipeline drop, (4) `/compare` fix + polish + dark mode + chart-axis / granularity carry-forwards.
+**UI hint**: yes
+**Notes**: This phase absorbed the original Phase 10 (v1 Retirement) and Phase 11 (Polish & Dark Mode) per operator decision 2026-05-01. See `.planning/notes/front-door-design-decisions.md` and `.planning/notes/v1-retirement-pull-forward.md` for the design intent and `.planning/notes/phase-7.5-spike-report.md` for the data grounding (the spike directory name preserves the historical "Phase 7.5" label).
+
+### Phase 9: Sharing
+**Goal**: An angler can share any explorer view (and any home-page filter state) with a fishing buddy by copying the URL, and can pull the underlying numbers into a spreadsheet via CSV export.
+**Depends on**: Phase 6 (URL-state contract is more useful once the explorer is stable); Phase 7 (so the moon toggle round-trips through the URL too); Phase 8 (so home-page filter state can be included in the URL contract from the start, not retrofitted; v1 routes are retired so the URL contract doesn't need to support them).
 **Requirements**: SHR-01, SHR-02
 **Success Criteria** (what must be TRUE):
-  1. An angler can copy the explorer URL, paste it into a text message, and the recipient opens the exact same view — same ticker type, ticker selection, time range, overlays, and moon toggle state.
+  1. An angler can copy the explorer URL, paste it into a text message, and the recipient opens the exact same view — same ticker type, ticker selection, time range, overlays, and moon toggle state. Home-page filter state (window selector, etc.) likewise round-trips through the URL.
   2. An angler can click a "Download CSV" button and get a spreadsheet of the rows currently driving the chart (one row per data point with date, trip type, species, anglers, catch count, per-angler value).
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 9: Email Alerts
+### Phase 10: Email Alerts
 **Goal**: An angler can sign up by email to follow specific boats and/or species, and receive timely email alerts when a followed boat has an unusual day or a followed species starts showing a fleet-wide rising trend.
-**Depends on**: Phase 6 (alert emails should deep-link to the relevant explorer view); Phase 8 (deep-links use the share-URL contract from Phase 8)
+**Depends on**: Phase 6 (alert emails should deep-link to the relevant explorer view); Phase 9 (deep-links use the share-URL contract from Phase 9)
 **Requirements**: ALT-01, ALT-02, ALT-03, ALT-04, ALT-05, ALT-06, ALT-07, ALT-08
 **Success Criteria** (what must be TRUE):
   1. An angler can enter their email on a signup form, pick boats and/or species to follow, click a confirmation link in the resulting email, and start receiving alerts (no account/password required to manage preferences afterward — all done via emailed links).
@@ -86,34 +100,6 @@ Full archive: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md) · [miles
 **Plans**: TBD
 **UI hint**: yes
 **Notes**: Cherry-pick candidate from git tag `phase-4-shipped` (commit fba1207): DAL alert repos, email send wrapper, anti-abuse libs, RFC 8058 lifecycle, scheduler hook, deliverability runbook. The two evaluators (`hotDay`, `startingToRun`) are pure-historical and conceptually compatible with the explorer mental model.
-
-### Phase 10: v1 Retirement
-**Goal**: The codebase no longer carries the v1 trip-picker / forecast / heatmap surfaces or their supporting infrastructure; the explorer is the de-facto front door, and v1 routes either redirect to it or are gone.
-**Depends on**: Phase 6 (don't delete v1 surfaces until the explorer can stand in for them); Phase 7 + Phase 8 + Phase 9 not strictly required, but retirement after them keeps the live site stable through the v2 build-out.
-**Requirements**: RTR-01, RTR-02, RTR-03, RTR-04, RTR-05, RTR-06, RTR-07, RTR-08, RTR-09
-**Success Criteria** (what must be TRUE):
-  1. The picker, forecast layer, and calendar heatmap are gone — `/picker` no longer exists (or redirects to the explorer), `src/routes/picker/`, `src/lib/forecast/`, and the calendar heatmap component are deleted, the `forecasts` table is dropped, and the nightly forecast recompute is removed from the scheduler.
-  2. The v1 `/trends` and `/compare` routes are either retired or redirect to the equivalent explorer view (their use cases are subsumed by the explorer's overlays).
-  3. The 3-file allowlist lint that enforced per-angler trip-type segmentation is removed (no longer applicable per the v2 trust-the-audience principle), and the row-count <50% silent-failure alert is replaced with scraper/parser-failure-only alerting (so off-season zero-row days don't false-positive).
-  4. The `/about` page reads correctly for v2 — no leftover references to picker, forecasts, or heatmaps — and the test suite passes with all v1-only tests for retired features removed.
-**Plans**: TBD
-
-### Phase 11: Polish & Dark Mode
-**Goal**: The explorer feels finished enough to share with a fishing buddy — failures show friendly messages, slow loads show a spinner instead of a blank screen, empty cases are handled, page titles look right when pinned/shared, and an angler can pick light / dark / follow-system theme.
-**Depends on**: Phases 6–10 (polish the surface that exists after retirement)
-**Requirements**: POL-01, POL-02, POL-03, POL-04, POL-05
-**Success Criteria** (what must be TRUE):
-  1. If something breaks on any route, the angler sees a friendly error message — never a stack trace or a blank page.
-  2. While the chart is fetching data, a skeleton or spinner shows so the angler knows something is happening; if the chosen ticker has no data (e.g., a boat that's never been scraped), the angler sees an explanatory empty state instead of a broken chart.
-  3. Each route has a descriptive browser tab title (so a pinned tab or shared link looks right, not a generic "FishCount").
-  4. The angler can toggle between light, dark, and follow-system color themes; the choice persists across visits.
-**Plans**: TBD
-
-**Carry-forward polish from Phase 7 (added 2026-05-01):**
-  - **Chart x-axis: category → time.** Catch chart x-axis is currently a `category` axis using raw bucket keys (`2025-W18`, `2025-MM`), which (a) reads as engineering output rather than a stock-chart-style date axis, and (b) forces moon-overlay sampling at one date per bucket → aliased "wobbly" curve at weekly+ ranges. Switching to a `time` axis fixes both: ECharts auto-formats human-readable date labels, and the moon row can render a true daily-sampled sine across the full date range and still align with the catch chart's bucket positions.
-  - **Granularity selector for ranges ≥ 3M.** Today granularity is auto-derived from range (1M→daily, 3M–1Y→weekly, 2Y+→monthly). Add explicit Daily / Weekly / Monthly buttons (with a sensible default per range) so an angler can override. New URL param, new header control, loader override.
-
-**UI hint**: yes
 
 ## Operator Punch List (carry-forward, not v2 dev work)
 
@@ -131,19 +117,19 @@ These items remain on the operator's plate from v1.0. They are not assigned to a
 | 1. Ingest + Store | v1.0 | 9/9 | Code complete; first-scrape operator-gated | 2026-04-24 |
 | 2. Browse + Trip Picker + Trends | v1.0 | 7/7 | Complete | 2026-04-25 |
 | 3. Forecast Layer | v1.0 | 6/6 | Complete (retired in v2) | 2026-04-26 |
-| 4. Email Alerts | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 9) | — |
-| 5. Polish | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 11) | — |
-| 6. Explorer Foundation | v2 | 0/5 | Planned | — |
-| 7. Moon-phase Overlay | v2 | 0/3 | Planned | — |
-| 8. Sharing | v2 | 0/TBD | Not started | — |
-| 9. Email Alerts | v2 | 0/TBD | Not started | — |
-| 10. v1 Retirement | v2 | 0/TBD | Not started | — |
-| 11. Polish & Dark Mode | v2 | 0/TBD | Not started | — |
+| 4. Email Alerts | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 10) | — |
+| 5. Polish | v1.0 | 0/— | Retired with v1.0 close (carried to v2 Phase 8 — merged into Home/Retire/Polish) | — |
+| 6. Explorer Foundation | v2 | 5/5 | Shipped | 2026-05-01 |
+| 7. Moon-phase Overlay | v2 | 3/3 | Shipped (PR #3) | 2026-05-01 |
+| 8. Home, Retire, Polish | v2 | 0/TBD | Not started — spike complete, awaiting plan-phase | — |
+| 9. Sharing | v2 | 0/TBD | Not started | — |
+| 10. Email Alerts | v2 | 0/TBD | Not started | — |
 
 ---
 
 *Roadmap created: 2026-04-22*
 *v1.0 milestone closed: 2026-04-30*
-*v2 milestone roadmapped: 2026-04-30 — 6 phases (6–11), 41 requirements mapped*
-*Phase 7 planned: 2026-05-01 — 3 plans*
-*Next: `/gsd-execute-phase 7` (Moon-phase Overlay)*
+*v2 milestone roadmapped: 2026-04-30 — originally 6 phases (6–11), 41 requirements mapped*
+*Phase 7 planned: 2026-05-01 — 3 plans, shipped same day via PR #3*
+*v2 restructured: 2026-05-01 — Phase 8 absorbed old Phases 10 + 11; old Phases 8 + 9 renumbered to 9 + 10; v2 now 4 phases (6–10). Spike `001-phase-7.5-data-exploration` grounds Phase 8 scope.*
+*Next: `/gsd:plan-phase 8` (Home, Retire, Polish)*
