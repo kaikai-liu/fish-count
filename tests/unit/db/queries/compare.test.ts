@@ -163,4 +163,30 @@ describe('compare.compareBoats', () => {
 
     expect(results[0]!.avg_per_angler).toBeNull();
   });
+
+  // Phase 8 D-03: passing a canonical trip_type filter folds aliased source_label
+  // rows into the result (e.g. raw 'Full Day Coronado Islands' is included when
+  // tripType='Full Day' because status='aliased' → 'Full Day').
+  it("includes aliased 'Full Day Coronado Islands' rows when filtering tripType='Full Day'", () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Pacific Voyager',
+      landingName: 'H&M Landing'
+    });
+    // Two raw labels — one canonical 'Full Day', one aliased.
+    seedTrip(db, { boatId, landingId, date: '2024-06-10', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-12', tripType: 'Full Day Coronado Islands', species: 'yellowtail', anglers: 15, count: 8 });
+
+    const [result] = compareBoats(db, {
+      boatIds: [boatId],
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      tripType: 'Full Day'
+    });
+
+    expect(result).not.toBeNull();
+    expect(result!.total_trips).toBe(2); // both rows folded in
+    // Weighted: (10 + 8) / (20 + 15) = 18/35
+    expect(result!.avg_per_angler).toBeCloseTo(18 / 35, 3);
+  });
 });
