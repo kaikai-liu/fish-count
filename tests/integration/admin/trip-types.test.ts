@@ -128,7 +128,7 @@ describe('/admin/trip-types — auth gate (T1, T2)', () => {
     const setHeaders = vi.fn();
 
     const mod = await import('../../../src/routes/admin/trip-types/+page.server.js');
-    const result = await mod.load({ cookies, setHeaders } as unknown as Parameters<typeof mod.load>[0]);
+    const result = (await mod.load({ cookies, setHeaders } as unknown as Parameters<typeof mod.load>[0])) as { labels: unknown[] };
     expect(Array.isArray(result.labels)).toBe(true);
     expect(result.labels.length).toBeGreaterThanOrEqual(1);
     expect(setHeaders).toHaveBeenCalledWith({ 'cache-control': 'private, no-store' });
