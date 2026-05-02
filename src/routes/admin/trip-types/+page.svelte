@@ -56,13 +56,13 @@
   </form>
 </header>
 
-{#if form?.success && form?.message}
+{#if form && 'success' in form && form.success && 'message' in form && form.message}
   <p
     role="status"
     class="mb-4 rounded border border-(--color-border) bg-(--color-surface-muted) px-3 py-2 text-sm">
     {form.message}
   </p>
-{:else if form && !form.success && 'error' in form && form.error}
+{:else if form && 'error' in form && form.error}
   <p
     role="alert"
     class="mb-4 rounded border border-(--color-provisional) bg-(--color-provisional-bg) px-3 py-2 text-sm text-(--color-provisional)">

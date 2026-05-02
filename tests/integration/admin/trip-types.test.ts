@@ -45,8 +45,9 @@ vi.mock('../../../src/lib/server/logger', () => ({
   }
 }));
 
-// $app/environment is not mocked — fall through to default (dev=false in tests).
-// SvelteKit fail()/redirect() throw a special-shaped object; tests catch via try/catch.
+// The login server module reads NODE_ENV directly (not `$app/environment`)
+// so vitest can import it without the SvelteKit plugin. SvelteKit fail() /
+// redirect() throw a special-shaped object; tests catch via try/catch.
 
 // ---------------------------------------------------------------------------
 // Test cookies helper — minimal { get, set, delete } shim
