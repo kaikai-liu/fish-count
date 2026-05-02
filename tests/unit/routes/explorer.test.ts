@@ -317,7 +317,9 @@ describe('/explorer +page.server.ts load()', () => {
     expect(result.empty).toBeNull();
     const seriesNames = result.chartOption.series.map((s: { name: string }) => s.name.replace(/ · [\d,]+ trips?$/, ''));
     expect(seriesNames).toContain('1/2 Day AM');
-    expect(seriesNames).toContain('Full Day Coronado Islands');
+    // Phase 8 alias seed maps "Full Day Coronado Islands" → canonical "Full Day"
+    // (D-06) so historical continuity holds across the 2026-04-27 source rename.
+    expect(seriesNames).toContain('Full Day');
     expect(seriesNames).toContain('Overnight');
     // None should be lowercased or normalized
     expect(seriesNames.some((n: string) => n.includes('1/2 day am'))).toBe(false);

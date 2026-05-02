@@ -63,12 +63,20 @@ describe('static-grep retirement guards (Phase 8 RTR-01/02/09)', () => {
   });
 
   it('no recomputeForecasts references survive', () => {
-    const hits = gitGrep('recomputeForecasts');
+    // scheduler.test.ts legitimately mentions the removed symbol in describe/it
+    // strings asserting its absence — that's the regression guard, not a leak.
+    const hits = gitGrep('recomputeForecasts', [
+      ':!tests/integration/scheduler.test.ts'
+    ]);
     expect(hits.trim()).toBe('');
   });
 
   it('no $lib/forecast imports survive', () => {
-    const hits = gitGrep('\\$lib/forecast');
+    // scheduler.test.ts asserts the absence of $lib/forecast imports — its
+    // describe/it text legitimately contains the path string.
+    const hits = gitGrep('\\$lib/forecast', [
+      ':!tests/integration/scheduler.test.ts'
+    ]);
     expect(hits.trim()).toBe('');
   });
 
@@ -76,6 +84,7 @@ describe('static-grep retirement guards (Phase 8 RTR-01/02/09)', () => {
     // forecast/heatmap can legitimately appear in:
     //   - migrations.ts (the DROP TABLE forecasts statement is the canonical retire)
     //   - migration tests (verify the DROP behavior)
+    //   - scheduler.test.ts (asserts the absence of forecast imports)
     //   - historical comment markers in scrapeRuns.ts, scheduler.ts, copy/metrics.ts
     //   - app.css comment marker for the retired heatmap palette
     //   - PerAnglerMetric.svelte / about page comment markers
@@ -86,7 +95,8 @@ describe('static-grep retirement guards (Phase 8 RTR-01/02/09)', () => {
     const hits = gitGrep('import.*forecast|FROM forecasts|INTO forecasts|UPDATE forecasts', [
       ':!src/lib/db/migrations.ts',
       ':!tests/unit/db/migrations.test.ts',
-      ':!tests/unit/db/migrations-aliases.test.ts'
+      ':!tests/unit/db/migrations-aliases.test.ts',
+      ':!tests/integration/scheduler.test.ts'
     ]);
     expect(hits.trim()).toBe('');
   });

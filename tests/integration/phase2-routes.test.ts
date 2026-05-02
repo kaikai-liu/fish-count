@@ -97,39 +97,8 @@ describe('Phase 2 routes — integration smoke (seed-fixture data)', () => {
     vi.restoreAllMocks();
   });
 
-  // ── / (home) ──────────────────────────────────────────────────────────────
-
-  it('/ — load() returns required shape keys', async () => {
-    const { load } = await import('../../src/routes/+page.server');
-    const event = makeEvent('/');
-    const result = await load(event);
-    expect(result).toHaveProperty('rows');
-    expect(result).toHaveProperty('date');
-    expect(result).toHaveProperty('isProvisional');
-    expect(result).toHaveProperty('lastScrapedLabel');
-    expect(result).toHaveProperty('filters');
-    expect(result).toHaveProperty('filterOptions');
-    expect(Array.isArray(result.rows)).toBe(true);
-    expect(result.isProvisional).toBe(true); // today is always provisional
-  });
-
-  it('/ — setHeaders called with cache-control: public, max-age=60', async () => {
-    const { load } = await import('../../src/routes/+page.server');
-    const event = makeEvent('/');
-    await load(event);
-    expect(event.setHeaders).toHaveBeenCalledWith({ 'cache-control': 'public, max-age=60' });
-  });
-
-  it('/ — filterOptions contains tripTypes, landings, speciesList arrays', async () => {
-    const { load } = await import('../../src/routes/+page.server');
-    const event = makeEvent('/');
-    const result = await load(event);
-    expect(Array.isArray(result.filterOptions.tripTypes)).toBe(true);
-    expect(Array.isArray(result.filterOptions.landings)).toBe(true);
-    expect(Array.isArray(result.filterOptions.speciesList)).toBe(true);
-    // Seeded DB should have real data
-    expect(result.filterOptions.tripTypes.length).toBeGreaterThan(0);
-  });
+  // ── / (home) — retired in Phase 8 (08-02 replaced today's-counts with
+  //   "what's been biting"). Phase 8 home is covered by tests/integration/routes/home.test.ts.
 
   // ── /date/[date] ──────────────────────────────────────────────────────────
 
