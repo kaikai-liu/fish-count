@@ -23,11 +23,15 @@ import {
   landingAcrossSpecies,
   speciesBreakdownForBoat,
   countCatchRowsForBoatInRange,
+  countCatchRowsForBoatEver,
+  countCatchRowsForSpeciesEver,
+  countCatchRowsForLandingEver,
   mostCaughtSpeciesForBoatInRange,
   topBoatForSpeciesInRange,
   earliestScrapeDate,
   type SpeciesBreakdownRow
 } from '$lib/db/queries/explorer';
+import { EMPTY_STATES } from '$lib/copy/empty-states';
 import { distinctSpecies } from '$lib/db/queries/browse';
 import { findBySlug, listBoatsByActivity, mostActiveBoatLast30Days } from '$lib/db/boats';
 import { getByName, mostRecentlyActiveLanding } from '$lib/db/landings';
@@ -144,7 +148,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         empty: {
           heading: 'No data yet',
           body: 'No catch data has been scraped yet. Check back after the first scrape run.'
-        }
+        },
+        noHistoryEver: true,
+        pageTitle: 'Boat'
       };
     }
     filters = { ticker: 'boat', slug: defaultBoat.slug, range: '1y', moon: false };
@@ -192,7 +198,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             breakdownRows: null,
             selectorOptions: [],
             lastScrapedLabel,
-            empty: { heading: 'No data yet', body: 'No catch data available.' }
+            empty: { heading: 'No data yet', body: 'No catch data available.' },
+            noHistoryEver: true,
+            pageTitle: 'Boat'
           };
         }
       } else if (rawTicker === 'species') {
@@ -217,7 +225,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             breakdownRows: null,
             selectorOptions: [],
             lastScrapedLabel,
-            empty: { heading: 'No data yet', body: 'No species data available.' }
+            empty: { heading: 'No data yet', body: 'No species data available.' },
+            noHistoryEver: true,
+            pageTitle: 'Species'
           };
         }
         filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
@@ -240,7 +250,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             breakdownRows: null,
             selectorOptions: [],
             lastScrapedLabel,
-            empty: { heading: 'No data yet', body: 'No landing data available.' }
+            empty: { heading: 'No data yet', body: 'No landing data available.' },
+            noHistoryEver: true,
+            pageTitle: 'Landing'
           };
         }
       }
@@ -264,7 +276,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
           empty: {
             heading: 'Invalid filter',
             body: 'The URL parameters were not recognized. Try navigating to /explorer to start fresh.'
-          }
+          },
+          noHistoryEver: true,
+          pageTitle: 'Explorer'
         };
       }
       filters = parseResult;
@@ -374,6 +388,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   let emptyResult: { heading: string; body: string } | null = null;
   let selectionLabel = '';
 
+  // Phase 8 Plan 04 (POL-03 / D-33): track whether the ticker has any history
+  // at all (independent of range). Empty-state copy varies on this signal.
+  let noHistoryEver = false;
+
   if (filters.ticker === 'boat') {
     // Boat selector options (D-09: sorted by activity over 90 days)
     const boats = listBoatsByActivity(db, 90);
@@ -385,6 +403,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         heading: 'Boat not found',
         body: `No boat found with slug "${filters.slug}". It may have been renamed or removed. Try selecting a different boat.`
       };
+      // Unknown slug — treat as "no history at all" for title-bar consistency.
+      noHistoryEver = true;
     } else {
       selectionLabel = boatRow.display_name;
       const rawBuckets = boatExplorerSeries(db, {
@@ -420,10 +440,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       });
 
       if (seriesList.length === 0) {
-        emptyResult = {
-          heading: `No data for ${boatRow.display_name} in this range`,
-          body: `We have no records for ${boatRow.display_name} in the selected window. Try a wider time range, or pick a different boat.`
-        };
+        // Phase 8 Plan 04 (POL-03 / D-33): split copy on whether the boat has
+        // any history EVER (different action: wait vs widen).
+        noHistoryEver = countCatchRowsForBoatEver(db, { boatId: boatRow.id }) === 0;
+        emptyResult = noHistoryEver
+          ? EMPTY_STATES.boatNoHistoryAtAll(boatRow.display_name)
+          : EMPTY_STATES.boatNoHistoryInRange(boatRow.display_name);
       }
     }
   } else if (filters.ticker === 'species') {
@@ -441,10 +463,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     });
 
     if (result.topBoats.length === 0) {
-      emptyResult = {
-        heading: `No data for ${filters.name} in this range`,
-        body: `We have no records for ${filters.name} in the selected window. Try a wider time range, or pick a different species.`
-      };
+      // Phase 8 Plan 04 (POL-03 / D-33).
+      noHistoryEver = countCatchRowsForSpeciesEver(db, { species: filters.name }) === 0;
+      emptyResult = EMPTY_STATES.speciesNoHistoryInRange(filters.name);
     } else {
       // Map bucket data per boat
       const byBoatId = new Map<number, typeof result.series>();
@@ -478,6 +499,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         heading: 'Landing not found',
         body: `No landing found named "${filters.name}". Try selecting a different landing.`
       };
+      noHistoryEver = true;
     } else {
       selectionLabel = landingRow.display_name;
       const result = landingAcrossSpecies(db, {
@@ -489,10 +511,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       });
 
       if (result.topSpecies.length === 0) {
-        emptyResult = {
-          heading: `No data for ${landingRow.display_name} in this range`,
-          body: `We have no records for ${landingRow.display_name} in the selected window. Try a wider time range, or pick a different landing.`
-        };
+        noHistoryEver = countCatchRowsForLandingEver(db, { landingId: landingRow.id }) === 0;
+        emptyResult = EMPTY_STATES.landingNoHistoryInRange(landingRow.display_name);
       } else {
         // Map bucket data per species
         const bySpecies = new Map<string, typeof result.series>();
@@ -524,6 +544,19 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   });
 
   // -------------------------------------------------------------------------
+  // Phase 8 Plan 04 (POL-04 / D-34). Page title: verbatim source label per
+  // ticker (boat display_name, species name, landing display_name). Falls
+  // back to ticker-type label when selection is unresolved (empty branch).
+  // -------------------------------------------------------------------------
+  const pageTitle =
+    selectionLabel ||
+    (filters.ticker === 'boat'
+      ? 'Boat'
+      : filters.ticker === 'species'
+        ? 'Species'
+        : 'Landing');
+
+  // -------------------------------------------------------------------------
   // Step 7: Return empty state if applicable
   // -------------------------------------------------------------------------
   if (emptyResult) {
@@ -549,7 +582,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       breakdownRows: null,
       selectorOptions,
       lastScrapedLabel,
-      empty: emptyResult
+      empty: emptyResult,
+      noHistoryEver,
+      pageTitle
     };
   }
 
@@ -712,6 +747,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     breakdownRows,
     selectorOptions,
     lastScrapedLabel,
-    empty: null
+    empty: null,
+    noHistoryEver,
+    pageTitle
   };
 };

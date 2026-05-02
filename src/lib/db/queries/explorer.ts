@@ -283,6 +283,54 @@ export function countCatchRowsForBoatInRange(
   return row ? 1 : 0;
 }
 
+/**
+ * Phase 8 Plan 04 (POL-03 / D-33): does this boat have ANY catch rows ever?
+ * Used by the empty-state branch to distinguish "no history at all" from
+ * "no history in this range" — the first invites patience, the second
+ * invites widening the range.
+ */
+export function countCatchRowsForBoatEver(
+  db: Database.Database,
+  args: { boatId: number }
+): number {
+  const row = db.prepare(
+    `SELECT 1 AS x FROM catch_reports WHERE boat_id = @boatId LIMIT 1`
+  ).get(args) as { x?: number } | undefined;
+  return row ? 1 : 0;
+}
+
+/**
+ * Phase 8 Plan 04 (POL-03 / D-33): does this species name appear in catch
+ * rows EVER? Returns 1 if any row exists, else 0. Same exists-style probe
+ * for cheapness — we don't need an actual count.
+ */
+export function countCatchRowsForSpeciesEver(
+  db: Database.Database,
+  args: { species: string }
+): number {
+  const row = db.prepare(
+    `SELECT 1 AS x FROM catch_reports WHERE species = @species LIMIT 1`
+  ).get(args) as { x?: number } | undefined;
+  return row ? 1 : 0;
+}
+
+/**
+ * Phase 8 Plan 04 (POL-03 / D-33): does this landing have ANY catch rows
+ * ever? Joined via the boats.landing_id foreign key.
+ */
+export function countCatchRowsForLandingEver(
+  db: Database.Database,
+  args: { landingId: number }
+): number {
+  const row = db.prepare(
+    `SELECT 1 AS x FROM catch_reports cr
+       JOIN boats b ON b.id = cr.boat_id
+      WHERE b.landing_id = @landingId
+      LIMIT 1`
+  ).get(args) as { x?: number } | undefined;
+  return row ? 1 : 0;
+}
+
 // ============ Earliest scrape date (custom range clamp) ============
 
 /**

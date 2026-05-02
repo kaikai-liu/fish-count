@@ -5,7 +5,9 @@
   import ExplorerHeader from '$lib/components/ExplorerHeader.svelte';
   import Chart from '$lib/components/Chart.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
+  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
   import SpeciesBreakdownTable from '$lib/components/SpeciesBreakdownTable.svelte';
+  import { navigating } from '$app/state';
   import { serializeExplorerFilters, type ExplorerFilters } from '$lib/shared/urlState';
   import { FISH_PER_ANGLER_TOOLTIP_UNIT } from '$lib/copy/metrics';
   import { MOON_ROW_ARIA } from '$lib/copy/moon';
@@ -137,7 +139,7 @@
 </script>
 
 <svelte:head>
-  <title>Explorer · FishCount</title>
+  <title>{data.pageTitle ?? 'Explorer'} — FishCount</title>
 </svelte:head>
 
 <PageHeader title="Explorer" lastScrapedLabel={data.lastScrapedLabel} />
@@ -174,7 +176,14 @@
 </ExplorerHeader>
 
 <div class="px-4 md:px-8 py-6 md:py-12 max-w-6xl mx-auto">
-  {#if data.empty}
+  {#if navigating.to}
+    <!-- Phase 8 Plan 04 (POL-02 / D-32). Skeleton during navigation; shape
+         matches the chart so it doesn't reflow when data lands. Typeahead
+         waits use a small spinner, not this skeleton (D-32). -->
+    <section class="mt-4">
+      <LoadingSkeleton variant="chart" height={chartHeight} ariaLabel="Loading chart…" />
+    </section>
+  {:else if data.empty}
     <EmptyState heading={data.empty.heading} body={data.empty.body} />
   {:else if data.chartOption}
     <section class="mt-4">
