@@ -131,12 +131,17 @@ export function serializePickerFilters(filters: PickerFilters): URLSearchParams 
 // boatIds uses getAll() because URLSearchParams repeats the key.
 // ---------------------------------------------------------------------------
 
-export const CompareFiltersSchema = z.object({
-  tripType: z.string().min(1, 'tripType is required'),
-  fromDate: dateField,
-  toDate: dateField,
-  boatIds: z.array(z.coerce.number().int().positive()).min(2).max(3)
-});
+export const CompareFiltersSchema = z
+  .object({
+    tripType: z.string().min(1, 'tripType is required'),
+    fromDate: dateField,
+    toDate: dateField,
+    boatIds: z.array(z.coerce.number().int().positive()).min(2).max(3)
+  })
+  .refine((d) => d.fromDate <= d.toDate, {
+    message: 'fromDate must be on or before toDate',
+    path: ['fromDate']
+  });
 
 export type CompareFilters = z.infer<typeof CompareFiltersSchema>;
 

@@ -267,6 +267,29 @@ describe('urlState.parseCompareFilters', () => {
       expect(parsed.boatIds).toEqual(original.boatIds);
     }
   });
+
+  // WR-02: reversed date range must be rejected at the URL boundary.
+  it('WR-02: returns {error} when fromDate > toDate (reversed range)', () => {
+    const sp = toSp({
+      tripType: 'Full Day',
+      fromDate: '2024-06-30',
+      toDate: '2024-06-01',
+      boatIds: ['1', '2']
+    });
+    const result = parseCompareFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('WR-02: accepts fromDate === toDate (same-day range is valid)', () => {
+    const sp = toSp({
+      tripType: 'Full Day',
+      fromDate: '2024-06-15',
+      toDate: '2024-06-15',
+      boatIds: ['1', '2']
+    });
+    const result = parseCompareFilters(sp);
+    expect('error' in result).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
