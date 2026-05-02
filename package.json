@@ -14,7 +14,6 @@
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
     "backfill": "tsx scripts/backfill.ts",
-    "forecasts:rebuild": "tsx scripts/forecasts-rebuild.ts",
     "seed:dev": "tsx scripts/seed-dev-db.ts"
   },
   "devDependencies": {

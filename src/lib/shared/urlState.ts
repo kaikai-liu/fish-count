@@ -30,33 +30,6 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const dateField = z.string().regex(dateRegex, 'Must be YYYY-MM-DD');
 
 // ---------------------------------------------------------------------------
-// Home filters ( / )
-// All fields optional — no required filters on the home page.
-// ---------------------------------------------------------------------------
-
-export const HomeFiltersSchema = z.object({
-  tripType: z.string().optional(),
-  landing: z.string().optional(),
-  species: z.string().optional()
-});
-
-export type HomeFilters = z.infer<typeof HomeFiltersSchema>;
-
-export function parseHomeFilters(sp: URLSearchParams): HomeFilters | { error: ZodError } {
-  const result = HomeFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
-  if (!result.success) return { error: result.error };
-  return result.data;
-}
-
-export function serializeHomeFilters(filters: HomeFilters): URLSearchParams {
-  const sp = new URLSearchParams();
-  if (filters.tripType) sp.set('tripType', filters.tripType);
-  if (filters.landing) sp.set('landing', filters.landing);
-  if (filters.species) sp.set('species', filters.species);
-  return sp;
-}
-
-// ---------------------------------------------------------------------------
 // Date-view filters ( /date/[YYYY-MM-DD] )
 // The date itself is the route param; optional filter-bar filters.
 // ---------------------------------------------------------------------------
@@ -80,48 +53,6 @@ export function serializeDateFilters(filters: DateFilters): URLSearchParams {
   if (filters.tripType) sp.set('tripType', filters.tripType);
   if (filters.landing) sp.set('landing', filters.landing);
   if (filters.species) sp.set('species', filters.species);
-  return sp;
-}
-
-// ---------------------------------------------------------------------------
-// Picker filters ( /picker )
-// Required: date (or fromDate+toDate in range mode), species, tripType.
-// windowDays: default 3, clamped [0, 14] (D-11, T-02-03).
-// ---------------------------------------------------------------------------
-
-// String "false" coerces to boolean true under z.coerce.boolean — must parse
-// the literal "true"/"false" strings produced by serializePickerFilters.
-const boolStringField = z
-  .enum(['true', 'false'])
-  .transform((s) => s === 'true');
-
-export const PickerFiltersSchema = z.object({
-  date: dateField,
-  species: z.string().min(1, 'species is required'),
-  tripType: z.string().min(1, 'tripType is required'),
-  windowDays: z.coerce.number().int().min(0).max(14).default(3),
-  rangeMode: boolStringField.default('false'),
-  fromDate: dateField.optional(),
-  toDate: dateField.optional()
-});
-
-export type PickerFilters = z.infer<typeof PickerFiltersSchema>;
-
-export function parsePickerFilters(sp: URLSearchParams): PickerFilters | { error: ZodError } {
-  const result = PickerFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
-  if (!result.success) return { error: result.error };
-  return result.data;
-}
-
-export function serializePickerFilters(filters: PickerFilters): URLSearchParams {
-  const sp = new URLSearchParams();
-  sp.set('date', filters.date);
-  sp.set('species', filters.species);
-  sp.set('tripType', filters.tripType);
-  sp.set('windowDays', String(filters.windowDays));
-  sp.set('rangeMode', String(filters.rangeMode));
-  if (filters.fromDate) sp.set('fromDate', filters.fromDate);
-  if (filters.toDate) sp.set('toDate', filters.toDate);
   return sp;
 }
 
@@ -174,38 +105,6 @@ export function serializeCompareFilters(filters: CompareFilters): URLSearchParam
 }
 
 // ---------------------------------------------------------------------------
-// Trends filters ( /trends )
-// Required: species, tripType.
-// Optional: boatId (single boat overlay), range, granularity.
-// ---------------------------------------------------------------------------
-
-export const TrendsFiltersSchema = z.object({
-  species: z.string().min(1, 'species is required'),
-  tripType: z.string().min(1, 'tripType is required'),
-  boatId: z.coerce.number().int().positive().optional(),
-  range: z.enum(['3mo', '6mo', '1y', 'all']).default('1y'),
-  granularity: z.enum(['weekly', 'monthly']).optional()
-});
-
-export type TrendsFilters = z.infer<typeof TrendsFiltersSchema>;
-
-export function parseTrendsFilters(sp: URLSearchParams): TrendsFilters | { error: ZodError } {
-  const result = TrendsFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
-  if (!result.success) return { error: result.error };
-  return result.data;
-}
-
-export function serializeTrendsFilters(filters: TrendsFilters): URLSearchParams {
-  const sp = new URLSearchParams();
-  sp.set('species', filters.species);
-  sp.set('tripType', filters.tripType);
-  if (filters.boatId !== undefined) sp.set('boatId', String(filters.boatId));
-  sp.set('range', filters.range);
-  if (filters.granularity) sp.set('granularity', filters.granularity);
-  return sp;
-}
-
-// ---------------------------------------------------------------------------
 // Explorer filters ( /explorer )
 // Phase 6: D-12 (boat → slug), D-14 (species/landing → plain name), D-19 (custom range).
 // Trust boundary: URLSearchParams is fully untrusted client input (T-06-07..T-06-13).
@@ -242,9 +141,8 @@ const TickerVariant = z.discriminatedUnion('ticker', [
 ]);
 
 // boolFlagField — accepts URL-style boolean flags `1|0|true|false`. Used by Phase 7
-// `moon` field on ExplorerFiltersSchema. Distinct from boolStringField (which only
-// accepts `true|false`) because UI-SPEC §URL State Contract requires `?moon=1`
-// shorthand to be valid in addition to `?moon=true`.
+// `moon` field on ExplorerFiltersSchema. UI-SPEC §URL State Contract requires
+// the `?moon=1` shorthand to be valid in addition to `?moon=true`.
 //
 // Note: `.default('false')` is applied BEFORE `.transform()` so that the default
 // value flows through the transform (yielding `false`). Putting `.default()`

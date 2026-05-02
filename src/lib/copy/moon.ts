@@ -4,9 +4,9 @@
 // Strings are locked verbatim by .planning/phases/07-moon-phase-overlay/07-UI-SPEC.md
 // §Copywriting Contract — do NOT paraphrase.
 //
-// Why a separate file (not an extension of src/lib/copy/metrics.ts): metrics.ts is
-// allowlisted by the per-angler-discipline lint and should stay scoped to per-angler
-// copy. A separate moon.ts keeps both modules' purposes legible.
+// Why a separate file (not an extension of src/lib/copy/metrics.ts): metrics.ts
+// is scoped to per-angler copy; moon.ts is scoped to the moon overlay. Keeping
+// each module purpose-narrow makes the codebase easier to scan.
 
 /** MoonToggle visible button label.
  *  Punchy fit for the range-strip rhythm — UI-SPEC §Copywriting Contract rationale:

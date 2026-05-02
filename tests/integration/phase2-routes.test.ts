@@ -10,8 +10,9 @@
 //   - vi.resetModules() in beforeAll so the DB singleton rebinds
 //   - closeDb() in afterAll
 //
-// Tested routes (all Phase 2 data-showing pages):
-//   / (home)   /date/[d]   /picker   /boats/[id]   /compare   /trends   /about
+// Tested routes (Phase 2 data-showing pages still surviving after Phase 8 Plan 03 retirement):
+//   / (home)   /date/[d]   /boats/[id]   /compare   /about
+// Retired in Phase 8 Plan 03 (D-22): /picker, /trends.
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -159,55 +160,6 @@ describe('Phase 2 routes — integration smoke (seed-fixture data)', () => {
     expect(event.setHeaders).toHaveBeenCalledWith({ 'cache-control': 'public, max-age=86400' });
   });
 
-  // ── /picker ───────────────────────────────────────────────────────────────
-
-  it('/picker — without filters returns guidance (no rankings)', async () => {
-    const { load } = await import('../../src/routes/picker/+page.server');
-    const event = makeEvent('/picker');
-    const result = await load(event);
-    expect(result.guidance).toBeTruthy();
-    expect(result.rankings).toBeNull();
-    expect(result.heatmap).toBeNull();
-  });
-
-  it('/picker — with valid species + tripType + date returns rankings + 30-cell heatmap', async () => {
-    const { load } = await import('../../src/routes/picker/+page.server');
-    const params = new URLSearchParams({
-      date: KNOWN_PAST_DATE,
-      species: firstSpecies,
-      tripType: firstTripType,
-      windowDays: '7' // capped at 14 by Zod schema
-    });
-    const event = makeEvent('/picker', params.toString());
-    const result = await load(event);
-    expect(result.rankings).not.toBeNull();
-    expect(Array.isArray(result.rankings)).toBe(true);
-    expect(result.heatmap).not.toBeNull();
-    expect(result.heatmap?.length).toBe(30); // D-13: always 30 cells
-    expect(result.rankings!.length).toBeGreaterThan(0);
-  });
-
-  it('/picker — rankings sorted by avg_per_angler desc (or null last)', async () => {
-    const { load } = await import('../../src/routes/picker/+page.server');
-    const params = new URLSearchParams({
-      date: KNOWN_PAST_DATE,
-      species: firstSpecies,
-      tripType: firstTripType,
-      windowDays: '7'
-    });
-    const event = makeEvent('/picker', params.toString());
-    const result = await load(event);
-    const rankings = result.rankings ?? [];
-    if (rankings.length >= 2) {
-      // Non-null values should be in descending order
-      const nonNull = rankings
-        .map((r: any) => r.avg_per_angler)
-        .filter((v: any) => v !== null);
-      for (let i = 0; i < nonNull.length - 1; i++) {
-        expect(nonNull[i]).toBeGreaterThanOrEqual(nonNull[i + 1]);
-      }
-    }
-  });
 
   // ── /boats/[id] ───────────────────────────────────────────────────────────
 
@@ -263,55 +215,6 @@ describe('Phase 2 routes — integration smoke (seed-fixture data)', () => {
     expect(Array.isArray(result.rows)).toBe(true);
     expect(result.chartOption).not.toBeNull();
     expect(Array.isArray(result.chartOption?.series)).toBe(true);
-  });
-
-  // ── /trends ───────────────────────────────────────────────────────────────
-
-  it('/trends — without filters returns guidance', async () => {
-    const { load } = await import('../../src/routes/trends/+page.server');
-    const event = makeEvent('/trends');
-    const result = await load(event);
-    expect(result.guidance).toBeTruthy();
-    expect(result.chartOption).toBeNull();
-  });
-
-  it('/trends — with species + tripType + range covering seed returns chartOption with bucket data', async () => {
-    // The seed runs 2024-01-01 → 2024-04-01. /trends defaults its date window
-    // off today() (rangeToDates uses today() − range), so range=1y from a
-    // current system date will not overlap the seed. Use range='all' (10-year
-    // sentinel per T-02-31) to guarantee the seeded 2024 data is in window.
-    const { load } = await import('../../src/routes/trends/+page.server');
-    const params = new URLSearchParams({
-      species: firstSpecies,
-      tripType: firstTripType,
-      range: 'all'
-    });
-    const event = makeEvent('/trends', params.toString());
-    const result = await load(event);
-    expect(result.guidance).toBeNull();
-    expect(result.noData).toBe(false);
-    expect(result.chartOption).not.toBeNull();
-    expect(Array.isArray(result.chartOption?.series)).toBe(true);
-    expect(result.chartOption?.series?.length).toBeGreaterThan(0);
-    // The xAxis data should have bucket keys
-    expect(Array.isArray(result.chartOption?.xAxis?.data)).toBe(true);
-    expect((result.chartOption?.xAxis?.data as any[]).length).toBeGreaterThan(0);
-  });
-
-  it('/trends — with species + tripType but query window outside seed → noData branch', async () => {
-    // Inverse of the above: range='1y' from today() does NOT overlap 2024 seed,
-    // so the loader takes its noData branch and returns chartOption: null.
-    const { load } = await import('../../src/routes/trends/+page.server');
-    const params = new URLSearchParams({
-      species: firstSpecies,
-      tripType: firstTripType,
-      range: '1y'
-    });
-    const event = makeEvent('/trends', params.toString());
-    const result = await load(event);
-    expect(result.guidance).toBeNull();
-    expect(result.noData).toBe(true);
-    expect(result.chartOption).toBeNull();
   });
 
   // ── /about ────────────────────────────────────────────────────────────────
