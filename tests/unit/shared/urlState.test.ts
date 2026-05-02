@@ -185,6 +185,73 @@ describe('urlState.parsePickerFilters', () => {
       expect(result.rangeMode).toBe(true);
     }
   });
+
+  // IN-03: rangeMode=true without fromDate+toDate must be rejected.
+  it('IN-03: returns {error} when rangeMode=true but fromDate is absent', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'true',
+      toDate: '2024-07-10'
+      // fromDate intentionally missing
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('IN-03: returns {error} when rangeMode=true but toDate is absent', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'true',
+      fromDate: '2024-07-01'
+      // toDate intentionally missing
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('IN-03: returns {error} when rangeMode=true but both fromDate and toDate are absent', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'true'
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(true);
+  });
+
+  it('IN-03: happy path — rangeMode=true with both fromDate and toDate passes', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'true',
+      fromDate: '2024-07-01',
+      toDate: '2024-07-10'
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.rangeMode).toBe(true);
+      expect(result.fromDate).toBe('2024-07-01');
+      expect(result.toDate).toBe('2024-07-10');
+    }
+  });
+
+  it('IN-03: rangeMode=false without fromDate/toDate still passes (single-date mode)', () => {
+    const sp = toSp({
+      date: '2024-07-04',
+      tripType: '1/2 Day AM',
+      species: 'yellowtail',
+      rangeMode: 'false'
+    });
+    const result = parsePickerFilters(sp);
+    expect('error' in result).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

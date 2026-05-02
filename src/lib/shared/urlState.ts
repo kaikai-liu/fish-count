@@ -95,15 +95,19 @@ const boolStringField = z
   .enum(['true', 'false'])
   .transform((s) => s === 'true');
 
-export const PickerFiltersSchema = z.object({
-  date: dateField,
-  species: z.string().min(1, 'species is required'),
-  tripType: z.string().min(1, 'tripType is required'),
-  windowDays: z.coerce.number().int().min(0).max(14).default(3),
-  rangeMode: boolStringField.default('false'),
-  fromDate: dateField.optional(),
-  toDate: dateField.optional()
-});
+export const PickerFiltersSchema = z
+  .object({
+    date: dateField,
+    species: z.string().min(1, 'species is required'),
+    tripType: z.string().min(1, 'tripType is required'),
+    windowDays: z.coerce.number().int().min(0).max(14).default(3),
+    rangeMode: boolStringField.default(false),
+    fromDate: dateField.optional(),
+    toDate: dateField.optional()
+  })
+  .refine((d) => !d.rangeMode || (d.fromDate && d.toDate), {
+    message: 'rangeMode requires both fromDate and toDate'
+  });
 
 export type PickerFilters = z.infer<typeof PickerFiltersSchema>;
 
