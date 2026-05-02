@@ -19,7 +19,7 @@ import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, addDays } from '$lib/shared/dates';
 import { parseCompareFilters, type CompareFilters } from '$lib/shared/urlState';
 import { FISH_PER_ANGLER_AXIS } from '$lib/copy/metrics';
-import { eachWeekOfInterval, format } from 'date-fns';
+import { eachWeekOfInterval, format, parseISO } from 'date-fns';
 
 export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const db = getDb();
@@ -78,8 +78,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
 
   // Build aligned weekly bucket axis.
   // date-fns eachWeekOfInterval produces weeks starting Monday (ISO).
-  const fromDateObj = new Date(filters.fromDate + 'T00:00:00Z');
-  const toDateObj = new Date(filters.toDate + 'T00:00:00Z');
+  // parseISO produces local-midnight Date objects, matching date-fns local-time semantics.
+  // new Date(str+'T00:00:00Z') would be UTC midnight = 16:00 PST, causing eachWeekOfInterval
+  // to back up one week when fromDate falls on a Monday (WR-01).
+  const fromDateObj = parseISO(filters.fromDate);
+  const toDateObj = parseISO(filters.toDate);
   const expectedBuckets = eachWeekOfInterval(
     { start: fromDateObj, end: toDateObj },
     { weekStartsOn: 1 }

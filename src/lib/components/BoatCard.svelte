@@ -76,7 +76,7 @@
         <li>Weighted average: <PerAnglerMetric value={boat.avg_per_angler} nTrips={boat.n_trips} ctx="row" /></li>
         <li>Last trip in window: <span class="tabular-nums">{boat.last_trip_date ?? '—'}</span></li>
         {#if why.bestDay}
-          <li>Best day in window: <span class="tabular-nums">{why.bestDay.date}</span> · {why.bestDay.value.toFixed(1)} {BEST_DAY_UNIT}</li>
+          <li>Window average: {why.bestDay.value.toFixed(1)} {BEST_DAY_UNIT}</li>
         {/if}
       </ul>
       <p class="mt-2">

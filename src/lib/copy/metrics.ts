@@ -25,7 +25,7 @@ export const FISH_PER_ANGLER_TOOLTIP_UNIT = 'fish/angler';
 /** Heading on /compare's multi-series weekly chart section. */
 export const WEEKLY_FISH_PER_ANGLER_HEADING = 'Weekly fish/angler comparison';
 
-/** Unit suffix for the "Best day in window" line inside BoatCard's why-panel. */
+/** Unit suffix for the "Window average" line inside BoatCard's why-panel. */
 export const BEST_DAY_UNIT = 'fish/angler';
 
 /** Heatmap visualMap legend "high" label (paired with "low"). */

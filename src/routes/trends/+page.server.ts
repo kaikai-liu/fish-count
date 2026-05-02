@@ -18,7 +18,7 @@ import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, addDays } from '$lib/shared/dates';
 import { parseTrendsFilters, type TrendsFilters } from '$lib/shared/urlState';
 import { FISH_PER_ANGLER_AXIS } from '$lib/copy/metrics';
-import { eachWeekOfInterval, eachMonthOfInterval, format } from 'date-fns';
+import { eachWeekOfInterval, eachMonthOfInterval, format, parseISO } from 'date-fns';
 
 /**
  * Map the time-range preset to a concrete date window.
@@ -100,8 +100,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
 
   // D-27 gap-fill: enumerate every expected bucket key, align with DB results,
   // insert null for missing buckets so the line renders as a gap (not zero).
-  const fromDateObj = new Date(fromDate + 'T00:00:00Z');
-  const toDateObj = new Date(toDate + 'T00:00:00Z');
+  // parseISO produces local-midnight Date objects, matching date-fns local-time semantics.
+  // new Date(str+'T00:00:00Z') would be UTC midnight = 16:00 PST, causing eachWeekOfInterval
+  // to back up one week when fromDate falls on a Monday (WR-01).
+  const fromDateObj = parseISO(fromDate);
+  const toDateObj = parseISO(toDate);
 
   const expectedKeys: string[] =
     granularity === 'weekly'
