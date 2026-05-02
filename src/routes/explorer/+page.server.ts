@@ -178,6 +178,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     // validation runs in the parseExplorerFilters branch below.
     const rawMoonStr = url.searchParams.get('moon');
     const rawMoon = rawMoonStr === '1' || rawMoonStr === 'true';
+    // Phase 8 Plan 04 (GRN-01): preserve granularity through cross-axis
+    // default resolution. Loose check (matching the moon flag pattern).
+    const rawGranStr = url.searchParams.get('granularity');
+    const rawGranularity: Granularity | undefined =
+      rawGranStr === 'daily' || rawGranStr === 'weekly' || rawGranStr === 'monthly'
+        ? rawGranStr
+        : undefined;
 
     // Cross-axis default resolution (D-08): if ticker is present but identifier is absent
     if (
@@ -192,7 +199,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       if (rawTicker === 'boat') {
         const defaultBoat = mostActiveBoatLast30Days(db);
         if (defaultBoat) {
-          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
+          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
@@ -245,12 +252,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             bucketStartIsos: [] as string[]
           };
         }
-        filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
+        filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
       } else {
         // landing ticker
         const defaultLanding = mostRecentlyActiveLanding(db);
         if (defaultLanding) {
-          filters = { ticker: 'landing', name: defaultLanding.display_name, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
+          filters = { ticker: 'landing', name: defaultLanding.display_name, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {

@@ -54,8 +54,11 @@
   function onTickerChange(next: ExplorerFilters['ticker']) {
     // D-08: ticker switch — range stays, selection resolves cross-axis default loader-side.
     // Phase 7 (MOON-01): preserve moon flag across ticker switch.
+    // Phase 8 Plan 04 (GRN-01): also preserve a non-default granularity.
     const moonParam = filters.moon ? '&moon=1' : '';
-    goto(`/explorer?ticker=${next}&range=${formRange}${moonParam}`, { keepFocus: true, replaceState: true, noScroll: true });
+    const gran = preservedGranularity();
+    const granParam = gran ? `&granularity=${gran}` : '';
+    goto(`/explorer?ticker=${next}&range=${formRange}${moonParam}${granParam}`, { keepFocus: true, replaceState: true, noScroll: true });
   }
 
   function onRangeChange(next: ExplorerFilters['range']) {
