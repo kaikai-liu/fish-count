@@ -8,6 +8,8 @@
 // Sources:
 //   .planning/phases/06-explorer-foundation/06-CONTEXT.md §D-01, D-03, D-08, D-15, D-20
 //   .planning/phases/06-explorer-foundation/06-RESEARCH.md §"Pitfall 9: Top-6 cap"
+//   .planning/phases/08-home-retire-polish/08-CONTEXT.md §D-03 (alias-aware grouping)
+//   .planning/phases/08-home-retire-polish/08-RESEARCH.md §Pattern 1, §Pitfall 1
 //
 // Key contracts:
 //   - All queries parameterized (named @param or positional ?); no string interpolation of user input
@@ -15,18 +17,24 @@
 //     Pass 1: window-total ORDER BY total DESC LIMIT N → select the top-N entities
 //     Pass 2: bucketed series restricted to those N entity IDs via IN (?,?,?,...) — bounded
 //   - boatExplorerSeries returns (bucket_key, trip_type) pairs for trip-type overlay (D-15)
+//   - Phase 8 D-03: every query that surfaces or groups by trip_type joins via
+//     ALIAS_JOIN_SQL and groups by CANONICAL_TRIP_TYPE_EXPR. NEVER `GROUP BY cr.trip_type`
+//     directly (Phase 8 RESEARCH §Pitfall 1) — the merged-history canonical is the truth.
 //   - Gap-filling (null-value buckets between present ones) is the route loader's responsibility
 import type Database from 'better-sqlite3';
 import type { BoatRow } from '$lib/db/boats';
+import { ALIAS_JOIN_SQL, CANONICAL_TRIP_TYPE_EXPR } from '$lib/db/aliases';
 
 export type Granularity = 'daily' | 'weekly' | 'monthly';
 
 function bucketExpr(g: Granularity): string {
+  // Note: prefixed with `cr.` because the alias-aware queries qualify
+  // catch_reports as `cr` for the LEFT JOIN trip_type_aliases tta.
   return g === 'daily'
-    ? "strftime('%Y-%m-%d', source_date)"
+    ? "strftime('%Y-%m-%d', cr.source_date)"
     : g === 'weekly'
-      ? "strftime('%G-W%V', source_date)"
-      : "strftime('%Y-%m', source_date)";
+      ? "strftime('%G-W%V', cr.source_date)"
+      : "strftime('%Y-%m', cr.source_date)";
 }
 
 // ============ Boat ticker — series-by-trip-type ============
@@ -49,18 +57,23 @@ export interface BoatExplorerBucket {
  * D-15 (boat ticker): Bucketed per-angler yield grouped by (bucket_key, trip_type).
  * One series per trip type the boat ran in the window — e.g. "1/2 Day AM", "Full Day".
  * Trip-type labels rendered verbatim from DB (CLAUDE.md domain-language rule).
+ *
+ * Phase 8 D-03 / Pitfall 1: trip_type is the canonical-merged label (e.g. raw
+ * 'Full Day Coronado Islands' surfaces as 'Full Day' when status='aliased').
+ * NEVER GROUP BY cr.trip_type directly — always the canonical expression.
  */
 export function boatExplorerSeries(db: Database.Database, args: BoatExplorerArgs): BoatExplorerBucket[] {
   const expr = bucketExpr(args.granularity);
   return db.prepare(
     `SELECT ${expr} AS bucket_key,
-            trip_type,
-            SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) AS value,
-            COUNT(DISTINCT source_date) AS n_trips
-       FROM catch_reports
-      WHERE boat_id = @boatId
-        AND source_date BETWEEN @fromDate AND @toDate
-      GROUP BY bucket_key, trip_type
+            ${CANONICAL_TRIP_TYPE_EXPR} AS trip_type,
+            SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
+            COUNT(DISTINCT cr.source_date) AS n_trips
+       FROM catch_reports cr
+       ${ALIAS_JOIN_SQL}
+      WHERE cr.boat_id = @boatId
+        AND cr.source_date BETWEEN @fromDate AND @toDate
+      GROUP BY bucket_key, ${CANONICAL_TRIP_TYPE_EXPR}
       ORDER BY bucket_key ASC, trip_type ASC`
   ).all(args) as BoatExplorerBucket[];
 }
@@ -95,6 +108,11 @@ export interface SpeciesAcrossBoatsResult {
  * Pass 2: Bucketed series restricted to those N boat IDs via IN (?,?,?,...).
  *
  * T-06-17 (DoS): topN default 6 caps result-set size; second pass is bounded by 6 IDs.
+ *
+ * Phase 8 D-03: this query does not group by trip_type (so no CANONICAL_TRIP_TYPE_EXPR
+ * needed) but the ALIAS_JOIN_SQL is included for symmetry — the LEFT JOIN against
+ * trip_type_aliases is a no-op on row count (source_label is PRIMARY KEY, 1:1 with
+ * catch_reports.trip_type) and keeps the file pattern uniform.
  */
 export function speciesAcrossBoats(db: Database.Database, args: SpeciesAcrossBoatsArgs): SpeciesAcrossBoatsResult {
   const topN = args.topN ?? 6;
@@ -103,6 +121,7 @@ export function speciesAcrossBoats(db: Database.Database, args: SpeciesAcrossBoa
   const topRows = db.prepare(
     `SELECT b.id, b.display_name, b.slug, SUM(cr.species_count) AS total
        FROM catch_reports cr
+       ${ALIAS_JOIN_SQL}
        JOIN boats b ON b.id = cr.boat_id
       WHERE cr.species = @species
         AND cr.source_date BETWEEN @fromDate AND @toDate
@@ -123,15 +142,16 @@ export function speciesAcrossBoats(db: Database.Database, args: SpeciesAcrossBoa
   const placeholders = ids.map(() => '?').join(',');
   const expr = bucketExpr(args.granularity);
   const series = db.prepare(
-    `SELECT boat_id, ${expr} AS bucket_key,
-            SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) AS value,
-            COUNT(DISTINCT source_date) AS n_trips
-       FROM catch_reports
-      WHERE species = ?
-        AND source_date BETWEEN ? AND ?
-        AND boat_id IN (${placeholders})
-      GROUP BY boat_id, bucket_key
-      ORDER BY bucket_key ASC, boat_id ASC`
+    `SELECT cr.boat_id, ${expr} AS bucket_key,
+            SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
+            COUNT(DISTINCT cr.source_date) AS n_trips
+       FROM catch_reports cr
+       ${ALIAS_JOIN_SQL}
+      WHERE cr.species = ?
+        AND cr.source_date BETWEEN ? AND ?
+        AND cr.boat_id IN (${placeholders})
+      GROUP BY cr.boat_id, bucket_key
+      ORDER BY bucket_key ASC, cr.boat_id ASC`
   ).all(args.species, args.fromDate, args.toDate, ...ids) as SpeciesAcrossBoatsBucket[];
 
   return {
@@ -169,17 +189,22 @@ export interface LandingAcrossSpeciesResult {
  * Pass 2: Bucketed series restricted to those species via IN (?,?,?,...).
  *
  * Species names returned verbatim from DB — no normalization (CLAUDE.md rule).
+ *
+ * Phase 8 D-03: this query does not group by trip_type (so no CANONICAL_TRIP_TYPE_EXPR
+ * needed) but the ALIAS_JOIN_SQL is included for symmetry with the rest of this file's
+ * alias-aware queries (no-op on row count — source_label is PRIMARY KEY).
  */
 export function landingAcrossSpecies(db: Database.Database, args: LandingAcrossSpeciesArgs): LandingAcrossSpeciesResult {
   const topN = args.topN ?? 6;
 
   const topRows = db.prepare(
-    `SELECT species, SUM(species_count) AS total
-       FROM catch_reports
-      WHERE landing_id = @landingId
-        AND source_date BETWEEN @fromDate AND @toDate
-      GROUP BY species
-      ORDER BY total DESC, species ASC
+    `SELECT cr.species, SUM(cr.species_count) AS total
+       FROM catch_reports cr
+       ${ALIAS_JOIN_SQL}
+      WHERE cr.landing_id = @landingId
+        AND cr.source_date BETWEEN @fromDate AND @toDate
+      GROUP BY cr.species
+      ORDER BY total DESC, cr.species ASC
       LIMIT @topN`
   ).all({ landingId: args.landingId, fromDate: args.fromDate, toDate: args.toDate, topN }) as Array<{
     species: string;
@@ -192,15 +217,16 @@ export function landingAcrossSpecies(db: Database.Database, args: LandingAcrossS
   const placeholders = speciesList.map(() => '?').join(',');
   const expr = bucketExpr(args.granularity);
   const series = db.prepare(
-    `SELECT species, ${expr} AS bucket_key,
-            SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) AS value,
-            COUNT(DISTINCT source_date) AS n_trips
-       FROM catch_reports
-      WHERE landing_id = ?
-        AND source_date BETWEEN ? AND ?
-        AND species IN (${placeholders})
-      GROUP BY species, bucket_key
-      ORDER BY bucket_key ASC, species ASC`
+    `SELECT cr.species, ${expr} AS bucket_key,
+            SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
+            COUNT(DISTINCT cr.source_date) AS n_trips
+       FROM catch_reports cr
+       ${ALIAS_JOIN_SQL}
+      WHERE cr.landing_id = ?
+        AND cr.source_date BETWEEN ? AND ?
+        AND cr.species IN (${placeholders})
+      GROUP BY cr.species, bucket_key
+      ORDER BY bucket_key ASC, cr.species ASC`
   ).all(args.landingId, args.fromDate, args.toDate, ...speciesList) as LandingAcrossSpeciesBucket[];
 
   return { topSpecies: speciesList, series };

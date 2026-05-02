@@ -301,3 +301,55 @@ describe('trends daily granularity (Phase 6 extension)', () => {
     expect(buckets[0].bucket_key).toMatch(/^\d{4}-W\d{2}$/);
   });
 });
+
+// Phase 8 D-03: aliased trip_type rows fold into the canonical when filtered.
+describe('trends — alias-aware trip_type filter (Phase 8 D-03)', () => {
+  let db: Database.Database | null = null;
+  afterEach(() => {
+    if (db) { db.close(); db = null; }
+  });
+
+  it("speciesTrend folds 'Full Day Coronado Islands' into 'Full Day' filter results", () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Pacific Voyager',
+      landingName: 'H&M Landing'
+    });
+    seedTrip(db, { boatId, landingId, date: '2024-06-10', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-15', tripType: 'Full Day Coronado Islands', species: 'yellowtail', anglers: 15, count: 8 });
+
+    const buckets = speciesTrend(db, {
+      species: 'yellowtail',
+      tripType: 'Full Day',
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'monthly'
+    });
+
+    expect(buckets.length).toBe(1);
+    expect(buckets[0].n_trips).toBe(2); // both rows folded in
+    expect(buckets[0].value).toBeCloseTo(18 / 35, 3);
+  });
+
+  it("boatTrend (all-species) folds aliased rows into the canonical 'Full Day' filter", () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, {
+      boatName: 'Pacific Voyager',
+      landingName: 'H&M Landing'
+    });
+    seedTrip(db, { boatId, landingId, date: '2024-06-10', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-15', tripType: 'Full Day Coronado Islands', species: 'yellowtail', anglers: 15, count: 8 });
+
+    const buckets = boatTrend(db, {
+      boatId,
+      tripType: 'Full Day',
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'monthly'
+    });
+
+    expect(buckets.length).toBe(1);
+    expect(buckets[0].n_trips).toBe(2);
+    expect(buckets[0].value).toBeCloseTo(18 / 35, 3);
+  });
+});

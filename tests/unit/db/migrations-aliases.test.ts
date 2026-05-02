@@ -71,7 +71,7 @@ describe('migrations — alias table CREATE+seed (Phase 8 ALI-01, ALI-05)', () =
   it('enforces the status enum CHECK constraint', () => {
     db = openTestDb();
     expect(() =>
-      db
+      db!
         .prepare(
           `INSERT INTO trip_type_aliases (source_label, canonical_label, status)
            VALUES (?, ?, ?)`
