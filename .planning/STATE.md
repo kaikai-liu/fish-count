@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: "Phase 07 shipped — PR #3"
 stopped_at: Phase 7 UI-SPEC approved
-last_updated: "2026-05-01T23:30:00.000Z"
-last_activity: "2026-05-01 -- spike 001 (phase-7.5 data exploration) complete; v2 restructured: Phase 8 absorbs old 10+11; old 8/9 renumbered to 9/10; backfill +6mo of history (22,305 rows total)"
+last_updated: "2026-05-02T04:15:00.000Z"
+last_activity: "2026-05-02 -- shipped Phase 8 prep work via PR #4 (spike, roadmap restructure, backfill addenda). DB now 50,297 rows spanning 2022-08-26 → 2026-04-30 (~3.7 years)."
 progress:
   total_phases: 4
   completed_phases: 2
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-04-30)
 Milestone: v2 Multi-Axis Trend Explorer
 Phase: 8 (Home, Retire, Polish — absorbed old Phases 10 + 11)
 Plan: Not started — data spike complete (`.planning/spikes/001-phase-7.5-data-exploration/`); awaiting `/gsd:plan-phase 8`
-Status: v2 restructured 2026-05-01; ready for plan-phase
-Last activity: 2026-05-01 -- spike 001 complete; v2 collapsed from 6 phases to 4; data backfilled +6 months (22,305 rows total)
+Status: Phase 8 prep work shipped — PR #4 (https://github.com/kaikai-liu/fish-count/pull/4); ready for /gsd:plan-phase 8 once #4 merges
+Last activity: 2026-05-02 -- PR #4 opened with 6 commits (spike, roadmap restructure, backfill addenda, STATE update); DB at 50,297 rows / 3.7 years of history
 
 Progress: [█████░░░░░] 50% (2 of 4 v2 phases complete — Phases 6 + 7 shipped; v2 collapsed to 4 phases on 2026-05-01)
 
