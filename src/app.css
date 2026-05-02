@@ -27,12 +27,9 @@
   /* Destructive — Phase 5 only */
   --color-destructive: #b91c1c;
 
-  /* Heatmap viridis (5 stops, colorblind-safe) */
-  --heatmap-0: #440154;
-  --heatmap-1: #3b528b;
-  --heatmap-2: #21918c;
-  --heatmap-3: #5ec962;
-  --heatmap-4: #fde725;
+  /* Phase 8 Plan 03 (D-19, RTR-04): viridis --heatmap-* palette removed along
+     with the calendar heatmap surface. Re-introduce if future sequential-color
+     visualizations need a colorblind-safe ramp. */
 
   /* Font stack: system-ui only — no web-font fetch */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

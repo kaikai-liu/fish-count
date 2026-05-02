@@ -71,5 +71,6 @@ export function getByDate(db: Database.Database, date: string): CatchReportRow[]
 }
 
 // Phase 8 Plan 03 (D-19): getRatiosForWindow + RatioRow + RatioWindowArgs removed.
-// The function was only consumed by recomputeForecasts (src/lib/forecast/compute.ts),
-// which retired with the rest of the forecast pipeline. Its tests were also removed.
+// The function was only consumed by the v1 forecast recompute helper (also
+// retired in Phase 8 Plan 03 along with the rest of the forecast pipeline).
+// Its tests were removed in the same sweep.

@@ -35,12 +35,15 @@
       const renderersMod = await import('echarts/renderers');
       if (cancelled) return;
       const { use, init } = coreMod;
-      const { LineChart, HeatmapChart } = chartsMod;
-      const { TooltipComponent, GridComponent, VisualMapComponent, CalendarComponent, LegendComponent } = componentsMod;
+      const { LineChart } = chartsMod;
+      const { TooltipComponent, GridComponent, LegendComponent } = componentsMod;
       const { CanvasRenderer } = renderersMod;
+      // Phase 8 Plan 03 (D-19, RTR-04): HeatmapChart, VisualMapComponent, and
+      // CalendarComponent registrations dropped along with the v1 calendar
+      // heatmap. Re-add if future surfaces need them.
       use([
-        LineChart, HeatmapChart,
-        TooltipComponent, GridComponent, VisualMapComponent, CalendarComponent, LegendComponent,
+        LineChart,
+        TooltipComponent, GridComponent, LegendComponent,
         CanvasRenderer
       ]);
       chart = init(chartEl);
