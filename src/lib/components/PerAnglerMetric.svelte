@@ -22,11 +22,15 @@
     pi?: { low: number; high: number };
   } = $props();
 
-  // Auto-detect framing from context provider if showFraming not explicitly set
+  // Auto-detect framing from context provider if showFraming not explicitly set.
+  // consume() runs once at component mount in the script body — NOT inside $derived.
+  // Calling a latch-mutating function inside $derived is a side-effect in a pure
+  // computation; if the provider's latch were ever backed by $state, it would throw
+  // state_unsafe_mutation and abort hydration (same failure as commit e2249de on
+  // PerAnglerFramingProvider.svelte).
   const framingCtx = getContext<{ consume: () => boolean } | undefined>('per-angler-framing');
-  const renderFraming = $derived(
-    showFraming ?? (framingCtx ? framingCtx.consume() : false)
-  );
+  const _ctxFraming = framingCtx ? framingCtx.consume() : false;
+  const renderFraming = $derived(showFraming ?? _ctxFraming);
 
   const formatted = $derived.by(() => {
     // D-25: forecast kind has its own formatting rules.
