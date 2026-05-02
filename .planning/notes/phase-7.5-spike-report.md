@@ -451,3 +451,66 @@ stand:
 - skunked-trip / zero-angler defensive code unnecessary
 - top-species-this-week dull as leaderboard
 - 30-row home page composition
+
+---
+
+## Addendum 2: findings after 2-year backfill at 1s/req (2026-05-01)
+
+A second backfill pass extended the dataset another 2 years back —
+2022-08-26 → 2024-08-25, 731 dates, +28,043 rows in 9.9 min at a
+temporary 1s/req rate (rate limiter reverted to 5s after). DB now spans
+**2022-08-26 → 2026-04-30, 50,297 rows across 1,342 distinct dates
+(~3.7 years)**.
+
+### Trip-type label space is bigger than the 18-month view suggested
+
+Past-7-day answers don't change. But the all-history trip-type inventory
+expanded from 16 to **22 distinct labels**, several of which never
+appear in the 2025-2026 data:
+
+| Trip type | All-history trips | First seen | Last seen | Status |
+|---|---:|---|---|---|
+| 1.75 Day | 33 | 2022-08 | 2024-08 | dormant since 2024-08 |
+| 4 Day | 31 (was 3) | 2022-08 | 2024-11 | seasonal fall variant |
+| Extended 1.5 Day | 10 | 2022-08 | 2024-08 | dormant — variant of 1.5 Day |
+| 3/4 Day Local | 7 | 2022-08 | 2024-09 | dormant variant |
+| 3/4 Day Islands | 9 | 2022-08 | 2024-10 | dormant variant |
+| Lobster | 3 | 2022-08 | 2024-08 | distinct category |
+| Extended 1/2 Day | 2 | 2022-08 | 2024-08 | dormant variant |
+| 3/4 Day Offshore | 2 | 2022-08 | 2024-08 | dormant variant |
+| 7 Day | 1 | 2022-08 | 2024-08 | one-off |
+| 6 Day | 1 | 2022-08 | 2024-08 | one-off |
+| 4.5 Day | 1 | 2022-08 | 2024-08 | one-off |
+| 3.25 Day | 1 | 2022-08 | 2024-08 | one-off |
+
+The active 11-label set (1/2 Day AM, Full Day, 1.5 Day, etc.) is the
+2025-2026 stable subset. The full historical span shows the source has
+churned labels every 1-2 seasons.
+
+### Implications for Phase 8
+
+- **Alias mapping table must handle ~22 historical labels**, not the 11
+  active ones. "Extended 1.5 Day" is presumably an alias of "1.5 Day";
+  "3/4 Day Local" / "3/4 Day Islands" / "3/4 Day Offshore" are
+  presumably regional variants of "3/4 Day"; the operator will need
+  good grouping UX to alias them correctly.
+- **Single-occurrence trip types** (7 Day, 6 Day, 4.5 Day, 3.25 Day,
+  Lobster) likely warrant a "rare / archive" bucket rather than first-class
+  trip-type sections. Phase 8 should not render them as their own
+  home-page sections regardless of window.
+- **Explorer's "All" range** now spans 3.7 years and includes labels
+  that never appear in 7d / 30d / 90d windows. The trip-type series
+  legend on a boat that ran "1.75 Day" in 2022 needs to render that
+  label honestly even if it's dead today.
+
+### "Long Range" — confirmed absent across 3.7 years
+
+Wider window, same answer: no "Long Range" label in any form (no "LR",
+no "long-range", no "extended trip"). CLAUDE.md keeps the term in vocab
+per operator decision; Phase 8 does not plan an LR section.
+
+### Headline answers still unchanged
+
+The past-7-day analysis (Q1-Q3, Q5-Q11, Q12-Q17) is unchanged. The home
+page's first-cut design (7 sections × ≤5 rows, 7d / ≥5 threshold,
+per-section bar normalization, no top-species section in v1) stands.
