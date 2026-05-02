@@ -15,14 +15,15 @@
   import { THEME_COOKIE, type Theme } from '$lib/shared/theme';
   import { themeToggleAria, THEME_TOGGLE_TOOLTIP } from '$lib/copy/theme';
 
-  // Read prop reactively so the seeding into local state is a derived
-  // dependency — silences svelte's "state_referenced_locally" warning by
-  // making the dependency on the prop explicit.
-  const props: { theme: Theme } = $props();
-  const initial = $derived(props.theme);
-  let theme = $state<Theme>('auto');
-  // Sync from prop on first render and on prop change (e.g. SSR roundtrip).
-  $effect.pre(() => { theme = initial; });
+  let { theme: initialTheme }: { theme: Theme } = $props();
+
+  // Local state mirrors the prop for the initial render (SSR-safe — runs at
+  // component instantiation, not in an effect). On toggle we update the
+  // cookie + DOM client-side and bump local state so the icon and aria-label
+  // update without a navigation. The next SSR roundtrip (any nav) will pick
+  // up the new cookie value via the layout server load.
+  // svelte-ignore state_referenced_locally
+  let theme = $state<Theme>(initialTheme);
 
   const NEXT: Record<Theme, Theme> = { auto: 'light', light: 'dark', dark: 'auto' };
 
