@@ -24,8 +24,6 @@ import { pingHealthcheck } from './heartbeat';
 import { scrapeDate } from '$lib/scraper/pipeline';
 import { today } from '$lib/shared/dates';
 import { checkSlaAndAlert } from '$lib/scraper/sla';
-import { recomputeForecasts } from '$lib/forecast/compute';
-import { getDb } from '$lib/db/client';
 
 const jobs: Cron[] = [];
 
@@ -80,21 +78,9 @@ export async function _scrapeTick(): Promise<void> {
       tickLogger.error({ err, msg: 'sla_check_failed_non_fatal' });
     }
 
-    // Phase 3 D-13/D-14 (FCT-06): recompute forecasts after a successful or empty scrape.
-    // Outcome gate: only run when the data state may have changed. Skipped on
-    // killed/http_error/parse_error since the previous forecast remains valid.
-    //
-    // Non-fatal: a recompute failure must never block pingHealthcheck('success').
-    // OPS-04 dead-man's switch owns "is ingestion alive"; forecast recompute is a
-    // secondary tripwire. Same try/catch discipline as the SLA check above.
-    if (result.outcome === 'success' || result.outcome === 'empty') {
-      try {
-        recomputeForecasts(getDb());
-        tickLogger.info({ msg: 'forecast_recompute_complete' });
-      } catch (err) {
-        tickLogger.error({ err, msg: 'forecast_recompute_failed_non_fatal' });
-      }
-    }
+    // Phase 8 Plan 03 (D-19, RTR-03): forecast nightly recompute hook removed.
+    // The forecasts table was dropped in Plan 01 and the forecast pipeline was
+    // deleted in Plan 03. Scheduler tick now ends after the SLA check.
 
     // 'killed' outcome (FIRST_SCRAPE_OK gated or kill-switch flipped mid-run)
     // → treat as failure so OPS-04 fires after grace. Any other outcome,

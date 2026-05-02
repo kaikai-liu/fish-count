@@ -3,11 +3,10 @@
   import { page } from '$app/state';
   let { children } = $props();
 
+  // Phase 8 Plan 03 (D-22, RTR-08): /picker and /trends retired; nav drops them.
   const navItems = [
     { href: '/', label: 'Home' },
     { href: '/explorer', label: 'Explorer' },
-    { href: '/picker', label: 'Picker' },
-    { href: '/trends', label: 'Trends' },
     { href: '/compare', label: 'Compare' },
     { href: '/about', label: 'About' }
   ];
