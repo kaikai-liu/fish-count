@@ -12,9 +12,14 @@
 //     error per D-04 Security V7 (no leak of which field was wrong).
 import type { Actions, PageServerLoad } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { dev } from '$app/environment';
 import { checkPassword, signAdminCookie, verifyAdminCookie } from '$lib/auth/admin';
 import { LOGIN_INVALID } from '$lib/copy/admin';
+
+// We read NODE_ENV directly rather than `import { dev } from '$app/environment'`
+// because the SvelteKit virtual module is not resolvable under vitest (the
+// SvelteKit plugin doesn't run there). NODE_ENV='production' on the host
+// process toggles Secure. Same gate, no plugin dependency.
+const isProd = process.env.NODE_ENV === 'production';
 
 export const load: PageServerLoad = async ({ setHeaders, cookies }) => {
   // RESEARCH §"Admin Auth" gotcha — never let a CDN cache the login form.
@@ -45,7 +50,7 @@ export const actions: Actions = {
     cookies.set('fc_admin', signed, {
       path: '/admin',
       httpOnly: true,
-      secure: !dev,
+      secure: isProd, // Secure cookie only in prod; localhost https isn't required.
       sameSite: 'strict',
       maxAge: 86400 // 24h, matches verifyAdminCookie TTL
     });
