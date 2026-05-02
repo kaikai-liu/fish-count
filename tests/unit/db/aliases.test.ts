@@ -175,27 +175,26 @@ describe('aliases DAL — listAllLabelsWithStatus', () => {
       boatName: 'Pacific Voyager',
       landingName: 'H&M Landing'
     });
-    // 2 distinct (date, boat) tuples for 'Full Day'.
+    // 2 distinct (date, boat) tuples for 'Full Day' — present in the seed
+    // as status='accepted', canonical='Full Day'.
     seedTrip(db, { boatId, landingId, date: '2024-06-01', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
     seedTrip(db, { boatId, landingId, date: '2024-06-02', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 12 });
-    // 1 distinct (date, boat) tuple for '1/2 Day AM' — should sort below Full Day.
-    seedTrip(db, { boatId, landingId, date: '2024-06-03', tripType: '1/2 Day AM', species: 'yellowtail', anglers: 20, count: 5 });
-
-    upsertAlias(db, {
-      source_label: 'Full Day',
-      canonical_label: 'Full Day',
-      status: 'accepted'
-    });
-    // '1/2 Day AM' intentionally has no alias row — status should surface as NULL.
+    // 1 distinct (date, boat) tuple for an INVENTED label that is intentionally
+    // NOT in the seed — status / canonical_label should surface as NULL via the
+    // LEFT JOIN. This represents a label scraped after the seed was applied
+    // (caught by the admin page's "NEW" badge flow, D-05).
+    seedTrip(db, { boatId, landingId, date: '2024-06-03', tripType: 'Brand New Trip', species: 'yellowtail', anglers: 20, count: 5 });
 
     const rows = listAllLabelsWithStatus(db);
     expect(rows.length).toBe(2);
+    // Full Day has 2 trips → sorts first.
     expect(rows[0].source_label).toBe('Full Day');
     expect(rows[0].trip_count).toBe(2);
     expect(rows[0].status).toBe('accepted');
     expect(rows[0].canonical_label).toBe('Full Day');
 
-    expect(rows[1].source_label).toBe('1/2 Day AM');
+    // 'Brand New Trip' has no alias row — status & canonical_label NULL.
+    expect(rows[1].source_label).toBe('Brand New Trip');
     expect(rows[1].status).toBeNull();
     expect(rows[1].canonical_label).toBeNull();
     expect(rows[1].first_seen).toBe('2024-06-03');
