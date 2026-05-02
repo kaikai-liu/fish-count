@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: paused-rate-limit
+status: ready_to_plan
 stopped_at: "Phase 8 Wave 2 — rate-limited mid-execution (resets 2pm PT)"
 last_updated: "2026-05-02T19:35:00.000Z"
 last_activity: "2026-05-02 -- Phase 08 paused: Wave 1 (08-01) complete; Wave 2 (08-02 home/admin, 08-03 retirement) partial — both agents hit Anthropic rate limit; partial work merged as wip(...) commits on main"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
   completed_plans: 8
-  percent: 67
+  percent: 60
 ---
 
 # Project State
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-04-30)
 ## Current Position
 
 Milestone: v2 Multi-Axis Trend Explorer
-Phase: 08 (Home, Retire, Polish) — PAUSED (rate-limited)
-Plan: 1 of 4 complete; 2-3 partial; 4 not started
-Status: Paused — both Wave 2 executors hit Anthropic rate limit before SUMMARY.md. Rate limit resets 2pm PT today (2026-05-02). Resume: `/gsd-execute-phase 8`. The fresh executors will see no SUMMARY.md for 08-02/08-03 and continue from existing commits.
-Last activity: 2026-05-02 -- Wave 1 (08-01 alias DAL) complete and verified; Wave 2 partials committed as wip(08-02) + wip(08-03) and merged to main
+Phase: 9
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-05-02
 
 Progress: [█████░░░░░] 50% (2 of 4 v2 phases complete — Phases 6 + 7 shipped; v2 collapsed to 4 phases on 2026-05-01)
 
