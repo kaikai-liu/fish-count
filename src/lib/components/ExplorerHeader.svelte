@@ -3,7 +3,9 @@
   import TickerPills from './TickerPills.svelte';
   import RangeStrip from './RangeStrip.svelte';
   import CustomDateInputs from './CustomDateInputs.svelte';
+  import GranularitySelector from './GranularitySelector.svelte';
   import { MOON_TOGGLE_LABEL, MOON_TOGGLE_ARIA } from '$lib/copy/moon';
+  import type { Granularity } from '$lib/shared/urlState';
 
   type Ticker = 'boat' | 'species' | 'landing';
   type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all' | 'custom';
@@ -21,7 +23,10 @@
     selector,
     // Phase 7 (MOON-01)
     moon,
-    onMoonChange
+    onMoonChange,
+    // Phase 8 Plan 04 (GRN-01 / D-37)
+    granularity,
+    onGranularityChange
   }: {
     ticker: Ticker;
     range: Range;
@@ -33,10 +38,24 @@
     autoWidenNote?: string | null;
     clampNote?: string | null;
     selector: Snippet;
-    // Phase 7 (MOON-01)
     moon: boolean;
     onMoonChange: (next: boolean) => void;
+    granularity: Granularity;
+    onGranularityChange: (next: Granularity) => void;
   } = $props();
+
+  // Phase 8 Plan 04 (GRN-01 / D-37). Hide the granularity selector at short
+  // ranges where Daily is the only sensible bucket. Visible at 3M and longer
+  // (and on custom — the loader resolves a sensible default).
+  const showGranularitySelector = $derived(
+    range === '3m' ||
+      range === '6m' ||
+      range === '1y' ||
+      range === '2y' ||
+      range === '5y' ||
+      range === 'all' ||
+      range === 'custom'
+  );
 </script>
 
 <header class="sticky top-0 md:top-[48px] z-20 bg-(--color-surface) border-b border-(--color-border)">
@@ -51,10 +70,15 @@
       {@render selector()}
     </div>
 
-    <!-- Row 3: Range strip + Moon toggle (Phase 7, MOON-01) -->
+    <!-- Row 3: Range strip + Granularity + Moon toggle -->
     <div class="py-2 md:py-3">
-      <div class="md:flex md:items-start md:gap-2">
+      <div class="md:flex md:flex-wrap md:items-start md:gap-2">
         <RangeStrip value={range} onChange={onRangeChange} />
+        {#if showGranularitySelector}
+          <div class="mt-2 md:mt-0">
+            <GranularitySelector value={granularity} onChange={onGranularityChange} />
+          </div>
+        {/if}
         <div class="mt-2 md:mt-0 inline-flex">
           <button
             type="button"

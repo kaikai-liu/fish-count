@@ -204,8 +204,9 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
 
     expect(data.moonChartOption).not.toBeNull();
     expect(data.filters.moon).toBe(true);
-    // Alignment guarantee: moon series length === catch chart x-axis bucket count
-    const catchBuckets = (data.chartOption as { xAxis: { data: unknown[] } }).xAxis.data.length;
+    // Phase 8 Plan 04 (AXS-01): time-axis migration. Bucket count is now
+    // exposed via bucketStartIsos (the loader's per-bucket ISO array).
+    const catchBuckets = (data.bucketStartIsos as string[]).length;
     const moonValues = (
       data.moonChartOption as { series: { data: unknown[] }[] }
     ).series[0].data.length;
@@ -242,12 +243,9 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
     // Different ranges → different bucket counts. The loader recomputes; client did not refetch.
     expect(oneYearMoon).not.toBe(sixMonthMoon);
     // And both still align with their catch charts (no drift either way).
-    expect(oneYearMoon).toBe(
-      (oneYear.chartOption as { xAxis: { data: unknown[] } }).xAxis.data.length
-    );
-    expect(sixMonthMoon).toBe(
-      (sixMonth.chartOption as { xAxis: { data: unknown[] } }).xAxis.data.length
-    );
+    // Phase 8 Plan 04 (AXS-01): time-axis migration — bucket count via bucketStartIsos.
+    expect(oneYearMoon).toBe((oneYear.bucketStartIsos as string[]).length);
+    expect(sixMonthMoon).toBe((sixMonth.bucketStartIsos as string[]).length);
   });
 
   it('moon flag persists when ticker changes', async () => {

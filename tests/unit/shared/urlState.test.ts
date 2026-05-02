@@ -407,4 +407,53 @@ describe('ExplorerFiltersSchema — moon field (Phase 7, MOON-01)', () => {
     expect('error' in parsed).toBe(false);
     if (!('error' in parsed)) expect(parsed.moon).toBe(false);
   });
+
+  // Phase 8 Plan 04 (GRN-01 / D-39).
+  describe('granularity field integration', () => {
+    it('parse: ticker + range + moon + granularity all populate together', () => {
+      const sp = new URLSearchParams(
+        'ticker=boat&slug=premier&range=3m&moon=1&granularity=weekly'
+      );
+      const r = parseExplorerFilters(sp);
+      expect('error' in r).toBe(false);
+      if (!('error' in r)) {
+        expect(r.ticker).toBe('boat');
+        expect(r.range).toBe('3m');
+        expect(r.moon).toBe(true);
+        expect(r.granularity).toBe('weekly');
+      }
+    });
+
+    it('serialize: emits granularity alongside moon', () => {
+      const f: ExplorerFilters = {
+        ticker: 'boat',
+        slug: 'premier',
+        range: '3m',
+        moon: true,
+        granularity: 'monthly'
+      };
+      const sp = serializeExplorerFilters(f);
+      expect(sp.get('granularity')).toBe('monthly');
+      expect(sp.get('moon')).toBe('1');
+    });
+
+    it('serialize: omits both when undefined/false (clean URL)', () => {
+      const f: ExplorerFilters = {
+        ticker: 'boat',
+        slug: 'premier',
+        range: '1y',
+        moon: false,
+        granularity: undefined
+      };
+      const sp = serializeExplorerFilters(f);
+      expect(sp.has('moon')).toBe(false);
+      expect(sp.has('granularity')).toBe(false);
+    });
+
+    it('parse: rejects invalid granularity', () => {
+      const sp = new URLSearchParams('ticker=boat&slug=premier&granularity=garbage');
+      const r = parseExplorerFilters(sp);
+      expect('error' in r).toBe(true);
+    });
+  });
 });

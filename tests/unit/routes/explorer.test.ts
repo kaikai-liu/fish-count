@@ -367,8 +367,10 @@ describe('/explorer +page.server.ts load()', () => {
     const result = await load(makeEvent(`ticker=boat&slug=${slug}&range=custom&fromDate=2026-04-01&toDate=2026-04-30`));
 
     expect(result.empty).toBeNull();
-    // xAxis.data should have 30 entries (April 1 to April 30 inclusive)
-    expect(result.chartOption.xAxis.data.length).toBe(30);
+    // Phase 8 Plan 04 (AXS-01): time-axis migration. Bucket count is now in
+    // bucketStartIsos (the loader's per-bucket ISO array). April 1-30 = 30.
+    expect(result.bucketStartIsos.length).toBe(30);
+    expect(result.chartOption.xAxis.type).toBe('time');
   });
 
   it('11. empty branch: boat slug not found → empty state returned', async () => {

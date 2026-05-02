@@ -23,18 +23,28 @@ import {
   landingAcrossSpecies,
   speciesBreakdownForBoat,
   countCatchRowsForBoatInRange,
+  countCatchRowsForBoatEver,
+  countCatchRowsForSpeciesEver,
+  countCatchRowsForLandingEver,
   mostCaughtSpeciesForBoatInRange,
   topBoatForSpeciesInRange,
   earliestScrapeDate,
   type SpeciesBreakdownRow
 } from '$lib/db/queries/explorer';
+import { EMPTY_STATES } from '$lib/copy/empty-states';
 import { distinctSpecies } from '$lib/db/queries/browse';
 import { findBySlug, listBoatsByActivity, mostActiveBoatLast30Days } from '$lib/db/boats';
 import { getByName, mostRecentlyActiveLanding } from '$lib/db/landings';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, clampDate } from '$lib/shared/dates';
-import { parseExplorerFilters, type ExplorerFilters } from '$lib/shared/urlState';
+import {
+  parseExplorerFilters,
+  defaultGranularityForRange,
+  type ExplorerFilters,
+  type Granularity
+} from '$lib/shared/urlState';
 import { rangeToDates } from '$lib/shared/range';
+import { isoWeekStartFromKey, monthStartFromKey } from '$lib/shared/dates';
 import { moonIllumination } from '$lib/shared/moon';
 import { FISH_PER_ANGLER_AXIS, FISH_PER_ANGLER_ARIA } from '$lib/copy/metrics';
 import {
@@ -144,7 +154,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         empty: {
           heading: 'No data yet',
           body: 'No catch data has been scraped yet. Check back after the first scrape run.'
-        }
+        },
+        noHistoryEver: true,
+        pageTitle: 'Boat',
+        granularity: 'weekly' as const,
+        showGranularitySelector: false,
+        bucketStartIsos: [] as string[]
       };
     }
     filters = { ticker: 'boat', slug: defaultBoat.slug, range: '1y', moon: false };
@@ -163,6 +178,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     // validation runs in the parseExplorerFilters branch below.
     const rawMoonStr = url.searchParams.get('moon');
     const rawMoon = rawMoonStr === '1' || rawMoonStr === 'true';
+    // Phase 8 Plan 04 (GRN-01): preserve granularity through cross-axis
+    // default resolution. Loose check (matching the moon flag pattern).
+    const rawGranStr = url.searchParams.get('granularity');
+    const rawGranularity: Granularity | undefined =
+      rawGranStr === 'daily' || rawGranStr === 'weekly' || rawGranStr === 'monthly'
+        ? rawGranStr
+        : undefined;
 
     // Cross-axis default resolution (D-08): if ticker is present but identifier is absent
     if (
@@ -177,7 +199,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       if (rawTicker === 'boat') {
         const defaultBoat = mostActiveBoatLast30Days(db);
         if (defaultBoat) {
-          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
+          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
@@ -192,7 +214,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             breakdownRows: null,
             selectorOptions: [],
             lastScrapedLabel,
-            empty: { heading: 'No data yet', body: 'No catch data available.' }
+            empty: { heading: 'No data yet', body: 'No catch data available.' },
+            noHistoryEver: true,
+            pageTitle: 'Boat',
+            granularity: defaultGranularityForRange(rawRange as ExplorerFilters['range']),
+            showGranularitySelector: false,
+            bucketStartIsos: [] as string[]
           };
         }
       } else if (rawTicker === 'species') {
@@ -217,15 +244,20 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             breakdownRows: null,
             selectorOptions: [],
             lastScrapedLabel,
-            empty: { heading: 'No data yet', body: 'No species data available.' }
+            empty: { heading: 'No data yet', body: 'No species data available.' },
+            noHistoryEver: true,
+            pageTitle: 'Species',
+            granularity: defaultGranularityForRange(rawRange as ExplorerFilters['range']),
+            showGranularitySelector: false,
+            bucketStartIsos: [] as string[]
           };
         }
-        filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
+        filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
       } else {
         // landing ticker
         const defaultLanding = mostRecentlyActiveLanding(db);
         if (defaultLanding) {
-          filters = { ticker: 'landing', name: defaultLanding.display_name, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
+          filters = { ticker: 'landing', name: defaultLanding.display_name, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
@@ -240,7 +272,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             breakdownRows: null,
             selectorOptions: [],
             lastScrapedLabel,
-            empty: { heading: 'No data yet', body: 'No landing data available.' }
+            empty: { heading: 'No data yet', body: 'No landing data available.' },
+            noHistoryEver: true,
+            pageTitle: 'Landing',
+            granularity: defaultGranularityForRange(rawRange as ExplorerFilters['range']),
+            showGranularitySelector: false,
+            bucketStartIsos: [] as string[]
           };
         }
       }
@@ -264,7 +301,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
           empty: {
             heading: 'Invalid filter',
             body: 'The URL parameters were not recognized. Try navigating to /explorer to start fresh.'
-          }
+          },
+          noHistoryEver: true,
+          pageTitle: 'Explorer',
+          granularity: 'weekly' as const,
+          showGranularitySelector: false,
+          bucketStartIsos: [] as string[]
         };
       }
       filters = parseResult;
@@ -282,6 +324,16 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       : undefined
   );
   let { fromDate, toDate, granularity, includesToday } = resolvedRange;
+
+  // Phase 8 Plan 04 (GRN-01 / D-39). User can override the per-range default
+  // granularity via the URL. defaultGranularityForRange supplies the default
+  // when the URL is silent. Range-switch reset to default is enforced
+  // page-side in /explorer/+page.svelte (Pitfall 3 + D-38).
+  if (filters.granularity) {
+    granularity = filters.granularity;
+  } else {
+    granularity = defaultGranularityForRange(filters.range);
+  }
 
   // D-19: Clamp custom range to [earliestScrapeDate, today()]
   if (filters.range === 'custom') {
@@ -374,6 +426,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   let emptyResult: { heading: string; body: string } | null = null;
   let selectionLabel = '';
 
+  // Phase 8 Plan 04 (POL-03 / D-33): track whether the ticker has any history
+  // at all (independent of range). Empty-state copy varies on this signal.
+  let noHistoryEver = false;
+
   if (filters.ticker === 'boat') {
     // Boat selector options (D-09: sorted by activity over 90 days)
     const boats = listBoatsByActivity(db, 90);
@@ -385,6 +441,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         heading: 'Boat not found',
         body: `No boat found with slug "${filters.slug}". It may have been renamed or removed. Try selecting a different boat.`
       };
+      // Unknown slug — treat as "no history at all" for title-bar consistency.
+      noHistoryEver = true;
     } else {
       selectionLabel = boatRow.display_name;
       const rawBuckets = boatExplorerSeries(db, {
@@ -420,10 +478,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       });
 
       if (seriesList.length === 0) {
-        emptyResult = {
-          heading: `No data for ${boatRow.display_name} in this range`,
-          body: `We have no records for ${boatRow.display_name} in the selected window. Try a wider time range, or pick a different boat.`
-        };
+        // Phase 8 Plan 04 (POL-03 / D-33): split copy on whether the boat has
+        // any history EVER (different action: wait vs widen).
+        noHistoryEver = countCatchRowsForBoatEver(db, { boatId: boatRow.id }) === 0;
+        emptyResult = noHistoryEver
+          ? EMPTY_STATES.boatNoHistoryAtAll(boatRow.display_name)
+          : EMPTY_STATES.boatNoHistoryInRange(boatRow.display_name);
       }
     }
   } else if (filters.ticker === 'species') {
@@ -441,10 +501,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     });
 
     if (result.topBoats.length === 0) {
-      emptyResult = {
-        heading: `No data for ${filters.name} in this range`,
-        body: `We have no records for ${filters.name} in the selected window. Try a wider time range, or pick a different species.`
-      };
+      // Phase 8 Plan 04 (POL-03 / D-33).
+      noHistoryEver = countCatchRowsForSpeciesEver(db, { species: filters.name }) === 0;
+      emptyResult = EMPTY_STATES.speciesNoHistoryInRange(filters.name);
     } else {
       // Map bucket data per boat
       const byBoatId = new Map<number, typeof result.series>();
@@ -478,6 +537,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         heading: 'Landing not found',
         body: `No landing found named "${filters.name}". Try selecting a different landing.`
       };
+      noHistoryEver = true;
     } else {
       selectionLabel = landingRow.display_name;
       const result = landingAcrossSpecies(db, {
@@ -489,10 +549,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       });
 
       if (result.topSpecies.length === 0) {
-        emptyResult = {
-          heading: `No data for ${landingRow.display_name} in this range`,
-          body: `We have no records for ${landingRow.display_name} in the selected window. Try a wider time range, or pick a different landing.`
-        };
+        noHistoryEver = countCatchRowsForLandingEver(db, { landingId: landingRow.id }) === 0;
+        emptyResult = EMPTY_STATES.landingNoHistoryInRange(landingRow.display_name);
       } else {
         // Map bucket data per species
         const bySpecies = new Map<string, typeof result.series>();
@@ -524,6 +582,19 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   });
 
   // -------------------------------------------------------------------------
+  // Phase 8 Plan 04 (POL-04 / D-34). Page title: verbatim source label per
+  // ticker (boat display_name, species name, landing display_name). Falls
+  // back to ticker-type label when selection is unresolved (empty branch).
+  // -------------------------------------------------------------------------
+  const pageTitle =
+    selectionLabel ||
+    (filters.ticker === 'boat'
+      ? 'Boat'
+      : filters.ticker === 'species'
+        ? 'Species'
+        : 'Landing');
+
+  // -------------------------------------------------------------------------
   // Step 7: Return empty state if applicable
   // -------------------------------------------------------------------------
   if (emptyResult) {
@@ -549,7 +620,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       breakdownRows: null,
       selectorOptions,
       lastScrapedLabel,
-      empty: emptyResult
+      empty: emptyResult,
+      noHistoryEver,
+      pageTitle,
+      granularity: granularity as Granularity,
+      showGranularitySelector: filters.range !== '1m',
+      bucketStartIsos: [] as string[]
     };
   }
 
@@ -568,20 +644,46 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     legendSelected[legendNameFor(s)] = i < 6;
   });
 
-  // nByBucketBySeries: per-bucket trip counts keyed by legend name, consumed by the
-  // client-side tooltip formatter (T-06-24 XSS mitigation; per-bucket trip-count reveal).
-  const nByBucketBySeries: Record<string, Record<string, number>> = {};
-  for (const s of seriesList) {
-    nByBucketBySeries[legendNameFor(s)] = s.nByBucket;
-  }
+  // nByBucketBySeries: per-bucket trip counts keyed by legend name. Used by
+  // the client-side tooltip formatter (T-06-24). Phase 8 Plan 04 (AXS-01)
+  // flips the inner key from bucket_key (e.g. '2025-W14') to ISO date
+  // (e.g. '2025-03-31') because ECharts time-mode surfaces Date-or-ms in
+  // params.axisValue, which the page-side formatter normalizes to ISO. The
+  // re-keying happens below after bucketStartIsos is built.
 
-  // Build chart series from seriesList
+  // Phase 8 Plan 04 (AXS-01 / D-35). x-axis migration category → time. Each
+  // bucket key gets a real PT-canonical ISO date (the bucket's start) so
+  // ECharts time-mode renders the axis correctly at every range × granularity.
+  // Series data becomes [iso, value] pairs (ECharts time-axis format). The
+  // moon overlay below also flips to type='time' so it aligns with the catch
+  // chart's axis (Pitfall 4).
+  function bucketKeyToIso(key: string): string {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(key)) return key;
+    if (/^\d{4}-\d{2}$/.test(key)) return monthStartFromKey(key);
+    if (/^\d{4}-W\d{2}$/.test(key)) return isoWeekStartFromKey(key);
+    return fromDate; // unreachable given buildExpectedKeys, defensive only
+  }
+  const bucketStartIsos: string[] = expectedKeys.map((k: string) => bucketKeyToIso(k));
+
+  // Build chart series with [iso, value] pairs for time-axis mode.
   const chartSeries = seriesList.map((s) => ({
     name: legendNameFor(s),
     type: 'line' as const,
     connectNulls: false, // D-17: gaps render as line breaks
-    data: s.data
+    data: s.data.map((v, i) => [bucketStartIsos[i], v])
   }));
+
+  // Re-key per-bucket trip counts by ISO date for the time-axis tooltip
+  // formatter (see legend comment block above).
+  const nByBucketBySeries: Record<string, Record<string, number>> = {};
+  for (const s of seriesList) {
+    const byIso: Record<string, number> = {};
+    for (const [bucketKey, count] of Object.entries(s.nByBucket)) {
+      const iso = bucketKeyToIso(bucketKey);
+      byIso[iso] = count;
+    }
+    nByBucketBySeries[legendNameFor(s)] = byIso;
+  }
 
   const captionText = `Based on ${totalTrips.toLocaleString()} trips across the ${rangeLabel(filters, fromDate, toDate)}. ${granularityLabel(granularity)} buckets, PT.`;
 
@@ -599,7 +701,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       bottom: 0,
       selected: legendSelected
     },
-    xAxis: { type: 'category' as const, data: expectedKeys },
+    // Phase 8 Plan 04 (AXS-01 / D-35). Time-mode axis with PT-canonical
+    // bucket-start dates. ECharts auto-formats the labels per range; the
+    // tooltip formatter (page-side) reformats axisValue to a PT-readable
+    // string.
+    xAxis: { type: 'time' as const },
     yAxis: { type: 'value' as const, name: FISH_PER_ANGLER_AXIS },
     series: chartSeries
   };
@@ -646,7 +752,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       // Fallback (should never happen given buildExpectedKeys output) — use fromDate
       return fromDate;
     }
-    const moonData = expectedKeys.map((key: string) => moonIllumination(bucketKeyToDate(key)));
+    // Phase 8 Plan 04 (AXS-01 / Pitfall 4). Moon overlay flips to time-axis
+    // alongside the catch chart so they align at every range × granularity.
+    // Series data is [iso, illumination] pairs.
+    const moonData = expectedKeys.map((key: string, i: number): [string, number] => [
+      bucketStartIsos[i],
+      moonIllumination(bucketKeyToDate(key))
+    ]);
     moonChartOption = {
       grid: {
         left: (chartOption as { grid?: { left?: string | number } }).grid?.left ?? 'auto',
@@ -655,8 +767,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         bottom: 0
       },
       xAxis: {
-        type: 'category' as const,
-        data: expectedKeys,
+        type: 'time' as const,
         show: false,
         axisLine: { show: false },
         axisTick: { show: false },
@@ -700,6 +811,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     bucketCount: expectedKeys.length
   });
 
+  // Phase 8 Plan 04 (GRN-01 / D-37). showGranularitySelector hides at <3M.
+  const showGranularitySelector =
+    filters.range !== '1m';
+
   return {
     filters,
     autoWidenNote,
@@ -712,6 +827,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     breakdownRows,
     selectorOptions,
     lastScrapedLabel,
-    empty: null
+    empty: null,
+    noHistoryEver,
+    pageTitle,
+    granularity: granularity as Granularity,
+    showGranularitySelector,
+    bucketStartIsos
   };
 };

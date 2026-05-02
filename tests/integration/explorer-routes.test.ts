@@ -242,10 +242,11 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
 
     expect(result.empty).toBeNull();
     expect(result.chartOption).not.toBeNull();
-    // April 1-30 = 30 days inclusive
-    expect(result.chartOption.xAxis.data.length).toBe(30);
-    // Each key should be YYYY-MM-DD format (daily)
-    expect(result.chartOption.xAxis.data[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Phase 8 Plan 04 (AXS-01 / D-35): time-mode axis. Bucket count is now
+    // exposed via bucketStartIsos (the loader's per-bucket ISO array).
+    expect(result.chartOption.xAxis.type).toBe('time');
+    expect(result.bucketStartIsos.length).toBe(30);
+    expect(result.bucketStartIsos[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it('6. future custom range → clamped to today, clampNote populated', async () => {
