@@ -197,8 +197,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   }
 
   // D-28: "Why this boat?" panel data — computed server-side, present per row.
-  // Phase 2 shortcut: best-day uses the boat's last_trip_date + avg_per_angler.
-  // Phase 3 can extend this to per-day breakdown without changing the loader API.
+  // bestDay.value = avg_per_angler (window average), bestDay.date = last_trip_date.
+  // Phase 3 can replace with per-day breakdown without changing the loader API.
   const why: Record<number, WhyPanel> = {};
   for (const r of rankings) {
     why[r.boat_id] = {
