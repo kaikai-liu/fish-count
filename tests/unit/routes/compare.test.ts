@@ -426,4 +426,59 @@ describe('routes/compare/+page.server.ts (load)', () => {
 
     expect(setHeaders).toHaveBeenCalledWith({ 'cache-control': 'public, max-age=300' });
   });
+
+  // WR-01 regression: a Monday fromDate must not produce a phantom earlier week.
+  // Previously new Date(dateStr+'T00:00:00Z') = UTC midnight = 16:00 PST the day before,
+  // causing eachWeekOfInterval to back up one week and insert a phantom empty bucket.
+  it('WR-01: Monday fromDate produces buckets starting on that exact Monday (PST alignment)', async () => {
+    const { getDb } = await import('../../../src/lib/db/client');
+    const { seedBoat, seedTrip } = await import('../../../tests/helpers/seedTestDb');
+    const db = getDb();
+
+    const { boatId: boatA, landingId: landingA } = seedBoat(db, {
+      boatName: 'Monday Boat A',
+      landingName: "Fisherman's Landing"
+    });
+    const { boatId: boatB, landingId: landingB } = seedBoat(db, {
+      boatName: 'Monday Boat B',
+      landingName: 'H&M Landing'
+    });
+
+    // 2025-06-02 is a Monday. Seed a trip in that week.
+    seedTrip(db, {
+      boatId: boatA,
+      landingId: landingA,
+      date: '2025-06-02',
+      tripType: 'Full Day',
+      species: 'yellowtail',
+      anglers: 20,
+      count: 40
+    });
+    seedTrip(db, {
+      boatId: boatB,
+      landingId: landingB,
+      date: '2025-06-09',
+      tripType: 'Full Day',
+      species: 'dorado',
+      anglers: 15,
+      count: 30
+    });
+
+    const { load } = await import('../../../src/routes/compare/+page.server');
+    const result = await load(
+      makeEvent({
+        tripType: 'Full Day',
+        fromDate: '2025-06-02', // Monday — was the bug trigger
+        toDate: '2025-06-15',
+        boatIds: [String(boatA), String(boatB)]
+      })
+    );
+
+    expect(result.chartOption).toBeDefined();
+    const xAxisData = result.chartOption!.xAxis.data as string[];
+    // First bucket must be 2025-W23 (week containing 2025-06-02), not 2025-W22
+    expect(xAxisData[0]).toBe('2025-W23');
+    // No phantom earlier week
+    expect(xAxisData).not.toContain('2025-W22');
+  });
 });

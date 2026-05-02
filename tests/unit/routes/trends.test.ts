@@ -355,4 +355,45 @@ describe('/trends +page.server.ts load()', () => {
     expect(result.chartOption).not.toBeNull();
     expect(result.chartOption.series[0].connectNulls).toBe(false);
   });
+
+  // WR-01 regression: with today=2026-05-02, range=6mo gives fromDate=2025-11-03 (a Monday).
+  // Bug: new Date('2025-11-03T00:00:00Z') in PST = Nov 2 (Sunday) → eachWeekOfInterval backs
+  // up one week and inserts phantom W44 before the real W45 start.
+  // Fix: parseISO('2025-11-03') = local-midnight Monday → first bucket is 2025-W45.
+  it('WR-01: Monday fromDate produces first bucket on that exact Monday, not the prior week', async () => {
+    const origTZ = process.env.TZ;
+    process.env.TZ = 'America/Los_Angeles';
+    try {
+      const db = openTestDb();
+      setTestDb(db);
+      const { boatId, landingId } = seedBoat(db, {
+        boatName: 'WR01 Trends Boat',
+        landingName: 'Point Loma Sportfishing'
+      });
+      // 2025-11-03 is the Monday that opens ISO week 2025-W45.
+      // range=6mo with today=2026-05-02 → fromDate=2025-11-03 (deterministic via addDays UTC).
+      seedTrip(db, {
+        boatId,
+        landingId,
+        date: '2025-11-03',
+        tripType: 'Full Day',
+        species: 'yellowtail',
+        anglers: 20,
+        count: 40
+      });
+
+      const result = await load(
+        makeEvent('species=yellowtail&tripType=Full Day&range=6mo&granularity=weekly')
+      );
+
+      expect(result.chartOption).not.toBeNull();
+      const xAxisData: string[] = result.chartOption.xAxis.data;
+      // First bucket must be 2025-W45 (the Monday fromDate's own week), not 2025-W44 (phantom)
+      expect(xAxisData[0]).toBe('2025-W45');
+      expect(xAxisData).not.toContain('2025-W44');
+    } finally {
+      if (origTZ === undefined) delete process.env.TZ;
+      else process.env.TZ = origTZ;
+    }
+  });
 });
