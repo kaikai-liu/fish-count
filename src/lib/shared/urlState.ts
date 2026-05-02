@@ -156,8 +156,31 @@ const RangeBase = z.object({
   range: z.enum(RANGE_PRESETS).default('1y'),
   fromDate: dateField.optional(),
   toDate: dateField.optional(),
-  moon: boolFlagField // Phase 7 (MOON-01) — default off; URL omits param when off (D-04 clean-URL)
+  moon: boolFlagField, // Phase 7 (MOON-01) — default off; URL omits param when off (D-04 clean-URL)
+  // Phase 8 Plan 04 (GRN-01 / D-39). Optional override; loader resolves the
+  // default per range (defaultGranularityForRange). Default-stripping at
+  // serialize time keeps the URL clean (RESEARCH §Pitfall 3).
+  granularity: z.enum(['daily', 'weekly', 'monthly']).optional()
 });
+
+export type Granularity = 'daily' | 'weekly' | 'monthly';
+
+/**
+ * Phase 8 Plan 04 (D-39 / GRN-01). Default granularity for each range
+ * preset. Short ranges default to Daily; long ranges to Weekly. The loader
+ * applies this when filters.granularity is undefined.
+ */
+export function defaultGranularityForRange(
+  range: ExplorerFilters['range']
+): Granularity {
+  if (range === '1m' || range === '3m' || range === '6m') return 'daily';
+  // 1y / 2y / 5y / all → weekly. Custom (post-clamp) defaults to daily —
+  // loader can refine if the clamped window is long.
+  if (range === '1y' || range === '2y' || range === '5y' || range === 'all') {
+    return 'weekly';
+  }
+  return 'daily';
+}
 
 // D-19: custom range requires both dates; fromDate <= toDate (T-06-10).
 export const ExplorerFiltersSchema = z
@@ -205,5 +228,10 @@ export function serializeExplorerFilters(filters: ExplorerFilters): URLSearchPar
   // "Serialization rule": "When moon is off, the param is omitted entirely. This
   // preserves D-04 (clean URL on default landing) and the off-state guarantee."
   if (filters.moon) sp.set('moon', '1');
+  // Phase 8 Plan 04 (GRN-01 / D-39). Emit `granularity` ONLY when set.
+  // Default-stripping (omit when filters.granularity == defaultForRange) is
+  // the page-component's job (range-change handler); see /explorer/+page.svelte
+  // onRangeChange. Here we just round-trip the field as-is.
+  if (filters.granularity) sp.set('granularity', filters.granularity);
   return sp;
 }

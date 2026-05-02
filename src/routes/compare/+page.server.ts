@@ -15,6 +15,7 @@ import { getDb } from '$lib/db/client';
 import { compareBoats } from '$lib/db/queries/compare';
 import { boatTrend, type TrendBucket } from '$lib/db/queries/trends';
 import { distinctTripTypes } from '$lib/db/queries/browse';
+import { listBoatsByActivity } from '$lib/db/boats';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, addDays } from '$lib/shared/dates';
 import { parseCompareFilters, type CompareFilters } from '$lib/shared/urlState';
@@ -34,6 +35,17 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const lastScrape = latestSuccessOrEmpty(db);
   const lastScrapedLabel = lastScrape ? toPtTimeLabel(lastScrape.finished_at) : null;
 
+  // Phase 8 Plan 04 (CMP-01 / D-24). All-boats list for the typeahead
+  // <datalist>. Activity-sorted so the most relevant boats are at the top
+  // when a typed prefix matches multiple. Each boat carries id + slug +
+  // display_name; the page-side JS resolves a typed display_name → id by
+  // a small lookup against this list (no DB query per keystroke).
+  const allBoats = listBoatsByActivity(db, 365).map((b) => ({
+    id: b.id,
+    slug: b.slug,
+    display_name: b.display_name
+  }));
+
   // Parse and validate compare filters from URL search params.
   // parseCompareFilters enforces: tripType required, boatIds 2..3, date format.
   const parseResult = parseCompareFilters(url.searchParams);
@@ -45,7 +57,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       rows: null,
       chartOption: null,
       filterOptions,
-      lastScrapedLabel
+      lastScrapedLabel,
+      allBoats
     };
   }
   const filters = parseResult as CompareFilters;
@@ -123,6 +136,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     rows,
     chartOption,
     filterOptions,
-    lastScrapedLabel
+    lastScrapedLabel,
+    allBoats
   };
 };

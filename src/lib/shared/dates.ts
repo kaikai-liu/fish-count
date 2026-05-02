@@ -88,6 +88,46 @@ export function monthKey(s: string): string {
   return s.slice(0, 7);
 }
 
+/**
+ * Phase 8 Plan 04 (AXS-01 / D-35). Convert a SQLite-style ISO-week bucket key
+ * "YYYY-Www" to the YYYY-MM-DD of the Monday that starts that ISO week.
+ * Pure: deterministic given the input. Verified: '2025-W01' → '2024-12-30'
+ * (ISO week 1 starts on the Monday of the week containing Jan 4).
+ *
+ * The implementation walks back from Jan 4 of the given ISO-week year to
+ * locate that year's week-1 Monday, then adds (week-1)*7 days. Done in
+ * UTC arithmetic to match the rest of this module's date-string contract.
+ */
+export function isoWeekStartFromKey(weekKey: string): string {
+  const m = /^(\d{4})-W(\d{2})$/.exec(weekKey);
+  if (!m) throw new Error(`isoWeekStartFromKey: invalid key "${weekKey}"`);
+  const year = Number(m[1]);
+  const week = Number(m[2]);
+  // Anchor: Jan 4 is always in ISO week 1 (definition).
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const jan4Dow = jan4.getUTCDay() || 7; // Mon=1..Sun=7
+  // Monday of ISO week 1.
+  const week1Monday = new Date(jan4);
+  week1Monday.setUTCDate(jan4.getUTCDate() - (jan4Dow - 1));
+  const target = new Date(week1Monday);
+  target.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+  const yy = target.getUTCFullYear();
+  const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(target.getUTCDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
+/**
+ * Phase 8 Plan 04 (AXS-01 / D-35). Convert a "YYYY-MM" month-bucket key to
+ * the YYYY-MM-DD of the first of the month.
+ */
+export function monthStartFromKey(monthKey: string): string {
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+    throw new Error(`monthStartFromKey: invalid key "${monthKey}"`);
+  }
+  return `${monthKey}-01`;
+}
+
 /** Format an ISO-8601 timestamp as "HH:MM PT" (24-hour). For "Last scraped at" indicator. */
 export function toPtTimeLabel(iso: string): string {
   const fmt = new Intl.DateTimeFormat('en-GB', {

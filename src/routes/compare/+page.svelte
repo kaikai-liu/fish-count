@@ -15,20 +15,49 @@
   let formTripType = $state(data.filters?.tripType ?? '');
   let formFromDate = $state(data.filters?.fromDate ?? data.filterOptions.defaultFromDate);
   let formToDate = $state(data.filters?.toDate ?? data.filterOptions.defaultToDate);
-  // boatIds stored as a comma-separated string for the text input
-  let formBoatIdsRaw = $state(data.filters?.boatIds.join(',') ?? '');
+
+  // Phase 8 Plan 04 (CMP-01 / D-24). Boat picker: 3 typeahead inputs feeding
+  // an HTML <datalist>. Each input holds a typed/picked display_name; we
+  // resolve to id via a small JS lookup against data.allBoats before
+  // submitting. Keeping the inputs separate (vs comma-paste) makes the UX
+  // match the explorer's boat-pill experience and removes the need to know
+  // boat IDs at all.
+  function preselectedNames(): [string, string, string] {
+    const ids = data.filters?.boatIds ?? [];
+    const byId = new Map(data.allBoats.map((b) => [b.id, b.display_name]));
+    return [
+      byId.get(ids[0] ?? -1) ?? '',
+      byId.get(ids[1] ?? -1) ?? '',
+      byId.get(ids[2] ?? -1) ?? ''
+    ];
+  }
+  const initialNames = preselectedNames();
+  let boatName1 = $state(initialNames[0]);
+  let boatName2 = $state(initialNames[1]);
+  let boatName3 = $state(initialNames[2]);
+
+  function resolveBoatId(name: string): number | null {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    // Exact-match first; case-insensitive fallback.
+    const exact = data.allBoats.find((b) => b.display_name === trimmed);
+    if (exact) return exact.id;
+    const ci = data.allBoats.find(
+      (b) => b.display_name.toLowerCase() === trimmed.toLowerCase()
+    );
+    return ci?.id ?? null;
+  }
 
   function submit() {
-    const parsedIds = formBoatIdsRaw
-      .split(',')
-      .map((s) => Number(s.trim()))
-      .filter((n) => Number.isFinite(n) && n > 0);
-    if (parsedIds.length < 2 || parsedIds.length > 3 || !formTripType) return;
+    const ids = [boatName1, boatName2, boatName3]
+      .map(resolveBoatId)
+      .filter((n): n is number => n !== null);
+    if (ids.length < 2 || ids.length > 3 || !formTripType) return;
     const filters: CompareFilters = {
       tripType: formTripType,
       fromDate: formFromDate,
       toDate: formToDate,
-      boatIds: parsedIds
+      boatIds: ids
     };
     const sp = serializeCompareFilters(filters);
     goto(`/compare?${sp.toString()}`, { keepFocus: true, replaceState: true, noScroll: true });
@@ -79,20 +108,54 @@
       />
     </label>
 
-    <label class="flex min-w-48 flex-col gap-1">
+    <label class="flex min-w-44 flex-col gap-1">
       <span class="text-sm font-semibold">
-        Boat IDs (comma-separated, 2–3) <span aria-hidden="true">*</span>
+        Boat 1 <span aria-hidden="true">*</span>
       </span>
       <input
         type="text"
-        class="min-h-11 rounded border border-(--color-border) px-2"
-        placeholder="e.g. 12,15,23"
-        bind:value={formBoatIdsRaw}
+        list="boats-list"
+        autocomplete="off"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
+        placeholder="Type a boat name…"
+        bind:value={boatName1}
       />
-      <span class="text-xs text-(--color-text-muted)">
-        Find boat IDs on each boat's detail page URL.
-      </span>
     </label>
+
+    <label class="flex min-w-44 flex-col gap-1">
+      <span class="text-sm font-semibold">
+        Boat 2 <span aria-hidden="true">*</span>
+      </span>
+      <input
+        type="text"
+        list="boats-list"
+        autocomplete="off"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
+        placeholder="Type a boat name…"
+        bind:value={boatName2}
+      />
+    </label>
+
+    <label class="flex min-w-44 flex-col gap-1">
+      <span class="text-sm font-semibold">Boat 3 (optional)</span>
+      <input
+        type="text"
+        list="boats-list"
+        autocomplete="off"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
+        placeholder="Type a boat name…"
+        bind:value={boatName3}
+      />
+    </label>
+
+    <!-- Phase 8 Plan 04 (CMP-01). Single datalist shared by all three inputs.
+         T-08-04-09: Svelte auto-escapes display_name in option value; no raw
+         HTML render. T-08-04-05: boat names are public data. -->
+    <datalist id="boats-list">
+      {#each data.allBoats as b (b.id)}
+        <option value={b.display_name}></option>
+      {/each}
+    </datalist>
   {/snippet}
 
   {#snippet actions()}

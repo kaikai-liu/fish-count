@@ -37,8 +37,14 @@ import { findBySlug, listBoatsByActivity, mostActiveBoatLast30Days } from '$lib/
 import { getByName, mostRecentlyActiveLanding } from '$lib/db/landings';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, clampDate } from '$lib/shared/dates';
-import { parseExplorerFilters, type ExplorerFilters } from '$lib/shared/urlState';
+import {
+  parseExplorerFilters,
+  defaultGranularityForRange,
+  type ExplorerFilters,
+  type Granularity
+} from '$lib/shared/urlState';
 import { rangeToDates } from '$lib/shared/range';
+import { isoWeekStartFromKey, monthStartFromKey } from '$lib/shared/dates';
 import { moonIllumination } from '$lib/shared/moon';
 import { FISH_PER_ANGLER_AXIS, FISH_PER_ANGLER_ARIA } from '$lib/copy/metrics';
 import {
@@ -150,7 +156,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
           body: 'No catch data has been scraped yet. Check back after the first scrape run.'
         },
         noHistoryEver: true,
-        pageTitle: 'Boat'
+        pageTitle: 'Boat',
+        granularity: 'weekly' as const,
+        showGranularitySelector: false,
+        bucketStartIsos: [] as string[]
       };
     }
     filters = { ticker: 'boat', slug: defaultBoat.slug, range: '1y', moon: false };
@@ -200,7 +209,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             lastScrapedLabel,
             empty: { heading: 'No data yet', body: 'No catch data available.' },
             noHistoryEver: true,
-            pageTitle: 'Boat'
+            pageTitle: 'Boat',
+            granularity: defaultGranularityForRange(rawRange as ExplorerFilters['range']),
+            showGranularitySelector: false,
+            bucketStartIsos: [] as string[]
           };
         }
       } else if (rawTicker === 'species') {
@@ -227,7 +239,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             lastScrapedLabel,
             empty: { heading: 'No data yet', body: 'No species data available.' },
             noHistoryEver: true,
-            pageTitle: 'Species'
+            pageTitle: 'Species',
+            granularity: defaultGranularityForRange(rawRange as ExplorerFilters['range']),
+            showGranularitySelector: false,
+            bucketStartIsos: [] as string[]
           };
         }
         filters = { ticker: 'species', name: speciesName, range: rawRange as ExplorerFilters['range'], moon: rawMoon };
@@ -252,7 +267,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             lastScrapedLabel,
             empty: { heading: 'No data yet', body: 'No landing data available.' },
             noHistoryEver: true,
-            pageTitle: 'Landing'
+            pageTitle: 'Landing',
+            granularity: defaultGranularityForRange(rawRange as ExplorerFilters['range']),
+            showGranularitySelector: false,
+            bucketStartIsos: [] as string[]
           };
         }
       }
@@ -278,7 +296,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             body: 'The URL parameters were not recognized. Try navigating to /explorer to start fresh.'
           },
           noHistoryEver: true,
-          pageTitle: 'Explorer'
+          pageTitle: 'Explorer',
+          granularity: 'weekly' as const,
+          showGranularitySelector: false,
+          bucketStartIsos: [] as string[]
         };
       }
       filters = parseResult;
@@ -296,6 +317,16 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       : undefined
   );
   let { fromDate, toDate, granularity, includesToday } = resolvedRange;
+
+  // Phase 8 Plan 04 (GRN-01 / D-39). User can override the per-range default
+  // granularity via the URL. defaultGranularityForRange supplies the default
+  // when the URL is silent. Range-switch reset to default is enforced
+  // page-side in /explorer/+page.svelte (Pitfall 3 + D-38).
+  if (filters.granularity) {
+    granularity = filters.granularity;
+  } else {
+    granularity = defaultGranularityForRange(filters.range);
+  }
 
   // D-19: Clamp custom range to [earliestScrapeDate, today()]
   if (filters.range === 'custom') {
@@ -584,7 +615,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       lastScrapedLabel,
       empty: emptyResult,
       noHistoryEver,
-      pageTitle
+      pageTitle,
+      granularity: granularity as Granularity,
+      showGranularitySelector: filters.range !== '1m',
+      bucketStartIsos: [] as string[]
     };
   }
 
@@ -603,20 +637,46 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     legendSelected[legendNameFor(s)] = i < 6;
   });
 
-  // nByBucketBySeries: per-bucket trip counts keyed by legend name, consumed by the
-  // client-side tooltip formatter (T-06-24 XSS mitigation; per-bucket trip-count reveal).
-  const nByBucketBySeries: Record<string, Record<string, number>> = {};
-  for (const s of seriesList) {
-    nByBucketBySeries[legendNameFor(s)] = s.nByBucket;
-  }
+  // nByBucketBySeries: per-bucket trip counts keyed by legend name. Used by
+  // the client-side tooltip formatter (T-06-24). Phase 8 Plan 04 (AXS-01)
+  // flips the inner key from bucket_key (e.g. '2025-W14') to ISO date
+  // (e.g. '2025-03-31') because ECharts time-mode surfaces Date-or-ms in
+  // params.axisValue, which the page-side formatter normalizes to ISO. The
+  // re-keying happens below after bucketStartIsos is built.
 
-  // Build chart series from seriesList
+  // Phase 8 Plan 04 (AXS-01 / D-35). x-axis migration category → time. Each
+  // bucket key gets a real PT-canonical ISO date (the bucket's start) so
+  // ECharts time-mode renders the axis correctly at every range × granularity.
+  // Series data becomes [iso, value] pairs (ECharts time-axis format). The
+  // moon overlay below also flips to type='time' so it aligns with the catch
+  // chart's axis (Pitfall 4).
+  function bucketKeyToIso(key: string): string {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(key)) return key;
+    if (/^\d{4}-\d{2}$/.test(key)) return monthStartFromKey(key);
+    if (/^\d{4}-W\d{2}$/.test(key)) return isoWeekStartFromKey(key);
+    return fromDate; // unreachable given buildExpectedKeys, defensive only
+  }
+  const bucketStartIsos: string[] = expectedKeys.map((k: string) => bucketKeyToIso(k));
+
+  // Build chart series with [iso, value] pairs for time-axis mode.
   const chartSeries = seriesList.map((s) => ({
     name: legendNameFor(s),
     type: 'line' as const,
     connectNulls: false, // D-17: gaps render as line breaks
-    data: s.data
+    data: s.data.map((v, i) => [bucketStartIsos[i], v])
   }));
+
+  // Re-key per-bucket trip counts by ISO date for the time-axis tooltip
+  // formatter (see legend comment block above).
+  const nByBucketBySeries: Record<string, Record<string, number>> = {};
+  for (const s of seriesList) {
+    const byIso: Record<string, number> = {};
+    for (const [bucketKey, count] of Object.entries(s.nByBucket)) {
+      const iso = bucketKeyToIso(bucketKey);
+      byIso[iso] = count;
+    }
+    nByBucketBySeries[legendNameFor(s)] = byIso;
+  }
 
   const captionText = `Based on ${totalTrips.toLocaleString()} trips across the ${rangeLabel(filters, fromDate, toDate)}. ${granularityLabel(granularity)} buckets, PT.`;
 
@@ -634,7 +694,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       bottom: 0,
       selected: legendSelected
     },
-    xAxis: { type: 'category' as const, data: expectedKeys },
+    // Phase 8 Plan 04 (AXS-01 / D-35). Time-mode axis with PT-canonical
+    // bucket-start dates. ECharts auto-formats the labels per range; the
+    // tooltip formatter (page-side) reformats axisValue to a PT-readable
+    // string.
+    xAxis: { type: 'time' as const },
     yAxis: { type: 'value' as const, name: FISH_PER_ANGLER_AXIS },
     series: chartSeries
   };
@@ -681,7 +745,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       // Fallback (should never happen given buildExpectedKeys output) — use fromDate
       return fromDate;
     }
-    const moonData = expectedKeys.map((key: string) => moonIllumination(bucketKeyToDate(key)));
+    // Phase 8 Plan 04 (AXS-01 / Pitfall 4). Moon overlay flips to time-axis
+    // alongside the catch chart so they align at every range × granularity.
+    // Series data is [iso, illumination] pairs.
+    const moonData = expectedKeys.map((key: string, i: number): [string, number] => [
+      bucketStartIsos[i],
+      moonIllumination(bucketKeyToDate(key))
+    ]);
     moonChartOption = {
       grid: {
         left: (chartOption as { grid?: { left?: string | number } }).grid?.left ?? 'auto',
@@ -690,8 +760,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         bottom: 0
       },
       xAxis: {
-        type: 'category' as const,
-        data: expectedKeys,
+        type: 'time' as const,
         show: false,
         axisLine: { show: false },
         axisTick: { show: false },
@@ -735,6 +804,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     bucketCount: expectedKeys.length
   });
 
+  // Phase 8 Plan 04 (GRN-01 / D-37). showGranularitySelector hides at <3M.
+  const showGranularitySelector =
+    filters.range !== '1m';
+
   return {
     filters,
     autoWidenNote,
@@ -749,6 +822,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     lastScrapedLabel,
     empty: null,
     noHistoryEver,
-    pageTitle
+    pageTitle,
+    granularity: granularity as Granularity,
+    showGranularitySelector,
+    bucketStartIsos
   };
 };
