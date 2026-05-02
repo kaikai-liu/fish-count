@@ -8,7 +8,7 @@
 //   BRW-01: getRowsForDate — JOIN catch_reports × boats × landings
 //   BRW-05: getDateBounds — dataset min/max source_date for /date/[d] clamp
 //   BRW-06: distinctTripTypes / distinctLandings / distinctSpecies (filter-bar options)
-//   D-10:   mostCommonTripType (default for /picker trip-type select)
+//   D-10:   mostCommonTripType (Phase 2 helper; consumer retired in Phase 8 Plan 03 with /picker)
 import type Database from 'better-sqlite3';
 
 export interface BrowseRow {
@@ -98,7 +98,8 @@ export function distinctSpecies(db: Database.Database): string[] {
 
 /**
  * D-10: The trip_type with the highest row count across catch_reports.
- * Used as the default pre-selection for the /picker trip-type filter.
+ * Phase 2 helper; the /picker filter that consumed this default retired
+ * in Phase 8 Plan 03. Function preserved as a reusable cross-table query.
  * Returns null when catch_reports is empty.
  */
 export function mostCommonTripType(db: Database.Database): string | null {
