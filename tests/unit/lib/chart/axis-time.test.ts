@@ -86,8 +86,10 @@ describe('Explorer chart x-axis migration (AXS-01 / D-35)', () => {
   it('emits xAxis.type === "time" (not "category")', async () => {
     const data = await load(makeEvent('ticker=boat&slug=premier&range=1y'));
     expect(data.chartOption).not.toBeNull();
-    expect(data.chartOption.xAxis.type).toBe('time');
-    expect('data' in data.chartOption.xAxis).toBe(false);
+    // Polish pass: xAxis is now an array (multi-grid layout supports the
+    // embedded moon overlay). Catch axis is index 0.
+    expect(data.chartOption.xAxis[0].type).toBe('time');
+    expect('data' in data.chartOption.xAxis[0]).toBe(false);
   });
 
   it('emits series data as [iso, value] pairs', async () => {
@@ -131,7 +133,13 @@ describe('Explorer chart x-axis migration (AXS-01 / D-35)', () => {
 
   it('moon overlay also uses xAxis.type = "time"', async () => {
     const data = await load(makeEvent('ticker=boat&slug=premier&range=1y&moon=1'));
-    expect(data.moonChartOption).not.toBeNull();
-    expect(data.moonChartOption.xAxis.type).toBe('time');
+    // Polish pass: moon is now an embedded grid (xAxis index 1) inside the
+    // single chartOption. moonChartOption is no longer used.
+    expect(data.chartOption.xAxis[1].type).toBe('time');
+    // Moon series is the last series, with its own axis indices.
+    const moonSeries = data.chartOption.series.find((s: { name?: string }) => s.name === '__moon__');
+    expect(moonSeries).toBeDefined();
+    expect(moonSeries.xAxisIndex).toBe(1);
+    expect(moonSeries.yAxisIndex).toBe(1);
   });
 });

@@ -83,7 +83,8 @@ describe('Explorer granularity (GRN-01)', () => {
   it('URL granularity=weekly → loader returns weekly buckets', async () => {
     const data = await load(makeEvent('ticker=boat&slug=premier&range=3m&granularity=weekly'));
     expect(data.granularity).toBe('weekly');
-    expect(data.chartOption.xAxis.type).toBe('time');
+    // Polish pass: xAxis is now an array (multi-grid for embedded moon overlay).
+    expect(data.chartOption.xAxis[0].type).toBe('time');
   });
 
   it('range=3m without granularity → default Daily', async () => {

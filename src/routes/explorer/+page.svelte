@@ -204,15 +204,20 @@
     return `${header}<br/>${rows}`;
   }
 
-  // Responsive chart height (D-23: 280px mobile <768px, 360px ≥768px)
+  // Responsive chart height (D-23: 280px mobile <768px, 360px ≥768px).
+  // Polish pass: the moon row is now embedded in the same chart, so we add
+  // ~32px when moon is on to keep the catch plot from squeezing.
+  const moonOn = $derived(data.filters.moon ?? false);
   let chartHeight = $state('280px');
   $effect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(min-width: 768px)');
-    chartHeight = mq.matches ? '360px' : '280px';
-    const handler = (e: MediaQueryListEvent) => {
-      chartHeight = e.matches ? '360px' : '280px';
+    const setHeight = (wide: boolean) => {
+      const base = wide ? 360 : 280;
+      chartHeight = `${moonOn ? base + 32 : base}px`;
     };
+    setHeight(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setHeight(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   });
@@ -265,20 +270,17 @@
     <EmptyState heading={data.empty.heading} body={data.empty.body} />
   {:else if data.chartOption}
     <section class="mt-4">
+      <!-- Polish pass: moon overlay is now embedded as a 2nd grid inside
+           chartOption (right below the plot, above the legend) — no longer
+           a separate Chart instance. -->
       <Chart
         option={data.chartOption}
         height={chartHeight}
         ariaLabel={data.ariaLabel}
         {tooltipFormatter}
-        group="explorer"
       />
-      {#if data.moonChartOption}
-        <Chart
-          option={data.moonChartOption as EChartsOption}
-          height="36px"
-          ariaLabel={MOON_ROW_ARIA}
-          group="explorer"
-        />
+      {#if data.filters.moon}
+        <span class="sr-only" aria-label={MOON_ROW_ARIA} role="img"></span>
       {/if}
       <p class="mt-2 text-sm text-(--color-text-muted)">{data.caption}</p>
     </section>

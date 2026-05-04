@@ -96,8 +96,9 @@
         CanvasRenderer
       ]);
       chart = init(chartEl);
-      // Polish pass: join group + connect so dataZoom/tooltip events fan
-      // out to every chart in the same group (e.g. main + moon overlay).
+      // Polish pass: opt-in group/connect so dataZoom/tooltip events fan
+      // out to every chart in the same group. Only used when callers
+      // pass a group prop (kept for future multi-chart pages).
       if (group) {
         chart.group = group;
         coreMod.connect(group);

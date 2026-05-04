@@ -651,11 +651,95 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
 
   const ariaLabel = `${granularityLabel(granularity)} ${FISH_PER_ANGLER_ARIA} for ${selectionLabel} — ${rangeLabel(filters, fromDate, toDate)}`;
 
+  // -------------------------------------------------------------------------
+  // Step 8: Build chartOption. Polish pass — when moon overlay is on, it now
+  // renders as a SECOND grid embedded in this same chartOption (sitting right
+  // below the catch plot, above the legend). Previously the moon was a
+  // separate <Chart> instance below; merging into one chart fixes the visual
+  // ordering (plot → moon → legend → slider) and gives us native dataZoom
+  // sync via xAxisIndex: [0, 1].
+  // -------------------------------------------------------------------------
+  let moonData: Array<[string, number]> = [];
+  if (filters.moon) {
+    // Polish pass: daily moon resolution regardless of catch granularity
+    // (Weekly/Monthly bucketing was distorting the 29.5-day cycle into a
+    // jagged stairstep). lttb sampling keeps render perf reasonable.
+    const dayMs = 86400000;
+    const start = new Date(fromDate + 'T00:00:00Z').getTime();
+    const end = new Date(toDate + 'T00:00:00Z').getTime();
+    for (let t = start; t <= end; t += dayMs) {
+      const d = new Date(t);
+      const yy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(d.getUTCDate()).padStart(2, '0');
+      const ymd = `${yy}-${mm}-${dd}`;
+      moonData.push([d.toISOString(), moonIllumination(ymd)]);
+    }
+  }
+
+  // Catch series names — used to whitelist what the legend shows (the moon
+  // series, when present, lives outside the legend).
+  const catchSeriesNames = chartSeries.map((s) => (s as { name: string }).name);
+
+  // Build grid / xAxis / yAxis arrays. Two-grid layout when moon=on,
+  // single-grid otherwise.
+  const grid = filters.moon
+    ? [
+        { left: 56, right: 24, top: 36, bottom: 156 }, // catch plot
+        { left: 56, right: 24, bottom: 122, height: 24 } // moon row directly below
+      ]
+    : [{ left: 56, right: 24, top: 36, bottom: 132 }];
+
+  const xAxis = filters.moon
+    ? [
+        { type: 'time' as const, gridIndex: 0 },
+        {
+          type: 'time' as const,
+          gridIndex: 1,
+          show: false,
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: { show: false }
+        }
+      ]
+    : [{ type: 'time' as const }];
+
+  const yAxis = filters.moon
+    ? [
+        { type: 'value' as const, name: FISH_PER_ANGLER_AXIS, gridIndex: 0 },
+        {
+          type: 'value' as const,
+          gridIndex: 1,
+          min: 0,
+          max: 1,
+          show: false,
+          splitLine: { show: false }
+        }
+      ]
+    : [{ type: 'value' as const, name: FISH_PER_ANGLER_AXIS }];
+
+  const moonSeries = filters.moon
+    ? [
+        {
+          name: '__moon__', // hidden from the legend via legend.data whitelist
+          type: 'line' as const,
+          smooth: true,
+          showSymbol: false,
+          sampling: 'lttb' as const,
+          xAxisIndex: 1,
+          yAxisIndex: 1,
+          lineStyle: { color: '#94a3b8', width: 1.5 },
+          areaStyle: { color: 'rgba(148, 163, 184, 0.35)' },
+          data: moonData,
+          silent: true,
+          animation: false,
+          tooltip: { show: false }
+        }
+      ]
+    : [];
+
   const chartOption = {
-    // Polish pass: leave room at the bottom for the dataZoom slider + the
-    // multi-line legend; toolbox sits at top-right. grid.bottom grows to
-    // accommodate up to ~3 rows of legend before the slider strip.
-    grid: { left: 56, right: 24, top: 36, bottom: 132 },
+    grid,
     toolbox: {
       right: 8,
       top: 4,
@@ -669,107 +753,32 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       // The page attaches tooltipFormatter client-side via the optional Chart prop (T-06-24)
     },
     legend: {
-      // Polish pass: type:'plain' wraps to multiple rows so users see every
-      // series at once instead of paginating through 'scroll' arrows.
       type: 'plain' as const,
       bottom: 36,
-      // Constrain width so wrap kicks in before reaching the right edge.
       width: '90%',
-      selected: legendSelected
+      selected: legendSelected,
+      // Polish pass: explicitly whitelist catch-series names so the moon
+      // series doesn't leak into the legend.
+      data: catchSeriesNames
     },
-    // Polish pass: range zoom on the time axis.
-    //   - 'slider' renders a draggable strip below the chart (above the legend).
-    //   - 'inside' enables scroll/pinch zoom on the plot itself.
-    //   - The toolbox 'restore' icon resets to full range; double-click on the
-    //     slider also resets per ECharts default.
+    // Polish pass: zoom both grids together via xAxisIndex: [0, 1] when moon is on.
     dataZoom: [
-      { type: 'slider' as const, xAxisIndex: 0, bottom: 4, height: 22 },
-      { type: 'inside' as const, xAxisIndex: 0 }
+      {
+        type: 'slider' as const,
+        xAxisIndex: filters.moon ? [0, 1] : 0,
+        bottom: 4,
+        height: 22
+      },
+      { type: 'inside' as const, xAxisIndex: filters.moon ? [0, 1] : 0 }
     ],
-    // Phase 8 Plan 04 (AXS-01 / D-35). Time-mode axis with PT-canonical
-    // bucket-start dates. ECharts auto-formats the labels per range; the
-    // tooltip formatter (page-side) reformats axisValue to a PT-readable
-    // string.
-    xAxis: { type: 'time' as const },
-    yAxis: { type: 'value' as const, name: FISH_PER_ANGLER_AXIS },
-    series: chartSeries
+    xAxis,
+    yAxis,
+    series: [...chartSeries, ...moonSeries]
   };
 
-  // -------------------------------------------------------------------------
-  // Step 8b: Moon overlay (Phase 7, MOON-01 + MOON-02).
-  // UI-SPEC §Component Anatomy 2 — emit a SECOND chart option only when
-  // filters.moon === true. Plain JSON (no echarts import — Pitfall 2 / T-06-30
-  // carry-forward). grid.left/right MUST match the catch chart's grid exactly
-  // (alignment guarantee).
-  let moonChartOption: object | null = null;
-  if (filters.moon) {
-    // Polish pass: render moon illumination at DAILY resolution regardless of
-    // the catch chart's granularity. Previously the moon was sampled once per
-    // bucket — at weekly/monthly bucketing that lost the 29.5-day cycle's
-    // shape. The two charts share the same xAxis time range (and dataZoom via
-    // ECharts.connect), so they stay visually aligned even at different
-    // resolutions; only the moon-row resolution is decoupled.
-    //
-    // For long ranges (e.g. 'all' = ~5500 days), the series 'sampling: lttb'
-    // option downsamples for render performance while preserving wave shape.
-    const moonData: Array<[string, number]> = [];
-    const dayMs = 86400000;
-    // Iterate UTC dates from fromDate to toDate inclusive. fromDate / toDate
-    // are PT-canonical YYYY-MM-DD strings; using UTC midnight as the ISO
-    // anchor keeps the daily cadence even across DST boundaries.
-    const start = new Date(fromDate + 'T00:00:00Z').getTime();
-    const end = new Date(toDate + 'T00:00:00Z').getTime();
-    for (let t = start; t <= end; t += dayMs) {
-      const d = new Date(t);
-      const yy = d.getUTCFullYear();
-      const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(d.getUTCDate()).padStart(2, '0');
-      const ymd = `${yy}-${mm}-${dd}`;
-      moonData.push([d.toISOString(), moonIllumination(ymd)]);
-    }
-    moonChartOption = {
-      grid: {
-        left: (chartOption as { grid?: { left?: string | number } }).grid?.left ?? 'auto',
-        right: (chartOption as { grid?: { right?: string | number } }).grid?.right ?? 'auto',
-        top: 0,
-        bottom: 0
-      },
-      // Polish pass: silent inside-zoom so the moon row joins the
-      // ECharts.connect('explorer') group and tracks the main chart's
-      // dataZoom range. zoomLock so the user can't accidentally pinch-zoom
-      // the moon row directly — it should only mirror the catch chart.
-      dataZoom: [{ type: 'inside' as const, xAxisIndex: 0, zoomLock: true, throttle: 0 }],
-      xAxis: {
-        type: 'time' as const,
-        show: false,
-        axisLine: { show: false },
-        axisTick: { show: false },
-        splitLine: { show: false }
-      },
-      yAxis: {
-        type: 'value' as const,
-        min: 0,
-        max: 1,
-        show: false,
-        splitLine: { show: false }
-      },
-      series: [
-        {
-          type: 'line' as const,
-          smooth: true,
-          showSymbol: false,
-          sampling: 'lttb' as const,
-          lineStyle: { color: 'var(--color-text-muted)', width: 1.5 },
-          areaStyle: { color: 'rgba(203, 213, 225, 0.35)' }, // --color-border-strong @ 35%
-          data: moonData,
-          silent: true,
-          animation: false
-        }
-      ],
-      tooltip: { show: false },
-      animation: false
-    };
-  }
+  // moonChartOption kept for back-compat with the old return shape. Now
+  // always null — the moon series is embedded in chartOption above.
+  const moonChartOption: object | null = null;
 
   // -------------------------------------------------------------------------
   // Step 9: Logger (T-06-31: no user PII)

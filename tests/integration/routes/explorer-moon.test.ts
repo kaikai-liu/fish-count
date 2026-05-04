@@ -194,7 +194,13 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
     expect(data.filters.moon).toBe(false);
   });
 
-  it('moonChartOption is present when ?moon=1 (daily resolution)', async () => {
+  // Polish pass: moon overlay is now an embedded grid inside chartOption
+  // (named series `__moon__` with xAxisIndex=1). moonChartOption is always null.
+  function getMoonSeries(data: { chartOption: { series: Array<{ name?: string; data?: unknown[] }> } }) {
+    return data.chartOption.series.find((s) => s.name === '__moon__');
+  }
+
+  it('moon series is embedded in chartOption when ?moon=1 (daily resolution)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
@@ -202,19 +208,16 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
 
     const data = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=1`));
 
-    expect(data.moonChartOption).not.toBeNull();
     expect(data.filters.moon).toBe(true);
+    const moon = getMoonSeries(data);
+    expect(moon).toBeDefined();
     // Polish pass: moon overlay renders at DAILY resolution regardless of
-    // the catch chart's bucket granularity (was: 1 point per bucket).
-    // For 1y → ~365-366 daily samples.
-    const moonValues = (
-      data.moonChartOption as { series: { data: unknown[] }[] }
-    ).series[0].data.length;
-    expect(moonValues).toBeGreaterThanOrEqual(365);
-    expect(moonValues).toBeLessThanOrEqual(367);
+    // the catch chart's bucket granularity. For 1y → ~365-366 daily samples.
+    expect(moon!.data!.length).toBeGreaterThanOrEqual(365);
+    expect(moon!.data!.length).toBeLessThanOrEqual(367);
   });
 
-  it('moonChartOption is present when ?moon=true (alternate literal)', async () => {
+  it('moon series is embedded when ?moon=true (alternate literal)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
@@ -222,8 +225,8 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
 
     const data = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=true`));
 
-    expect(data.moonChartOption).not.toBeNull();
     expect(data.filters.moon).toBe(true);
+    expect(getMoonSeries(data)).toBeDefined();
   });
 
   it('moon series re-samples when range changes (daily resolution)', async () => {
@@ -235,10 +238,8 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
     const oneYear = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=1`));
     const sixMonth = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=6m&moon=1`));
 
-    const oneYearMoon = (oneYear.moonChartOption as { series: { data: unknown[] }[] }).series[0]
-      .data.length;
-    const sixMonthMoon = (sixMonth.moonChartOption as { series: { data: unknown[] }[] }).series[0]
-      .data.length;
+    const oneYearMoon = getMoonSeries(oneYear)!.data!.length;
+    const sixMonthMoon = getMoonSeries(sixMonth)!.data!.length;
     // Polish pass: moon is daily-only, so the day count differs by date range.
     // 1y has ~365 daily samples, 6m has ~180. Strict greater-than holds.
     expect(oneYearMoon).toBeGreaterThan(sixMonthMoon);

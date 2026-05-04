@@ -372,7 +372,8 @@ describe('/explorer +page.server.ts load()', () => {
     // 1m preset spans ~30 days at daily granularity.
     expect(result.bucketStartIsos.length).toBeGreaterThanOrEqual(30);
     expect(result.bucketStartIsos.length).toBeLessThanOrEqual(31);
-    expect(result.chartOption.xAxis.type).toBe('time');
+    // Polish pass: xAxis is now an array (multi-grid for embedded moon overlay).
+    expect(result.chartOption.xAxis[0].type).toBe('time');
   });
 
   it('11. empty branch: boat slug not found → empty state returned', async () => {

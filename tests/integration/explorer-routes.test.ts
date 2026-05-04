@@ -289,6 +289,7 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
 
     const result = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y`));
 
-    expect(result.chartOption.yAxis.name).toBe('fish/angler');
+    // Polish pass: yAxis is now an array (multi-grid for embedded moon overlay).
+    expect(result.chartOption.yAxis[0].name).toBe('fish/angler');
   });
 });
