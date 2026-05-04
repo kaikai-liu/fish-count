@@ -230,40 +230,9 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
     expect(result.breakdownRows).toBeNull();
   });
 
-  it('5. custom range 30 days → granularity=daily, xAxis.data.length = 30', async () => {
-    const db = openTestDb();
-    setTestDb(db);
-    const { boats } = populateDb(db);
-    const boat = boats[0];
-
-    const result = await load(makeEvent(
-      `ticker=boat&slug=${boat.slug}&range=custom&fromDate=2026-04-01&toDate=2026-04-30`
-    ));
-
-    expect(result.empty).toBeNull();
-    expect(result.chartOption).not.toBeNull();
-    // Phase 8 Plan 04 (AXS-01 / D-35): time-mode axis. Bucket count is now
-    // exposed via bucketStartIsos (the loader's per-bucket ISO array).
-    expect(result.chartOption.xAxis.type).toBe('time');
-    expect(result.bucketStartIsos.length).toBe(30);
-    expect(result.bucketStartIsos[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
-
-  it('6. future custom range → clamped to today, clampNote populated', async () => {
-    const db = openTestDb();
-    setTestDb(db);
-    const { boats } = populateDb(db);
-    const boat = boats[0];
-
-    const result = await load(makeEvent(
-      `ticker=boat&slug=${boat.slug}&range=custom&fromDate=2030-01-01&toDate=2030-12-31`
-    ));
-
-    // Should have been clamped to available data window
-    // clampNote should be set
-    expect(result.clampNote).not.toBeNull();
-    expect(result.clampNote).toBeTruthy();
-  });
+  // Polish pass: 'custom' range removed — chart dataZoom replaces it. The
+  // two former custom-range integration tests (30-day window, future-clamp)
+  // are obsolete; range presets cover the equivalent loader paths.
 
   it('7. unknown slug → empty state with "Boat not found" heading', async () => {
     const db = openTestDb();

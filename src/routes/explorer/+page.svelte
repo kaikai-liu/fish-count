@@ -31,20 +31,7 @@
   );
   const formMoon = $derived(filters.moon ?? false);
 
-  // Custom date inputs need writable state for the bind on CustomDateInputs.
-  // The $effect below seeds and re-syncs them from the loader on every navigation.
-  let formFromDate = $state('');
-  let formToDate = $state('');
-  $effect(() => {
-    if (filters.range === 'custom') {
-      formFromDate = filters.fromDate ?? '';
-      formToDate = filters.toDate ?? '';
-    } else {
-      formFromDate = '';
-      formToDate = '';
-    }
-  });
-
+  // Polish pass: removed Custom range — chart dataZoom replaces it.
   function navigate(next: ExplorerFilters) {
     const sp = serializeExplorerFilters(next);
     // T-06-28: URL built only from typed ExplorerFilters — no open redirect
@@ -62,7 +49,6 @@
   }
 
   function onRangeChange(next: ExplorerFilters['range']) {
-    if (next === 'custom') return; // wait for CustomDateInputs onSubmit
     // Phase 8 Plan 04 (GRN-02 / D-38). Range switch resets granularity to the
     // new range's default. Default-stripping happens in serialize: we leave
     // filters.granularity undefined so the URL drops the param. The user can
@@ -90,17 +76,12 @@
     // D-38 default-stripping: if user picks the default for the current range,
     // omit the URL param so the URL stays clean.
     const isDefault = next === defaultGranularityForRange(formRange);
-    const customDates =
-      formRange === 'custom' && formFromDate && formToDate
-        ? { fromDate: formFromDate, toDate: formToDate }
-        : {};
     const f: ExplorerFilters =
       formTicker === 'boat'
         ? {
             ticker: 'boat',
             slug: formSelection ?? '',
             range: formRange,
-            ...customDates,
             moon: filters.moon,
             granularity: isDefault ? undefined : next
           }
@@ -108,7 +89,6 @@
             ticker: formTicker as 'species' | 'landing',
             name: formSelection ?? '',
             range: formRange,
-            ...customDates,
             moon: filters.moon,
             granularity: isDefault ? undefined : next
           };
@@ -126,23 +106,11 @@
   }
 
   function onMoonChange(next: boolean) {
-    const customDates = formRange === 'custom' && formFromDate && formToDate
-      ? { fromDate: formFromDate, toDate: formToDate }
-      : {};
     const granularity = preservedGranularity();
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: formRange, ...customDates, moon: next, granularity }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: formRange, ...customDates, moon: next, granularity };
-    navigate(f);
-  }
-
-  function onCustomDates(dates: { fromDate: string; toDate: string }) {
-    const granularity = preservedGranularity();
-    const f: ExplorerFilters =
-      formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate, moon: filters.moon, granularity }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate, moon: filters.moon, granularity };
+        ? { ticker: 'boat', slug: formSelection ?? '', range: formRange, moon: next, granularity }
+        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: formRange, moon: next, granularity };
     navigate(f);
   }
 
@@ -151,8 +119,8 @@
     const granularity = preservedGranularity();
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: val, range: formRange, moon: filters.moon, granularity, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) }
-        : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, moon: filters.moon, granularity, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) };
+        ? { ticker: 'boat', slug: val, range: formRange, moon: filters.moon, granularity }
+        : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, moon: filters.moon, granularity };
     navigate(f);
   }
 
@@ -259,17 +227,13 @@
 <ExplorerHeader
   ticker={formTicker}
   range={formRange}
-  bind:fromDate={formFromDate}
-  bind:toDate={formToDate}
   moon={formMoon}
   {onTickerChange}
   {onRangeChange}
-  {onCustomDates}
   {onMoonChange}
   granularity={data.granularity ?? defaultGranularityForRange(formRange)}
   {onGranularityChange}
   autoWidenNote={data.autoWidenNote}
-  clampNote={data.clampNote}
 >
   {#snippet selector()}
     <label class="flex flex-col gap-1">

@@ -28,7 +28,6 @@ import {
   countCatchRowsForLandingEver,
   mostCaughtSpeciesForBoatInRange,
   topBoatForSpeciesInRange,
-  earliestScrapeDate,
   type SpeciesBreakdownRow
 } from '$lib/db/queries/explorer';
 import { EMPTY_STATES } from '$lib/copy/empty-states';
@@ -57,10 +56,7 @@ import {
 // ---------------------------------------------------------------------------
 // Range label for caption (D-16 copywriting contract)
 // ---------------------------------------------------------------------------
-function rangeLabel(filters: ExplorerFilters, fromDate: string, toDate: string): string {
-  if (filters.range === 'custom') {
-    return `${fromDate} to ${toDate}`;
-  }
+function rangeLabel(filters: ExplorerFilters, _fromDate: string, _toDate: string): string {
   const labels: Record<string, string> = {
     '1m': 'past month',
     '3m': 'past 3 months',
@@ -314,15 +310,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   }
 
   // -------------------------------------------------------------------------
-  // Step 2: Resolve date range (D-02, D-19)
+  // Step 2: Resolve date range (D-02). Polish pass: 'custom' range removed
+  // — chart dataZoom replaces it. clampNote stays for back-compat with the
+  // page contract but is always null now.
   // -------------------------------------------------------------------------
-  let clampNote: string | null = null;
-  let resolvedRange = rangeToDates(
-    filters.range,
-    filters.range === 'custom' && filters.fromDate && filters.toDate
-      ? { fromDate: filters.fromDate, toDate: filters.toDate }
-      : undefined
-  );
+  const clampNote: string | null = null;
+  const resolvedRange = rangeToDates(filters.range);
+  // eslint-disable-next-line prefer-const
   let { fromDate, toDate, granularity, includesToday } = resolvedRange;
 
   // Phase 8 Plan 04 (GRN-01 / D-39). User can override the per-range default
@@ -333,40 +327,6 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     granularity = filters.granularity;
   } else {
     granularity = defaultGranularityForRange(filters.range);
-  }
-
-  // D-19: Clamp custom range to [earliestScrapeDate, today()]
-  if (filters.range === 'custom') {
-    const earliest = earliestScrapeDate(db);
-    const todayStr = today();
-    let clamped = false;
-    let clampedFrom = fromDate;
-    let clampedTo = toDate;
-    if (earliest && fromDate < earliest) {
-      clampedFrom = earliest;
-      clamped = true;
-    }
-    if (toDate > todayStr) {
-      clampedTo = todayStr;
-      clamped = true;
-    }
-    if (clamped) {
-      const parts: string[] = [];
-      if (clampedFrom !== fromDate) parts.push('Start date adjusted to earliest available data.');
-      if (clampedTo !== toDate) parts.push('End date adjusted to today.');
-      // Also ensure fromDate <= toDate after clamping (e.g. entire range is in future)
-      if (clampedFrom > clampedTo) {
-        clampedFrom = clampedTo;
-        parts.push('Date range adjusted to available data window.');
-      }
-      clampNote = parts.join(' ');
-      fromDate = clampedFrom;
-      toDate = clampedTo;
-      // Recompute resolved range with clamped dates
-      resolvedRange = rangeToDates('custom', { fromDate, toDate });
-      granularity = resolvedRange.granularity;
-      includesToday = resolvedRange.includesToday;
-    }
   }
 
   // -------------------------------------------------------------------------

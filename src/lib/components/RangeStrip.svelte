@@ -1,5 +1,6 @@
 <script lang="ts">
-  type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all' | 'custom';
+  // Polish pass: dropped 'custom' — chart dataZoom slider replaces it.
+  type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all';
   let {
     value,
     onChange
@@ -15,8 +16,7 @@
     { id: '1y', label: '1Y' },
     { id: '2y', label: '2Y' },
     { id: '5y', label: '5Y' },
-    { id: 'all', label: 'All' },
-    { id: 'custom', label: 'Custom' }
+    { id: 'all', label: 'All' }
   ];
 </script>
 

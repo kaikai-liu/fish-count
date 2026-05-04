@@ -2,24 +2,20 @@
   import type { Snippet } from 'svelte';
   import TickerPills from './TickerPills.svelte';
   import RangeStrip from './RangeStrip.svelte';
-  import CustomDateInputs from './CustomDateInputs.svelte';
   import GranularitySelector from './GranularitySelector.svelte';
   import { MOON_TOGGLE_LABEL, MOON_TOGGLE_ARIA } from '$lib/copy/moon';
   import type { Granularity } from '$lib/shared/urlState';
 
   type Ticker = 'boat' | 'species' | 'landing';
-  type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all' | 'custom';
+  // Polish pass: dropped 'custom' — chart dataZoom slider replaces it.
+  type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all';
 
   let {
     ticker,
     range,
-    fromDate = $bindable(''),
-    toDate = $bindable(''),
     onTickerChange,
     onRangeChange,
-    onCustomDates,
     autoWidenNote,
-    clampNote,
     selector,
     // Phase 7 (MOON-01)
     moon,
@@ -30,13 +26,9 @@
   }: {
     ticker: Ticker;
     range: Range;
-    fromDate?: string;
-    toDate?: string;
     onTickerChange: (next: Ticker) => void;
     onRangeChange: (next: Range) => void;
-    onCustomDates: (next: { fromDate: string; toDate: string }) => void;
     autoWidenNote?: string | null;
-    clampNote?: string | null;
     selector: Snippet;
     moon: boolean;
     onMoonChange: (next: boolean) => void;
@@ -45,16 +37,14 @@
   } = $props();
 
   // Phase 8 Plan 04 (GRN-01 / D-37). Hide the granularity selector at short
-  // ranges where Daily is the only sensible bucket. Visible at 3M and longer
-  // (and on custom — the loader resolves a sensible default).
+  // ranges where Daily is the only sensible bucket. Visible at 3M and longer.
   const showGranularitySelector = $derived(
     range === '3m' ||
       range === '6m' ||
       range === '1y' ||
       range === '2y' ||
       range === '5y' ||
-      range === 'all' ||
-      range === 'custom'
+      range === 'all'
   );
 </script>
 
@@ -94,14 +84,6 @@
           </button>
         </div>
       </div>
-      {#if range === 'custom'}
-        <CustomDateInputs
-          bind:fromDate
-          bind:toDate
-          onSubmit={onCustomDates}
-          {clampNote}
-        />
-      {/if}
     </div>
 
     {#if autoWidenNote}

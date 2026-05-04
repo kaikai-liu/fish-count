@@ -152,10 +152,11 @@ const boolFlagField = z
   .default('false')
   .transform((s) => s === 'true' || s === '1');
 
+// Polish pass: dropped fromDate/toDate from RangeBase — chart dataZoom
+// replaces the 'custom' range. (Compare's date filters live in their own
+// schema, untouched.)
 const RangeBase = z.object({
   range: z.enum(RANGE_PRESETS).default('1y'),
-  fromDate: dateField.optional(),
-  toDate: dateField.optional(),
   moon: boolFlagField, // Phase 7 (MOON-01) — default off; URL omits param when off (D-04 clean-URL)
   // Phase 8 Plan 04 (GRN-01 / D-39). Optional override; loader resolves the
   // default per range (defaultGranularityForRange). Default-stripping at
@@ -174,34 +175,13 @@ export function defaultGranularityForRange(
   range: ExplorerFilters['range']
 ): Granularity {
   if (range === '1m' || range === '3m' || range === '6m') return 'daily';
-  // 1y / 2y / 5y / all → weekly. Custom (post-clamp) defaults to daily —
-  // loader can refine if the clamped window is long.
-  if (range === '1y' || range === '2y' || range === '5y' || range === 'all') {
-    return 'weekly';
-  }
-  return 'daily';
+  // 1y / 2y / 5y / all → weekly.
+  return 'weekly';
 }
 
-// D-19: custom range requires both dates; fromDate <= toDate (T-06-10).
-export const ExplorerFiltersSchema = z
-  .intersection(TickerVariant, RangeBase)
-  .superRefine((v, ctx) => {
-    if (v.range === 'custom') {
-      if (!v.fromDate || !v.toDate) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'fromDate and toDate required when range=custom'
-        });
-        return;
-      }
-      if (v.fromDate > v.toDate) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'fromDate must be <= toDate'
-        });
-      }
-    }
-  });
+// Polish pass: dropped the 'custom'-only superRefine — schema is now a
+// straight intersection.
+export const ExplorerFiltersSchema = z.intersection(TickerVariant, RangeBase);
 
 export type ExplorerFilters = z.infer<typeof ExplorerFiltersSchema>;
 
@@ -220,10 +200,6 @@ export function serializeExplorerFilters(filters: ExplorerFilters): URLSearchPar
     sp.set('name', filters.name);
   }
   sp.set('range', filters.range);
-  if (filters.range === 'custom') {
-    if (filters.fromDate) sp.set('fromDate', filters.fromDate);
-    if (filters.toDate) sp.set('toDate', filters.toDate);
-  }
   // Phase 7 (MOON-01) — emit moon=1 ONLY when on. UI-SPEC §URL State Contract
   // "Serialization rule": "When moon is off, the param is omitted entirely. This
   // preserves D-04 (clean URL on default landing) and the off-state guarantee."

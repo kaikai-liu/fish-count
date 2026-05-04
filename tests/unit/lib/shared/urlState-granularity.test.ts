@@ -30,9 +30,7 @@ describe('defaultGranularityForRange', () => {
     expect(defaultGranularityForRange('all')).toBe('weekly');
   });
 
-  it('custom → daily (loader can refine after clamp)', () => {
-    expect(defaultGranularityForRange('custom')).toBe('daily');
-  });
+  // Polish pass: 'custom' range removed — chart dataZoom replaces it.
 });
 
 describe('parseExplorerFilters: granularity', () => {

@@ -187,22 +187,7 @@ describe('ExplorerFiltersSchema', () => {
     }
   });
 
-  it('parses custom range with valid fromDate and toDate', () => {
-    const sp = toSp({
-      ticker: 'boat',
-      slug: 'pacific-voyager',
-      range: 'custom',
-      fromDate: '2025-01-01',
-      toDate: '2025-06-30'
-    });
-    const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(false);
-    if (!('error' in result)) {
-      expect(result.range).toBe('custom');
-      expect(result.fromDate).toBe('2025-01-01');
-      expect(result.toDate).toBe('2025-06-30');
-    }
-  });
+  // Polish pass: 'custom' range removed — chart dataZoom replaces it.
 
   // ---- invalid inputs — should return {error} ----
 
@@ -257,33 +242,10 @@ describe('ExplorerFiltersSchema', () => {
     expect('error' in result).toBe(false);
   });
 
-  it('returns {error} when range=custom but no fromDate/toDate', () => {
+  it('range=custom is rejected (polish pass: removed from RANGE_PRESETS)', () => {
     const sp = toSp({ ticker: 'boat', slug: 'pacific-voyager', range: 'custom' });
     const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when range=custom and fromDate > toDate', () => {
-    const sp = toSp({
-      ticker: 'boat',
-      slug: 'pacific-voyager',
-      range: 'custom',
-      fromDate: '2025-02-01',
-      toDate: '2025-01-01'
-    });
-    const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when date format is invalid', () => {
-    const sp = toSp({
-      ticker: 'boat',
-      slug: 'valid-slug',
-      range: 'custom',
-      fromDate: '01-01-2025',
-      toDate: '2025-06-30'
-    });
-    const result = parseExplorerFilters(sp);
+    // 'custom' is no longer in the enum so Zod returns a ZodError.
     expect('error' in result).toBe(true);
   });
 
@@ -319,22 +281,7 @@ describe('ExplorerFiltersSchema', () => {
     }
   });
 
-  it('round-trip: custom range parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = {
-      ticker: 'boat',
-      slug: 'pacific-voyager',
-      range: 'custom',
-      fromDate: '2025-01-01',
-      toDate: '2025-06-30',
-      moon: false
-    };
-    const sp = serializeExplorerFilters(f);
-    const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(false);
-    if (!('error' in result)) {
-      expect(result).toEqual(f);
-    }
-  });
+  // Polish pass: 'custom' round-trip test removed — schema no longer accepts it.
 });
 
 describe('ExplorerFiltersSchema — moon field (Phase 7, MOON-01)', () => {

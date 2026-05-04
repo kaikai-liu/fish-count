@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { openTestDb } from '../helpers/in-memory-db';
 import { seedBoat, seedTrip } from '../helpers/seedTestDb';
+import { today } from '../../src/lib/shared/dates';
 
 let _testDb: Database.Database | null = null;
 
@@ -121,12 +122,12 @@ describe('Explorer empty-state variants (POL-03 / D-33)', () => {
       boatName: 'Premier',
       landingName: "Fisherman's Landing"
     });
-    // Trip from "today" — should be in the 1m range.
-    const today = new Date().toISOString().slice(0, 10);
+    // Trip from "today" — should be in the 1m range. Use the PT-canonical
+    // today() so this passes regardless of UTC rollover state.
     seedTrip(_testDb!, {
       boatId,
       landingId,
-      date: today,
+      date: today(),
       tripType: 'Full Day',
       species: 'yellowtail',
       anglers: 20,
