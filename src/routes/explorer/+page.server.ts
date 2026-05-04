@@ -31,7 +31,7 @@ import {
   type SpeciesBreakdownRow
 } from '$lib/db/queries/explorer';
 import { EMPTY_STATES } from '$lib/copy/empty-states';
-import { distinctSpecies } from '$lib/db/queries/browse';
+import { distinctSpecies, topSpecies } from '$lib/db/queries/browse';
 import { findBySlug, listBoatsByActivity, mostActiveBoatLast30Days } from '$lib/db/boats';
 import { getByName, mostRecentlyActiveLanding } from '$lib/db/landings';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
@@ -447,8 +447,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       }
     }
   } else if (filters.ticker === 'species') {
-    // Species selector options (D-10: alphabetical)
-    const speciesList = distinctSpecies(db);
+    // Polish pass: trim from 310 → top 20 most-caught species (alphabetical),
+    // size-class variants rolled up to canonical name. Anglers were drowning
+    // in "bluefin tuna (up to 100 pounds)" + 99 sibling weights.
+    const speciesList = topSpecies(db, 20);
     selectorOptions = speciesList.map((s) => ({ value: s, label: s }));
     selectionLabel = filters.name;
 

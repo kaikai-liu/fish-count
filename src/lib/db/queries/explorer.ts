@@ -24,6 +24,7 @@
 import type Database from 'better-sqlite3';
 import type { BoatRow } from '$lib/db/boats';
 import { ALIAS_JOIN_SQL, CANONICAL_TRIP_TYPE_EXPR } from '$lib/db/aliases';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export type Granularity = 'daily' | 'weekly' | 'monthly';
 
@@ -118,12 +119,14 @@ export function speciesAcrossBoats(db: Database.Database, args: SpeciesAcrossBoa
   const topN = args.topN ?? 6;
 
   // Pass 1: top-N boats by total species_count in window (Pitfall 9 — window totals, not per-bucket).
+  // Polish pass: filter on canonical species so size-class variants
+  // ("bluefin tuna (up to 100 pounds)") roll into "bluefin tuna".
   const topRows = db.prepare(
     `SELECT b.id, b.display_name, b.slug, SUM(cr.species_count) AS total
        FROM catch_reports cr
        ${ALIAS_JOIN_SQL}
        JOIN boats b ON b.id = cr.boat_id
-      WHERE cr.species = @species
+      WHERE ${CANONICAL_SPECIES_EXPR} = @species
         AND cr.source_date BETWEEN @fromDate AND @toDate
       GROUP BY cr.boat_id
       ORDER BY total DESC, b.display_name ASC
@@ -147,7 +150,7 @@ export function speciesAcrossBoats(db: Database.Database, args: SpeciesAcrossBoa
             COUNT(DISTINCT cr.source_date) AS n_trips
        FROM catch_reports cr
        ${ALIAS_JOIN_SQL}
-      WHERE cr.species = ?
+      WHERE ${CANONICAL_SPECIES_EXPR} = ?
         AND cr.source_date BETWEEN ? AND ?
         AND cr.boat_id IN (${placeholders})
       GROUP BY cr.boat_id, bucket_key
@@ -197,14 +200,16 @@ export interface LandingAcrossSpeciesResult {
 export function landingAcrossSpecies(db: Database.Database, args: LandingAcrossSpeciesArgs): LandingAcrossSpeciesResult {
   const topN = args.topN ?? 6;
 
+  // Polish pass: roll up size-class species variants in the GROUP BY so
+  // bluefin tuna's 100+ weight bins surface as a single "bluefin tuna" row.
   const topRows = db.prepare(
-    `SELECT cr.species, SUM(cr.species_count) AS total
+    `SELECT ${CANONICAL_SPECIES_EXPR} AS species, SUM(cr.species_count) AS total
        FROM catch_reports cr
        ${ALIAS_JOIN_SQL}
       WHERE cr.landing_id = @landingId
         AND cr.source_date BETWEEN @fromDate AND @toDate
-      GROUP BY cr.species
-      ORDER BY total DESC, cr.species ASC
+      GROUP BY ${CANONICAL_SPECIES_EXPR}
+      ORDER BY total DESC, species ASC
       LIMIT @topN`
   ).all({ landingId: args.landingId, fromDate: args.fromDate, toDate: args.toDate, topN }) as Array<{
     species: string;
@@ -217,16 +222,16 @@ export function landingAcrossSpecies(db: Database.Database, args: LandingAcrossS
   const placeholders = speciesList.map(() => '?').join(',');
   const expr = bucketExpr(args.granularity);
   const series = db.prepare(
-    `SELECT cr.species, ${expr} AS bucket_key,
+    `SELECT ${CANONICAL_SPECIES_EXPR} AS species, ${expr} AS bucket_key,
             SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
             COUNT(DISTINCT cr.source_date) AS n_trips
        FROM catch_reports cr
        ${ALIAS_JOIN_SQL}
       WHERE cr.landing_id = ?
         AND cr.source_date BETWEEN ? AND ?
-        AND cr.species IN (${placeholders})
-      GROUP BY cr.species, bucket_key
-      ORDER BY bucket_key ASC, cr.species ASC`
+        AND ${CANONICAL_SPECIES_EXPR} IN (${placeholders})
+      GROUP BY ${CANONICAL_SPECIES_EXPR}, bucket_key
+      ORDER BY bucket_key ASC, species ASC`
   ).all(args.landingId, args.fromDate, args.toDate, ...speciesList) as LandingAcrossSpeciesBucket[];
 
   return { topSpecies: speciesList, series };
@@ -252,14 +257,16 @@ export interface SpeciesBreakdownRow {
  * No bucketing — this feeds the breakdown table, not the chart.
  */
 export function speciesBreakdownForBoat(db: Database.Database, args: SpeciesBreakdownArgs): SpeciesBreakdownRow[] {
+  // Polish pass: roll up size-class variants so the breakdown table shows
+  // one "bluefin tuna" row instead of 100+ weight bins.
   return db.prepare(
-    `SELECT species,
-            SUM(species_count) AS total_catch,
-            COUNT(DISTINCT source_date) AS n_trips
-       FROM catch_reports
-      WHERE boat_id = @boatId
-        AND source_date BETWEEN @fromDate AND @toDate
-      GROUP BY species
+    `SELECT ${CANONICAL_SPECIES_EXPR} AS species,
+            SUM(cr.species_count) AS total_catch,
+            COUNT(DISTINCT cr.source_date) AS n_trips
+       FROM catch_reports cr
+      WHERE cr.boat_id = @boatId
+        AND cr.source_date BETWEEN @fromDate AND @toDate
+      GROUP BY ${CANONICAL_SPECIES_EXPR}
       ORDER BY total_catch DESC, species ASC`
   ).all(args) as SpeciesBreakdownRow[];
 }
@@ -308,8 +315,10 @@ export function countCatchRowsForSpeciesEver(
   db: Database.Database,
   args: { species: string }
 ): number {
+  // Polish pass: canonical match so dropdown values like "bluefin tuna" find
+  // rows even when only "bluefin tuna (up to 100 pounds)" exists in the DB.
   const row = db.prepare(
-    `SELECT 1 AS x FROM catch_reports WHERE species = @species LIMIT 1`
+    `SELECT 1 AS x FROM catch_reports cr WHERE ${CANONICAL_SPECIES_EXPR} = @species LIMIT 1`
   ).get(args) as { x?: number } | undefined;
   return row ? 1 : 0;
 }
@@ -356,11 +365,14 @@ export function mostCaughtSpeciesForBoatInRange(
   db: Database.Database,
   args: { boatId: number; fromDate: string; toDate: string }
 ): string | null {
+  // Polish pass: pick the canonical species so the cross-axis default
+  // sends users to "bluefin tuna" — a value present in the trimmed top-20
+  // dropdown — not a size-class variant that's been canonicalized away.
   const row = db.prepare(
-    `SELECT species, SUM(species_count) AS total
-       FROM catch_reports
-      WHERE boat_id = @boatId AND source_date BETWEEN @fromDate AND @toDate
-      GROUP BY species
+    `SELECT ${CANONICAL_SPECIES_EXPR} AS species, SUM(cr.species_count) AS total
+       FROM catch_reports cr
+      WHERE cr.boat_id = @boatId AND cr.source_date BETWEEN @fromDate AND @toDate
+      GROUP BY ${CANONICAL_SPECIES_EXPR}
       ORDER BY total DESC, species ASC
       LIMIT 1`
   ).get(args) as { species?: string } | undefined;
@@ -377,11 +389,13 @@ export function topBoatForSpeciesInRange(
   db: Database.Database,
   args: { species: string; fromDate: string; toDate: string }
 ): Pick<BoatRow, 'id' | 'display_name' | 'slug'> | null {
+  // Polish pass: canonical species so the size-class variants count toward
+  // the same fish; anglers don't think of "bluefin tuna 100lb" as separate.
   const row = db.prepare(
     `SELECT b.id, b.display_name, b.slug, SUM(cr.species_count) AS total
        FROM catch_reports cr
        JOIN boats b ON b.id = cr.boat_id
-      WHERE cr.species = @species AND cr.source_date BETWEEN @fromDate AND @toDate
+      WHERE ${CANONICAL_SPECIES_EXPR} = @species AND cr.source_date BETWEEN @fromDate AND @toDate
       GROUP BY cr.boat_id
       ORDER BY total DESC, b.display_name ASC
       LIMIT 1`

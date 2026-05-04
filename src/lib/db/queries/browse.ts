@@ -10,6 +10,7 @@
 //   BRW-06: distinctTripTypes / distinctLandings / distinctSpecies (filter-bar options)
 //   D-10:   mostCommonTripType (Phase 2 helper; consumer retired in Phase 8 Plan 03 with /picker)
 import type Database from 'better-sqlite3';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export interface BrowseRow {
   boat_id: number;
@@ -128,6 +129,35 @@ export function distinctSpecies(db: Database.Database): string[] {
     .prepare(`SELECT DISTINCT species FROM catch_reports ORDER BY species`)
     .all() as { species: string }[];
   return rows.map((r) => r.species);
+}
+
+/**
+ * Polish pass: top species by total catch count, then re-sorted
+ * alphabetically. /explorer's species ticker had 310 options because every
+ * size-class variant ("bluefin tuna (up to 100 pounds)") and release flavor
+ * ("calico bass released") was its own option — overwhelming.
+ *
+ * Rolls up to a canonical species name (strips the " (up to N pounds)"
+ * suffix) before counting, picks the top `topN` by total catch_count,
+ * then sorts alphabetically for the dropdown.
+ *
+ * Release-status variants stay as their own canonical (e.g. "calico bass"
+ * and "calico bass released" are separate) — that's a meaningful angler
+ * distinction (kept-and-released signals different behavior).
+ */
+export function topSpecies(db: Database.Database, topN = 20): string[] {
+  const rows = db
+    .prepare(
+      `SELECT ${CANONICAL_SPECIES_EXPR} AS canonical_species, SUM(cr.species_count) AS total
+       FROM catch_reports cr
+       GROUP BY ${CANONICAL_SPECIES_EXPR}
+       ORDER BY total DESC
+       LIMIT ?`
+    )
+    .all(topN) as { canonical_species: string; total: number }[];
+  // Re-sort alphabetically for the dropdown — most-caught is implied by inclusion
+  // in the top-N set; ordering A→Z is easier to scan.
+  return rows.map((r) => r.canonical_species).sort((a, b) => a.localeCompare(b));
 }
 
 /**

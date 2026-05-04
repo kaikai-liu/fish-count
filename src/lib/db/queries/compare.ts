@@ -23,6 +23,7 @@
 //     matching data in the window.
 import type Database from 'better-sqlite3';
 import { ALIAS_JOIN_SQL, CANONICAL_TRIP_TYPE_EXPR } from '$lib/db/aliases';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export interface CompareRow {
   boat_id: number;
@@ -94,15 +95,17 @@ export function compareBoats(db: Database.Database, args: CompareArgs): (Compare
   // rows are folded in.
   const topSpeciesMap = new Map<number, string | null>();
   for (const boatId of args.boatIds) {
+    // Polish pass: roll up size-class species variants so the displayed
+    // "top species" doesn't read as "bluefin tuna (up to 100 pounds)".
     const row = db
       .prepare(
-        `SELECT cr.species, SUM(cr.species_count) AS total
+        `SELECT ${CANONICAL_SPECIES_EXPR} AS species, SUM(cr.species_count) AS total
            FROM catch_reports cr
            ${ALIAS_JOIN_SQL}
           WHERE cr.boat_id = ?
             AND ${CANONICAL_TRIP_TYPE_EXPR} = ?
             AND cr.source_date BETWEEN ? AND ?
-          GROUP BY cr.species
+          GROUP BY ${CANONICAL_SPECIES_EXPR}
           ORDER BY total DESC
           LIMIT 1`
       )

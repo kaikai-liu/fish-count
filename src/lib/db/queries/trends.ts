@@ -28,6 +28,7 @@
 //     to 'Full Day' (e.g. 'Full Day Coronado Islands').
 import type Database from 'better-sqlite3';
 import { ALIAS_JOIN_SQL, CANONICAL_TRIP_TYPE_EXPR } from '$lib/db/aliases';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export interface TrendBucket {
   bucket_key: string;
@@ -65,7 +66,7 @@ export function speciesTrend(db: Database.Database, args: SpeciesTrendArgs): Tre
               COUNT(DISTINCT cr.source_date || '|' || ${CANONICAL_TRIP_TYPE_EXPR}) AS n_trips
          FROM catch_reports cr
          ${ALIAS_JOIN_SQL}
-        WHERE cr.species = @species
+        WHERE ${CANONICAL_SPECIES_EXPR} = @species
           AND ${CANONICAL_TRIP_TYPE_EXPR} = @tripType
           AND cr.source_date BETWEEN @fromDate AND @toDate
         GROUP BY bucket_key
@@ -121,7 +122,7 @@ export function boatTrend(db: Database.Database, args: BoatTrendArgs): TrendBuck
            ${ALIAS_JOIN_SQL}
           WHERE cr.boat_id = @boatId
             AND ${CANONICAL_TRIP_TYPE_EXPR} = @tripType
-            AND cr.species = @species
+            AND ${CANONICAL_SPECIES_EXPR} = @species
             AND cr.source_date BETWEEN @fromDate AND @toDate
           GROUP BY bucket_key
           ORDER BY bucket_key ASC`
