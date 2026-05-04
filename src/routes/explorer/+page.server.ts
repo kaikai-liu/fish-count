@@ -690,6 +690,15 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const ariaLabel = `${granularityLabel(granularity)} ${FISH_PER_ANGLER_ARIA} for ${selectionLabel} — ${rangeLabel(filters, fromDate, toDate)}`;
 
   const chartOption = {
+    // Polish pass: leave room at the bottom for the dataZoom slider + scrollable
+    // legend; toolbox sits at top-right.
+    grid: { left: 56, right: 24, top: 36, bottom: 88 },
+    toolbox: {
+      right: 8,
+      top: 4,
+      itemSize: 14,
+      feature: { restore: { title: 'Reset zoom' } }
+    },
     tooltip: {
       trigger: 'axis' as const,
       axisPointer: { type: 'cross' as const }
@@ -698,9 +707,18 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     },
     legend: {
       type: 'scroll' as const,
-      bottom: 0,
+      bottom: 36,
       selected: legendSelected
     },
+    // Polish pass: range zoom on the time axis.
+    //   - 'slider' renders a draggable strip below the chart (above the legend).
+    //   - 'inside' enables scroll/pinch zoom on the plot itself.
+    //   - The toolbox 'restore' icon resets to full range; double-click on the
+    //     slider also resets per ECharts default.
+    dataZoom: [
+      { type: 'slider' as const, xAxisIndex: 0, bottom: 4, height: 22 },
+      { type: 'inside' as const, xAxisIndex: 0 }
+    ],
     // Phase 8 Plan 04 (AXS-01 / D-35). Time-mode axis with PT-canonical
     // bucket-start dates. ECharts auto-formats the labels per range; the
     // tooltip formatter (page-side) reformats axisValue to a PT-readable

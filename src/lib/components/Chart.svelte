@@ -72,14 +72,22 @@
       if (cancelled) return;
       const { use, init } = coreMod;
       const { LineChart } = chartsMod;
-      const { TooltipComponent, GridComponent, LegendComponent } = componentsMod;
+      const {
+        TooltipComponent, GridComponent, LegendComponent,
+        DataZoomComponent, DataZoomInsideComponent, DataZoomSliderComponent,
+        ToolboxComponent
+      } = componentsMod;
       const { CanvasRenderer } = renderersMod;
       // Phase 8 Plan 03 (D-19, RTR-04): HeatmapChart, VisualMapComponent, and
       // CalendarComponent registrations dropped along with the v1 calendar
       // heatmap. Re-add if future surfaces need them.
+      // Polish pass: dataZoom (slider + inside scroll/pinch) + toolbox restore
+      // button — gives Plotly-style range zoom on the time-axis chart.
       use([
         LineChart,
         TooltipComponent, GridComponent, LegendComponent,
+        DataZoomComponent, DataZoomInsideComponent, DataZoomSliderComponent,
+        ToolboxComponent,
         CanvasRenderer
       ]);
       chart = init(chartEl);
