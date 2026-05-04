@@ -7,7 +7,8 @@
     height = '320px',
     ariaLabel,
     loading = false,
-    tooltipFormatter
+    tooltipFormatter,
+    group
   }: {
     option: EChartsOption;
     height?: string;
@@ -17,6 +18,10 @@
     // so the loader returns plain chartOption without a formatter; the page passes this prop
     // to attach the formatter client-side (T-06-24: HTML-escaped by caller).
     tooltipFormatter?: (params: unknown[]) => string;
+    // Polish pass: when set, the chart joins an ECharts group so dataZoom
+    // (and tooltip) events sync across every Chart in the same group. Used
+    // to sync the moon-overlay sub-chart with the main catch chart on /explorer.
+    group?: string;
   } = $props();
 
   let chartEl: HTMLDivElement;
@@ -91,6 +96,12 @@
         CanvasRenderer
       ]);
       chart = init(chartEl);
+      // Polish pass: join group + connect so dataZoom/tooltip events fan
+      // out to every chart in the same group (e.g. main + moon overlay).
+      if (group) {
+        chart.group = group;
+        coreMod.connect(group);
+      }
       // Honor reduced-motion preference (UI-SPEC §Accessibility)
       const reducedMotion = typeof window !== 'undefined'
         && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

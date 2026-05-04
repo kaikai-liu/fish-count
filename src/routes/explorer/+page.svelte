@@ -270,12 +270,14 @@
         height={chartHeight}
         ariaLabel={data.ariaLabel}
         {tooltipFormatter}
+        group="explorer"
       />
       {#if data.moonChartOption}
         <Chart
           option={data.moonChartOption as EChartsOption}
           height="36px"
           ariaLabel={MOON_ROW_ARIA}
+          group="explorer"
         />
       {/if}
       <p class="mt-2 text-sm text-(--color-text-muted)">{data.caption}</p>

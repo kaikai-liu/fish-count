@@ -744,6 +744,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         top: 0,
         bottom: 0
       },
+      // Polish pass: silent inside-zoom so the moon row joins the
+      // ECharts.connect('explorer') group and tracks the main chart's
+      // dataZoom range. zoomLock so the user can't accidentally pinch-zoom
+      // the moon row directly — it should only mirror the catch chart.
+      dataZoom: [{ type: 'inside' as const, xAxisIndex: 0, zoomLock: true, throttle: 0 }],
       xAxis: {
         type: 'time' as const,
         show: false,
