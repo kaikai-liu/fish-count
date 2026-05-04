@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: "Phase 8 Wave 2 — rate-limited mid-execution (resets 2pm PT)"
-last_updated: "2026-05-02T19:35:00.000Z"
-last_activity: "2026-05-02 -- Phase 08 paused: Wave 1 (08-01) complete; Wave 2 (08-02 home/admin, 08-03 retirement) partial — both agents hit Anthropic rate limit; partial work merged as wip(...) commits on main"
+status: "Phase 8 shipped — PR #6 (https://github.com/kaikai-liu/fish-count/pull/6); 56 commits, 614/614 tests"
+stopped_at: "Phase 8 in PR review"
+last_updated: "2026-05-04T05:30:00.000Z"
+last_activity: "2026-05-04 -- Phase 08 shipped via PR #6 (Home, Retire, Polish + operator-driven UX iteration). 4 plans complete, 6/6 ROADMAP success criteria verified, 614/614 tests green. HUMAN-UAT items pending operator confirmation post-merge."
 progress:
   total_phases: 5
   completed_phases: 3
