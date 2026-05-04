@@ -631,7 +631,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const chartSeries = seriesList.map((s) => ({
     name: legendNameFor(s),
     type: 'line' as const,
-    connectNulls: false, // D-17: gaps render as line breaks
+    connectNulls: true, // Polish pass (operator pref): connect across no-data gaps for a smoother line
     data: s.data.map((v, i) => [bucketStartIsos[i], v])
   }));
 

@@ -265,7 +265,7 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
     expect(result).toBeDefined();
   });
 
-  it('chartOption has connectNulls:false and tooltip.axisPointer.type="cross"', async () => {
+  it('chartOption has connectNulls:true and tooltip.axisPointer.type="cross"', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
@@ -275,7 +275,8 @@ describe('/explorer integration: full URL → DAL → PageData', () => {
 
     expect(result.empty).toBeNull();
     for (const s of result.chartOption.series) {
-      expect(s.connectNulls).toBe(false);
+      // Polish pass (operator pref): connect across no-data gaps for a smoother line.
+      expect(s.connectNulls).toBe(true);
     }
     expect(result.chartOption.tooltip.axisPointer.type).toBe('cross');
   });

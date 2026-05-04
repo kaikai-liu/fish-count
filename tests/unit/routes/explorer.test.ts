@@ -351,7 +351,7 @@ describe('/explorer +page.server.ts load()', () => {
 
     expect(result.empty).toBeNull();
     for (const s of result.chartOption.series) {
-      expect(s.connectNulls).toBe(false);
+      expect(s.connectNulls).toBe(true);
     }
   });
 

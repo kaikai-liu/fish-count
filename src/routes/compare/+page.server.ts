@@ -122,7 +122,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         return {
           name: r!.boat_name,
           type: 'line' as const,
-          connectNulls: false, // gap-aware per D-27
+          connectNulls: true, // Polish pass (operator pref): smooth line across no-data gaps
           data: expectedBuckets.map((k) => presentMap.get(k) ?? null)
         };
       })

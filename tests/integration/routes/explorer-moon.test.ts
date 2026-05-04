@@ -194,7 +194,7 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
     expect(data.filters.moon).toBe(false);
   });
 
-  it('moonChartOption is present when ?moon=1 (alignment guaranteed)', async () => {
+  it('moonChartOption is present when ?moon=1 (daily resolution)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
@@ -204,13 +204,14 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
 
     expect(data.moonChartOption).not.toBeNull();
     expect(data.filters.moon).toBe(true);
-    // Phase 8 Plan 04 (AXS-01): time-axis migration. Bucket count is now
-    // exposed via bucketStartIsos (the loader's per-bucket ISO array).
-    const catchBuckets = (data.bucketStartIsos as string[]).length;
+    // Polish pass: moon overlay renders at DAILY resolution regardless of
+    // the catch chart's bucket granularity (was: 1 point per bucket).
+    // For 1y → ~365-366 daily samples.
     const moonValues = (
       data.moonChartOption as { series: { data: unknown[] }[] }
     ).series[0].data.length;
-    expect(moonValues).toBe(catchBuckets);
+    expect(moonValues).toBeGreaterThanOrEqual(365);
+    expect(moonValues).toBeLessThanOrEqual(367);
   });
 
   it('moonChartOption is present when ?moon=true (alternate literal)', async () => {
@@ -225,27 +226,24 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
     expect(data.filters.moon).toBe(true);
   });
 
-  it('moon series re-aligns when range changes (no re-fetch needed by client)', async () => {
+  it('moon series re-samples when range changes (daily resolution)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
     const boat = boats[0];
 
     const oneYear = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=1`));
-    // Need a fresh DB / module per call? No — load() is a pure function over the in-memory DB
-    // and URL params; calling twice in sequence is fine.
     const sixMonth = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=6m&moon=1`));
 
     const oneYearMoon = (oneYear.moonChartOption as { series: { data: unknown[] }[] }).series[0]
       .data.length;
     const sixMonthMoon = (sixMonth.moonChartOption as { series: { data: unknown[] }[] }).series[0]
       .data.length;
-    // Different ranges → different bucket counts. The loader recomputes; client did not refetch.
-    expect(oneYearMoon).not.toBe(sixMonthMoon);
-    // And both still align with their catch charts (no drift either way).
-    // Phase 8 Plan 04 (AXS-01): time-axis migration — bucket count via bucketStartIsos.
-    expect(oneYearMoon).toBe((oneYear.bucketStartIsos as string[]).length);
-    expect(sixMonthMoon).toBe((sixMonth.bucketStartIsos as string[]).length);
+    // Polish pass: moon is daily-only, so the day count differs by date range.
+    // 1y has ~365 daily samples, 6m has ~180. Strict greater-than holds.
+    expect(oneYearMoon).toBeGreaterThan(sixMonthMoon);
+    expect(oneYearMoon).toBeGreaterThanOrEqual(365);
+    expect(sixMonthMoon).toBeGreaterThanOrEqual(180);
   });
 
   it('moon flag persists when ticker changes', async () => {
