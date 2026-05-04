@@ -64,6 +64,40 @@ export function distinctTripTypes(db: Database.Database): string[] {
   return rows.map((r) => r.trip_type);
 }
 
+/**
+ * Polish pass: trip types that are *currently active* — used by /compare so the
+ * trip-type select isn't a 34-option dump including historical anomalies like
+ * "1.75 Day", "Lobster", "Reverse Overnight". Filters to:
+ *   - canonical (alias-aware) trip type
+ *   - at least `minTrips` trips
+ *   - within the last `daysBack` days
+ *
+ * Sorted by trip count desc so the most familiar types surface first.
+ */
+export function activeTripTypes(
+  db: Database.Database,
+  daysBack = 365,
+  minTrips = 5
+): string[] {
+  const rows = db
+    .prepare(
+      `SELECT
+         COALESCE(
+           CASE WHEN tta.status = 'aliased' THEN tta.canonical_label ELSE NULL END,
+           cr.trip_type
+         ) AS canonical,
+         COUNT(*) AS cnt
+       FROM catch_reports cr
+       LEFT JOIN trip_type_aliases tta ON tta.source_label = cr.trip_type
+       WHERE cr.source_date >= date('now', ?)
+       GROUP BY canonical
+       HAVING cnt >= ?
+       ORDER BY cnt DESC, canonical ASC`
+    )
+    .all(`-${daysBack} days`, minTrips) as { canonical: string; cnt: number }[];
+  return rows.map((r) => r.canonical);
+}
+
 export interface LandingOption {
   id: number;
   display_name: string;

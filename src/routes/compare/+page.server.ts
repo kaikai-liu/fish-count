@@ -14,7 +14,7 @@ import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/db/client';
 import { compareBoats } from '$lib/db/queries/compare';
 import { boatTrend, type TrendBucket } from '$lib/db/queries/trends';
-import { distinctTripTypes } from '$lib/db/queries/browse';
+import { activeTripTypes } from '$lib/db/queries/browse';
 import { listBoatsByActivity } from '$lib/db/boats';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, addDays } from '$lib/shared/dates';
@@ -28,7 +28,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   setHeaders({ 'cache-control': 'public, max-age=300' });
 
   const filterOptions = {
-    tripTypes: distinctTripTypes(db),
+    // Polish pass: only show trip types that are actually active right now —
+    // ≥50 trips in the past 365 days, alias-aware. Drops historical anomalies
+    // (1.75 Day, Lobster, Reverse Overnight) AND rare types (5 Day, 7 Day,
+    // 4 Hour, 6 Hour). Sorted by frequency desc — the type anglers know first.
+    tripTypes: activeTripTypes(db, 365, 50),
     defaultFromDate: addDays(today(), -30),
     defaultToDate: today()
   };
