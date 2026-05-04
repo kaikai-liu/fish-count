@@ -652,9 +652,10 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   const ariaLabel = `${granularityLabel(granularity)} ${FISH_PER_ANGLER_ARIA} for ${selectionLabel} — ${rangeLabel(filters, fromDate, toDate)}`;
 
   const chartOption = {
-    // Polish pass: leave room at the bottom for the dataZoom slider + scrollable
-    // legend; toolbox sits at top-right.
-    grid: { left: 56, right: 24, top: 36, bottom: 88 },
+    // Polish pass: leave room at the bottom for the dataZoom slider + the
+    // multi-line legend; toolbox sits at top-right. grid.bottom grows to
+    // accommodate up to ~3 rows of legend before the slider strip.
+    grid: { left: 56, right: 24, top: 36, bottom: 132 },
     toolbox: {
       right: 8,
       top: 4,
@@ -668,8 +669,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       // The page attaches tooltipFormatter client-side via the optional Chart prop (T-06-24)
     },
     legend: {
-      type: 'scroll' as const,
+      // Polish pass: type:'plain' wraps to multiple rows so users see every
+      // series at once instead of paginating through 'scroll' arrows.
+      type: 'plain' as const,
       bottom: 36,
+      // Constrain width so wrap kicks in before reaching the right edge.
+      width: '90%',
       selected: legendSelected
     },
     // Polish pass: range zoom on the time axis.
