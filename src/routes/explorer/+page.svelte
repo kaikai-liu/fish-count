@@ -30,6 +30,9 @@
     filters.ticker === 'boat' ? filters.slug : (filters as { name: string }).name
   );
   const formMoon = $derived(filters.moon ?? false);
+  // Polish pass: Landing pre-filter on the Boat tab. Empty string = "All landings".
+  const formLanding = $derived(filters.landing ?? '');
+  const allLandings = $derived((data.allLandings as string[]) ?? []);
 
   // Polish pass: removed Custom range — chart dataZoom replaces it.
   function navigate(next: ExplorerFilters) {
@@ -117,10 +120,50 @@
   function onSelectorChange(e: Event) {
     const val = (e.target as HTMLSelectElement).value;
     const granularity = preservedGranularity();
+    // Polish pass: special "__landing__:Name" sentinel from the Boat tab
+    // means "show all boats at this landing" — pivot to the Landing ticker
+    // so the existing aggregate logic kicks in.
+    if (formTicker === 'boat' && val.startsWith('__landing__:')) {
+      const landingName = val.slice('__landing__:'.length);
+      navigate({
+        ticker: 'landing',
+        name: landingName,
+        range: formRange,
+        moon: filters.moon,
+        granularity
+      });
+      return;
+    }
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: val, range: formRange, moon: filters.moon, granularity }
+        ? {
+            ticker: 'boat',
+            slug: val,
+            range: formRange,
+            moon: filters.moon,
+            granularity,
+            // Polish pass: preserve the Landing pre-filter when picking a boat.
+            landing: filters.landing
+          }
         : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, moon: filters.moon, granularity };
+    navigate(f);
+  }
+
+  // Polish pass: Landing pre-filter on the Boat tab. Empty string = "All
+  // landings" (omit param). Picking a different landing resets the boat to
+  // the first one in the new list (loader will pick a sensible default).
+  function onLandingChange(e: Event) {
+    const val = (e.target as HTMLSelectElement).value;
+    const granularity = preservedGranularity();
+    if (filters.ticker !== 'boat') return;
+    const f: ExplorerFilters = {
+      ticker: 'boat',
+      slug: filters.slug, // loader will recompute if the boat isn't in the new landing
+      range: formRange,
+      moon: filters.moon,
+      granularity,
+      landing: val || undefined
+    };
     navigate(f);
   }
 
@@ -206,20 +249,20 @@
 
   // Responsive chart height (D-23: 280px mobile <768px, 360px ≥768px).
   // Polish pass: the moon row is now embedded in the same chart, so we add
-  // ~32px when moon is on to keep the catch plot from squeezing.
+  // ~52px when moon is on to keep the catch plot from squeezing.
   const moonOn = $derived(data.filters.moon ?? false);
-  let chartHeight = $state('280px');
+  let isWide = $state(false);
   $effect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(min-width: 768px)');
-    const setHeight = (wide: boolean) => {
-      const base = wide ? 360 : 280;
-      chartHeight = `${moonOn ? base + 32 : base}px`;
-    };
-    setHeight(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setHeight(e.matches);
+    isWide = mq.matches;
+    const handler = (e: MediaQueryListEvent) => { isWide = e.matches; };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  });
+  const chartHeight = $derived.by(() => {
+    const base = isWide ? 360 : 280;
+    return `${moonOn ? base + 52 : base}px`;
   });
 </script>
 
@@ -241,20 +284,45 @@
   autoWidenNote={data.autoWidenNote}
 >
   {#snippet selector()}
-    <label class="flex flex-col gap-1">
-      <span class="text-sm font-semibold text-(--color-text-muted)">
-        {formTicker === 'boat' ? 'Boat' : formTicker === 'species' ? 'Species' : 'Landing'}
-      </span>
-      <select
-        class="min-h-11 w-full rounded border border-(--color-border) bg-(--color-surface) px-2 text-base focus:border-(--color-border-strong)"
-        value={formSelection}
-        onchange={onSelectorChange}
-      >
-        {#each data.selectorOptions as opt (opt.value)}
-          <option value={opt.value}>{opt.label}</option>
-        {/each}
-      </select>
-    </label>
+    <div class="flex flex-col gap-2 md:flex-row md:items-end md:gap-3">
+      <!-- Polish pass: Landing pre-filter only on the Boat tab — narrows the
+           boat dropdown so anglers don't have to scan all 90 boats. -->
+      {#if formTicker === 'boat'}
+        <label class="flex flex-col gap-1 md:w-72">
+          <span class="text-sm font-semibold text-(--color-text-muted)">Landing</span>
+          <select
+            class="min-h-11 w-full rounded border border-(--color-border) bg-(--color-surface) px-2 text-base focus:border-(--color-border-strong)"
+            value={formLanding}
+            onchange={onLandingChange}
+          >
+            <option value="">All landings</option>
+            {#each allLandings as l (l)}
+              <option value={l}>{l}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
+      <label class="flex flex-col gap-1 md:flex-1">
+        <span class="text-sm font-semibold text-(--color-text-muted)">
+          {formTicker === 'boat' ? 'Boat' : formTicker === 'species' ? 'Species' : 'Landing'}
+        </span>
+        <select
+          class="min-h-11 w-full rounded border border-(--color-border) bg-(--color-surface) px-2 text-base focus:border-(--color-border-strong)"
+          value={formSelection}
+          onchange={onSelectorChange}
+        >
+          {#if formTicker === 'boat' && formLanding}
+            <!-- Polish pass: when a Landing pre-filter is active, offer
+                 "All boats at {landing}" as a shortcut to the Landing ticker
+                 (aggregates every boat at that landing). -->
+            <option value={`__landing__:${formLanding}`}>All boats at {formLanding}</option>
+          {/if}
+          {#each data.selectorOptions as opt (opt.value)}
+            <option value={opt.value}>{opt.label}</option>
+          {/each}
+        </select>
+      </label>
+    </div>
   {/snippet}
 </ExplorerHeader>
 

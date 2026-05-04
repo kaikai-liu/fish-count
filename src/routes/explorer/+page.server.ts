@@ -31,7 +31,7 @@ import {
   type SpeciesBreakdownRow
 } from '$lib/db/queries/explorer';
 import { EMPTY_STATES } from '$lib/copy/empty-states';
-import { distinctSpecies, topSpecies } from '$lib/db/queries/browse';
+import { distinctSpecies, topSpecies, distinctLandings, landingIdByDisplayName } from '$lib/db/queries/browse';
 import { findBySlug, listBoatsByActivity, mostActiveBoatLast30Days } from '$lib/db/boats';
 import { getByName, mostRecentlyActiveLanding } from '$lib/db/landings';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
@@ -168,6 +168,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     const rawSlug = url.searchParams.get('slug');
     const rawName = url.searchParams.get('name');
     const rawRange = url.searchParams.get('range') ?? '1y';
+    // Polish pass: optional Landing pre-filter on the Boat ticker.
+    const rawLanding = url.searchParams.get('landing') || undefined;
     // Phase 7 (MOON-01): preserve moon flag through cross-axis default resolution.
     // Loose check (not Zod) — only used as a literal pass-through when client sends
     // ?ticker=X&range=Y&moon=1 from a ticker-switch in +page.svelte. Full Zod
@@ -193,9 +195,18 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       const { fromDate: fd, toDate: td } = resolved;
 
       if (rawTicker === 'boat') {
-        const defaultBoat = mostActiveBoatLast30Days(db);
+        // Polish pass: when landing pre-filter is set, pick a default boat
+        // from that landing (not the global most-active).
+        let defaultBoat = mostActiveBoatLast30Days(db);
+        if (rawLanding) {
+          const landingId = landingIdByDisplayName(db, rawLanding);
+          if (landingId != null) {
+            const candidates = listBoatsByActivity(db, 90).filter((b) => b.landing_id === landingId);
+            if (candidates.length > 0) defaultBoat = candidates[0];
+          }
+        }
         if (defaultBoat) {
-          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity };
+          filters = { ticker: 'boat', slug: defaultBoat.slug, range: rawRange as ExplorerFilters['range'], moon: rawMoon, granularity: rawGranularity, landing: rawLanding };
         } else {
           setHeaders({ 'cache-control': 'public, max-age=60' });
           return {
@@ -391,9 +402,18 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   let noHistoryEver = false;
 
   if (filters.ticker === 'boat') {
-    // Boat selector options (D-09: sorted by activity over 90 days)
+    // Boat selector options (D-09: sorted by activity over 90 days).
+    // Polish pass: optional 'landing' filter narrows the dropdown to one
+    // landing's boats so anglers don't have to scan all 90.
     const boats = listBoatsByActivity(db, 90);
-    selectorOptions = boats.map((b) => ({ value: b.slug, label: b.display_name }));
+    let filteredBoats = boats;
+    if (filters.landing) {
+      const landingId = landingIdByDisplayName(db, filters.landing);
+      if (landingId != null) {
+        filteredBoats = boats.filter((b) => b.landing_id === landingId);
+      }
+    }
+    selectorOptions = filteredBoats.map((b) => ({ value: b.slug, label: b.display_name }));
 
     const boatRow = findBySlug(db, filters.slug);
     if (!boatRow) {
@@ -683,10 +703,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
 
   // Build grid / xAxis / yAxis arrays. Two-grid layout when moon=on,
   // single-grid otherwise.
+  // Polish pass: leave ~28px between the catch x-axis tick labels and the
+  // moon row so they don't visually overlap on dense ranges.
   const grid = filters.moon
     ? [
-        { left: 56, right: 24, top: 36, bottom: 156 }, // catch plot
-        { left: 56, right: 24, bottom: 122, height: 24 } // moon row directly below
+        { left: 56, right: 24, top: 36, bottom: 176 }, // catch plot
+        { left: 56, right: 24, bottom: 100, height: 24 } // moon row, ~28px below catch axis labels
       ]
     : [{ left: 56, right: 24, top: 36, bottom: 132 }];
 
@@ -814,6 +836,9 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     pageTitle,
     granularity: granularity as Granularity,
     showGranularitySelector,
-    bucketStartIsos
+    bucketStartIsos,
+    // Polish pass: pass all landings to the page so the Boat tab can render
+    // a Landing pre-filter dropdown above the boat picker.
+    allLandings: distinctLandings(db).map((l) => l.display_name)
   };
 };

@@ -161,7 +161,12 @@ const RangeBase = z.object({
   // Phase 8 Plan 04 (GRN-01 / D-39). Optional override; loader resolves the
   // default per range (defaultGranularityForRange). Default-stripping at
   // serialize time keeps the URL clean (RESEARCH §Pitfall 3).
-  granularity: z.enum(['daily', 'weekly', 'monthly']).optional()
+  granularity: z.enum(['daily', 'weekly', 'monthly']).optional(),
+  // Polish pass: optional Landing pre-filter on the boat ticker. When set,
+  // the boat dropdown narrows to just that landing's boats. Stored as the
+  // landing display_name (matches LandingTicker.name shape — no slug for
+  // landings yet).
+  landing: z.string().min(1).max(120).optional()
 });
 
 export type Granularity = 'daily' | 'weekly' | 'monthly';
@@ -209,5 +214,7 @@ export function serializeExplorerFilters(filters: ExplorerFilters): URLSearchPar
   // the page-component's job (range-change handler); see /explorer/+page.svelte
   // onRangeChange. Here we just round-trip the field as-is.
   if (filters.granularity) sp.set('granularity', filters.granularity);
+  // Polish pass: emit `landing` pre-filter only when set (defaults to all).
+  if (filters.landing) sp.set('landing', filters.landing);
   return sp;
 }

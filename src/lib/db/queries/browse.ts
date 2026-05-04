@@ -106,6 +106,21 @@ export interface LandingOption {
 }
 
 /**
+ * Polish pass: lookup a landing's id by its display_name. Returns null when
+ * the name doesn't match any landing. Used by /explorer to resolve the
+ * Landing pre-filter param into a numeric id for the boats.landing_id filter.
+ */
+export function landingIdByDisplayName(
+  db: Database.Database,
+  displayName: string
+): number | null {
+  const row = db
+    .prepare('SELECT id FROM landings WHERE display_name = ?')
+    .get(displayName) as { id?: number } | undefined;
+  return row?.id ?? null;
+}
+
+/**
  * BRW-06: Distinct landings that have at least one catch_report row,
  * joined with landing metadata. Used for filter-bar options.
  */
