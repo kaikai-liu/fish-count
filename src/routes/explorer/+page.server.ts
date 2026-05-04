@@ -700,50 +700,33 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // UI-SPEC §Component Anatomy 2 — emit a SECOND chart option only when
   // filters.moon === true. Plain JSON (no echarts import — Pitfall 2 / T-06-30
   // carry-forward). grid.left/right MUST match the catch chart's grid exactly
-  // (alignment guarantee). expectedKeys is the catch chart's xAxis.data — reused
-  // for bucket alignment. Each bucket key is a YYYY-MM-DD (daily) or YYYY-Wxx /
-  // YYYY-MM (weekly/monthly) string. We map only the YYYY-MM-DD form directly to
-  // moonIllumination; for weekly/monthly buckets we synthesize a representative
-  // start-of-bucket date (UI-SPEC D-06 accepts the fuzzy band on long ranges).
+  // (alignment guarantee).
   let moonChartOption: object | null = null;
   if (filters.moon) {
-    // Map an expectedKey string to a YYYY-MM-DD date for moon illumination lookup.
-    // - Daily (YYYY-MM-DD): use as-is.
-    // - Weekly (YYYY-Www, ISO week per date-fns format "RRRR-'W'II"): convert to
-    //   the Monday of that ISO week.
-    // - Monthly (YYYY-MM): use the first of the month.
-    function bucketKeyToDate(key: string): string {
-      // YYYY-MM-DD
-      if (/^\d{4}-\d{2}-\d{2}$/.test(key)) return key;
-      // YYYY-MM
-      if (/^\d{4}-\d{2}$/.test(key)) return `${key}-01`;
-      // YYYY-Www (ISO week — Monday of week)
-      const m = /^(\d{4})-W(\d{2})$/.exec(key);
-      if (m) {
-        const year = Number(m[1]);
-        const week = Number(m[2]);
-        // ISO week 1 = the week containing Jan 4. Monday of week 1:
-        const jan4 = new Date(Date.UTC(year, 0, 4));
-        const jan4Dow = jan4.getUTCDay() || 7; // Mon=1..Sun=7
-        const week1Monday = new Date(jan4);
-        week1Monday.setUTCDate(jan4.getUTCDate() - (jan4Dow - 1));
-        const target = new Date(week1Monday);
-        target.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
-        const yy = target.getUTCFullYear();
-        const mm = String(target.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(target.getUTCDate()).padStart(2, '0');
-        return `${yy}-${mm}-${dd}`;
-      }
-      // Fallback (should never happen given buildExpectedKeys output) — use fromDate
-      return fromDate;
+    // Polish pass: render moon illumination at DAILY resolution regardless of
+    // the catch chart's granularity. Previously the moon was sampled once per
+    // bucket — at weekly/monthly bucketing that lost the 29.5-day cycle's
+    // shape. The two charts share the same xAxis time range (and dataZoom via
+    // ECharts.connect), so they stay visually aligned even at different
+    // resolutions; only the moon-row resolution is decoupled.
+    //
+    // For long ranges (e.g. 'all' = ~5500 days), the series 'sampling: lttb'
+    // option downsamples for render performance while preserving wave shape.
+    const moonData: Array<[string, number]> = [];
+    const dayMs = 86400000;
+    // Iterate UTC dates from fromDate to toDate inclusive. fromDate / toDate
+    // are PT-canonical YYYY-MM-DD strings; using UTC midnight as the ISO
+    // anchor keeps the daily cadence even across DST boundaries.
+    const start = new Date(fromDate + 'T00:00:00Z').getTime();
+    const end = new Date(toDate + 'T00:00:00Z').getTime();
+    for (let t = start; t <= end; t += dayMs) {
+      const d = new Date(t);
+      const yy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(d.getUTCDate()).padStart(2, '0');
+      const ymd = `${yy}-${mm}-${dd}`;
+      moonData.push([d.toISOString(), moonIllumination(ymd)]);
     }
-    // Phase 8 Plan 04 (AXS-01 / Pitfall 4). Moon overlay flips to time-axis
-    // alongside the catch chart so they align at every range × granularity.
-    // Series data is [iso, illumination] pairs.
-    const moonData = expectedKeys.map((key: string, i: number): [string, number] => [
-      bucketStartIsos[i],
-      moonIllumination(bucketKeyToDate(key))
-    ]);
     moonChartOption = {
       grid: {
         left: (chartOption as { grid?: { left?: string | number } }).grid?.left ?? 'auto',
