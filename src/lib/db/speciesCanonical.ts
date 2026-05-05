@@ -8,8 +8,12 @@
 // Strategy (mirrors the trip-type alias pattern in aliases.ts but with no
 // table — the rule is regular and stable enough to express as a SQL CASE):
 //   - "<species> (up to N pounds)" → "<species>"  (collapse size variants)
-//   - "<species> released"          → unchanged   (kept-and-released is a
-//                                                  meaningful angler signal)
+//   - "<species> released"          → "<species>" (operator decision: roll
+//                                                  released catches under
+//                                                  the parent species so
+//                                                  "calico bass" totals
+//                                                  reflect every fish caught,
+//                                                  not just kept ones)
 //
 // CLAUDE.md Architecture Rule: DAL is the only module that issues SQL.
 // Discipline: this constant is the SOLE legitimate canonical-species SQL
@@ -30,6 +34,23 @@ export const CANONICAL_SPECIES_EXPR = `
   CASE
     WHEN cr.species LIKE '% (up to % pounds)'
       THEN trim(substr(cr.species, 1, instr(cr.species, ' (up to ') - 1))
+    WHEN cr.species LIKE '% released'
+      THEN trim(substr(cr.species, 1, length(cr.species) - 9))
     ELSE cr.species
   END
 `;
+
+/**
+ * JS twin of CANONICAL_SPECIES_EXPR. Use to canonicalize species names
+ * coming in from URL params or other application-side sources before
+ * passing them into queries that filter on canonical species.
+ *
+ * Keep this in lockstep with CANONICAL_SPECIES_EXPR — any rule added to
+ * one must be mirrored in the other.
+ */
+export function canonicalizeSpecies(name: string): string {
+  const sizeMatch = name.match(/^(.*?)\s+\(up to .* pounds\)$/);
+  if (sizeMatch) return sizeMatch[1].trim();
+  if (name.endsWith(' released')) return name.slice(0, -' released'.length).trim();
+  return name;
+}

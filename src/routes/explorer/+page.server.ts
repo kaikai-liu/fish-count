@@ -32,6 +32,7 @@ import {
 } from '$lib/db/queries/explorer';
 import { EMPTY_STATES } from '$lib/copy/empty-states';
 import { distinctSpecies, topSpecies, distinctLandings, landingIdByDisplayName } from '$lib/db/queries/browse';
+import { canonicalizeSpecies } from '$lib/db/speciesCanonical';
 import { findBySlug, listBoatsByActivity, mostActiveBoatLast30Days } from '$lib/db/boats';
 import { getByName, mostRecentlyActiveLanding } from '$lib/db/landings';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
@@ -317,6 +318,15 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         };
       }
       filters = parseResult;
+      // Polish pass: when species ticker name carries a stale variant (e.g.
+      // a shared URL minted before the released-rollup), normalize to canonical
+      // so queries (which filter on CANONICAL_SPECIES_EXPR) actually match.
+      if (filters.ticker === 'species') {
+        const canonical = canonicalizeSpecies(filters.name);
+        if (canonical !== filters.name) {
+          filters = { ...filters, name: canonical };
+        }
+      }
     }
   }
 

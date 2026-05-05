@@ -141,7 +141,9 @@ export function distinctLandings(db: Database.Database): LandingOption[] {
  */
 export function distinctSpecies(db: Database.Database): string[] {
   const rows = db
-    .prepare(`SELECT DISTINCT species FROM catch_reports ORDER BY species`)
+    .prepare(
+      `SELECT DISTINCT ${CANONICAL_SPECIES_EXPR} AS species FROM catch_reports cr ORDER BY species`
+    )
     .all() as { species: string }[];
   return rows.map((r) => r.species);
 }
