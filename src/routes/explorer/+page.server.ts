@@ -451,7 +451,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     if (!boatRow) {
       emptyResult = {
         heading: 'Boat not found',
-        body: `No boat found with slug "${filters.slug}". It may have been renamed or removed. Try selecting a different boat.`
+        body: `We don't have a boat at "${filters.slug}". It may have been renamed, retired, or never run from a San Diego landing. Pick a different boat from the dropdown.`
       };
       // Unknown slug — treat as "no history at all" for title-bar consistency.
       noHistoryEver = true;
