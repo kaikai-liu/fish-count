@@ -17,7 +17,7 @@ import { boatTrend, type TrendBucket } from '$lib/db/queries/trends';
 import { activeTripTypes } from '$lib/db/queries/browse';
 import { listBoatsByActivity } from '$lib/db/boats';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
-import { today, toPtTimeLabel, addDays } from '$lib/shared/dates';
+import { today, toPtTimeLabel, addDays, isoWeekStartFromKey } from '$lib/shared/dates';
 import { parseCompareFilters, type CompareFilters } from '$lib/shared/urlState';
 import { FISH_PER_ANGLER_AXIS } from '$lib/copy/metrics';
 import { eachWeekOfInterval, format } from 'date-fns';
@@ -101,31 +101,50 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     { start: fromDateObj, end: toDateObj },
     { weekStartsOn: 1 }
   ).map((d) => format(d, "RRRR-'W'II"));
+  // Polish pass: time-axis ISO start for each bucket so the x-axis renders
+  // "May / Jun / Jul" calendar labels instead of "2026-W14 / 2026-W15".
+  const bucketStartIsos = expectedBuckets.map(
+    (k) => `${isoWeekStartFromKey(k)}T00:00:00Z`
+  );
 
-  // Chart yAxis.name uses the imported constant (FISH_PER_ANGLER_AXIS) — no inline literal.
+  // Chart styling mirrors the Explorer chart: time-axis x, dataZoom slider,
+  // restore-zoom toolbox, bottom legend wrapping at 90%.
+  const visibleSeries = rows.filter((r) => r !== null);
   const chartOption = {
-    tooltip: { trigger: 'axis' as const },
-    legend: {
-      data: rows
-        .filter((r) => r !== null)
-        .map((r) => r!.boat_name),
-      bottom: 0
+    grid: { left: 56, right: 24, top: 36, bottom: 132 },
+    toolbox: {
+      right: 8,
+      top: 4,
+      itemSize: 14,
+      feature: { restore: { title: 'Reset zoom' } }
     },
-    xAxis: { type: 'category' as const, data: expectedBuckets },
+    tooltip: {
+      trigger: 'axis' as const,
+      axisPointer: { type: 'cross' as const }
+    },
+    legend: {
+      type: 'plain' as const,
+      bottom: 36,
+      width: '90%',
+      data: visibleSeries.map((r) => r!.boat_name)
+    },
+    dataZoom: [
+      { type: 'slider' as const, xAxisIndex: 0, bottom: 4, height: 22 },
+      { type: 'inside' as const, xAxisIndex: 0 }
+    ],
+    xAxis: { type: 'time' as const },
     yAxis: { type: 'value' as const, name: FISH_PER_ANGLER_AXIS },
-    series: rows
-      .filter((r) => r !== null)
-      .map((r) => {
-        const presentMap = new Map(
-          (trendsByBoat[r!.boat_id] ?? []).map((b) => [b.bucket_key, b.value])
-        );
-        return {
-          name: r!.boat_name,
-          type: 'line' as const,
-          connectNulls: true, // Polish pass (operator pref): smooth line across no-data gaps
-          data: expectedBuckets.map((k) => presentMap.get(k) ?? null)
-        };
-      })
+    series: visibleSeries.map((r) => {
+      const presentMap = new Map(
+        (trendsByBoat[r!.boat_id] ?? []).map((b) => [b.bucket_key, b.value])
+      );
+      return {
+        name: r!.boat_name,
+        type: 'line' as const,
+        connectNulls: true, // Polish pass (operator pref): smooth line across no-data gaps
+        data: expectedBuckets.map((k, i) => [bucketStartIsos[i], presentMap.get(k) ?? null])
+      };
+    })
   };
 
   locals.logger?.info({
