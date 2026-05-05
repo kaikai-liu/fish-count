@@ -232,9 +232,10 @@ describe('routes/compare/+page.server.ts (load)', () => {
     );
 
     expect(result.chartOption).toBeDefined();
-    const xAxisData = result.chartOption!.xAxis.data as string[];
-    const expectedBucketCount = xAxisData.length;
-    // Every series should have data aligned to the bucket axis
+    // Polish pass: time-axis chart now carries [iso, value] tuples — bucket
+    // count derives from any visible series since xAxis no longer has .data.
+    expect(result.chartOption!.series.length).toBeGreaterThan(0);
+    const expectedBucketCount = result.chartOption!.series[0].data.length;
     for (const series of result.chartOption!.series) {
       expect(series.data).toHaveLength(expectedBucketCount);
     }
@@ -359,7 +360,10 @@ describe('routes/compare/+page.server.ts (load)', () => {
     const boatASeries = result.chartOption!.series.find((s) => s.name === 'Multi Species Boat');
     expect(boatASeries).toBeDefined();
     // The bucket for week of 2025-06-02 should have the all-species aggregate value
-    const bucketValues = boatASeries!.data.filter((v) => v !== null);
+    // Polish pass: data is now [iso, value] tuples — pull the value side.
+    const bucketValues = boatASeries!.data
+      .map((tuple) => (Array.isArray(tuple) ? tuple[1] : tuple))
+      .filter((v) => v !== null);
     expect(bucketValues.length).toBeGreaterThanOrEqual(1);
     // The value should be > 0 (we got data from both species aggregated)
     expect(bucketValues[0]).toBeGreaterThan(0);

@@ -3,16 +3,10 @@
 // Verifies: Zod parse/validation + round-trip property tests + error cases.
 import { describe, it, expect } from 'vitest';
 import {
-  parseHomeFilters,
-  serializeHomeFilters,
   parseDateFilters,
   serializeDateFilters,
-  parsePickerFilters,
-  serializePickerFilters,
   parseCompareFilters,
   serializeCompareFilters,
-  parseTrendsFilters,
-  serializeTrendsFilters,
   parseExplorerFilters,
   serializeExplorerFilters,
   type ExplorerFilters
@@ -35,30 +29,6 @@ function toSp(obj: Record<string, string | string[]>): URLSearchParams {
 }
 
 // ---------------------------------------------------------------------------
-// Home filters
-// ---------------------------------------------------------------------------
-
-describe('urlState.parseHomeFilters', () => {
-  it('returns empty object for empty searchParams', () => {
-    const result = parseHomeFilters(new URLSearchParams());
-    expect('error' in result).toBe(false);
-    // All fields optional — empty parse is valid
-  });
-
-  it('round-trip: serialize -> parse -> same values', () => {
-    const original = { tripType: '1/2 Day AM', landing: 'Seaforth', species: 'yellowtail' };
-    const sp = serializeHomeFilters(original);
-    const parsed = parseHomeFilters(sp);
-    expect('error' in parsed).toBe(false);
-    if (!('error' in parsed)) {
-      expect(parsed.tripType).toBe(original.tripType);
-      expect(parsed.landing).toBe(original.landing);
-      expect(parsed.species).toBe(original.species);
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Date filters
 // ---------------------------------------------------------------------------
 
@@ -76,113 +46,6 @@ describe('urlState.parseDateFilters', () => {
     if (!('error' in parsed)) {
       expect(parsed.tripType).toBe('Full Day');
       expect(parsed.species).toBe('dorado');
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Picker filters
-// ---------------------------------------------------------------------------
-
-describe('urlState.parsePickerFilters', () => {
-  it('returns {error} when tripType is missing (D-10)', () => {
-    const sp = toSp({ date: '2024-07-04', species: 'yellowtail' });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when species is missing', () => {
-    const sp = toSp({ date: '2024-07-04', tripType: '1/2 Day AM' });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when date is missing', () => {
-    const sp = toSp({ tripType: '1/2 Day AM', species: 'yellowtail' });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when windowDays > 14 (T-02-03 clamp)', () => {
-    const sp = toSp({ date: '2024-07-04', tripType: '1/2 Day AM', species: 'yellowtail', windowDays: '15' });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when windowDays < 0', () => {
-    const sp = toSp({ date: '2024-07-04', tripType: '1/2 Day AM', species: 'yellowtail', windowDays: '-1' });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('accepts windowDays at boundary values 0 and 14', () => {
-    const sp0 = toSp({ date: '2024-07-04', tripType: '1/2 Day AM', species: 'yellowtail', windowDays: '0' });
-    const sp14 = toSp({ date: '2024-07-04', tripType: '1/2 Day AM', species: 'yellowtail', windowDays: '14' });
-    expect('error' in parsePickerFilters(sp0)).toBe(false);
-    expect('error' in parsePickerFilters(sp14)).toBe(false);
-  });
-
-  it('defaults windowDays to 3 when not provided', () => {
-    const sp = toSp({ date: '2024-07-04', tripType: '1/2 Day AM', species: 'yellowtail' });
-    const result = parsePickerFilters(sp);
-    if (!('error' in result)) {
-      expect(result.windowDays).toBe(3);
-    }
-  });
-
-  it('returns {error} when date format is invalid', () => {
-    const sp = toSp({ date: '07-04-2024', tripType: '1/2 Day AM', species: 'yellowtail' });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('round-trip: serialize -> parse -> same values', () => {
-    const original = {
-      date: '2024-07-04',
-      species: 'yellowtail',
-      tripType: '1/2 Day AM',
-      windowDays: 7,
-      rangeMode: false
-    };
-    const sp = serializePickerFilters(original);
-    const parsed = parsePickerFilters(sp);
-    expect('error' in parsed).toBe(false);
-    if (!('error' in parsed)) {
-      expect(parsed.date).toBe(original.date);
-      expect(parsed.species).toBe(original.species);
-      expect(parsed.tripType).toBe(original.tripType);
-      expect(parsed.windowDays).toBe(original.windowDays);
-      expect(parsed.rangeMode).toBe(original.rangeMode);
-    }
-  });
-
-  it('rangeMode=false from URL parses as boolean false (regression: z.coerce.boolean() turns string "false" into true)', () => {
-    const sp = toSp({
-      date: '2024-07-04',
-      tripType: '1/2 Day AM',
-      species: 'yellowtail',
-      rangeMode: 'false'
-    });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(false);
-    if (!('error' in result)) {
-      expect(result.rangeMode).toBe(false);
-    }
-  });
-
-  it('rangeMode=true from URL parses as boolean true', () => {
-    const sp = toSp({
-      date: '2024-07-04',
-      tripType: '1/2 Day AM',
-      species: 'yellowtail',
-      rangeMode: 'true',
-      fromDate: '2024-07-01',
-      toDate: '2024-07-10'
-    });
-    const result = parsePickerFilters(sp);
-    expect('error' in result).toBe(false);
-    if (!('error' in result)) {
-      expect(result.rangeMode).toBe(true);
     }
   });
 });
@@ -270,65 +133,6 @@ describe('urlState.parseCompareFilters', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Trends filters
-// ---------------------------------------------------------------------------
-
-describe('urlState.parseTrendsFilters', () => {
-  it('returns {error} when species is missing', () => {
-    const sp = toSp({ tripType: 'Full Day' });
-    const result = parseTrendsFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when tripType is missing', () => {
-    const sp = toSp({ species: 'yellowtail' });
-    const result = parseTrendsFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('defaults range to "1y" when not provided', () => {
-    const sp = toSp({ species: 'yellowtail', tripType: 'Full Day' });
-    const result = parseTrendsFilters(sp);
-    if (!('error' in result)) {
-      expect(result.range).toBe('1y');
-    }
-  });
-
-  it('returns {error} when range is an invalid value', () => {
-    const sp = toSp({ species: 'yellowtail', tripType: 'Full Day', range: '2y' });
-    const result = parseTrendsFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('accepts all valid range values', () => {
-    for (const range of ['3mo', '6mo', '1y', 'all'] as const) {
-      const sp = toSp({ species: 'yellowtail', tripType: 'Full Day', range });
-      expect('error' in parseTrendsFilters(sp)).toBe(false);
-    }
-  });
-
-  it('round-trip: serialize -> parse -> same values', () => {
-    const original = {
-      species: 'yellowtail',
-      tripType: 'Full Day',
-      boatId: 42,
-      range: '6mo' as const,
-      granularity: 'weekly' as const
-    };
-    const sp = serializeTrendsFilters(original);
-    const parsed = parseTrendsFilters(sp);
-    expect('error' in parsed).toBe(false);
-    if (!('error' in parsed)) {
-      expect(parsed.species).toBe(original.species);
-      expect(parsed.tripType).toBe(original.tripType);
-      expect(parsed.boatId).toBe(original.boatId);
-      expect(parsed.range).toBe(original.range);
-      expect(parsed.granularity).toBe(original.granularity);
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Explorer filters ( /explorer )
 // Discriminated union: boat | species | landing ticker.
 // ---------------------------------------------------------------------------
@@ -383,22 +187,7 @@ describe('ExplorerFiltersSchema', () => {
     }
   });
 
-  it('parses custom range with valid fromDate and toDate', () => {
-    const sp = toSp({
-      ticker: 'boat',
-      slug: 'pacific-voyager',
-      range: 'custom',
-      fromDate: '2025-01-01',
-      toDate: '2025-06-30'
-    });
-    const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(false);
-    if (!('error' in result)) {
-      expect(result.range).toBe('custom');
-      expect(result.fromDate).toBe('2025-01-01');
-      expect(result.toDate).toBe('2025-06-30');
-    }
-  });
+  // Polish pass: 'custom' range removed — chart dataZoom replaces it.
 
   // ---- invalid inputs — should return {error} ----
 
@@ -453,33 +242,10 @@ describe('ExplorerFiltersSchema', () => {
     expect('error' in result).toBe(false);
   });
 
-  it('returns {error} when range=custom but no fromDate/toDate', () => {
+  it('range=custom is rejected (polish pass: removed from RANGE_PRESETS)', () => {
     const sp = toSp({ ticker: 'boat', slug: 'pacific-voyager', range: 'custom' });
     const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when range=custom and fromDate > toDate', () => {
-    const sp = toSp({
-      ticker: 'boat',
-      slug: 'pacific-voyager',
-      range: 'custom',
-      fromDate: '2025-02-01',
-      toDate: '2025-01-01'
-    });
-    const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(true);
-  });
-
-  it('returns {error} when date format is invalid', () => {
-    const sp = toSp({
-      ticker: 'boat',
-      slug: 'valid-slug',
-      range: 'custom',
-      fromDate: '01-01-2025',
-      toDate: '2025-06-30'
-    });
-    const result = parseExplorerFilters(sp);
+    // 'custom' is no longer in the enum so Zod returns a ZodError.
     expect('error' in result).toBe(true);
   });
 
@@ -515,22 +281,7 @@ describe('ExplorerFiltersSchema', () => {
     }
   });
 
-  it('round-trip: custom range parse(serialize(f)) == f', () => {
-    const f: ExplorerFilters = {
-      ticker: 'boat',
-      slug: 'pacific-voyager',
-      range: 'custom',
-      fromDate: '2025-01-01',
-      toDate: '2025-06-30',
-      moon: false
-    };
-    const sp = serializeExplorerFilters(f);
-    const result = parseExplorerFilters(sp);
-    expect('error' in result).toBe(false);
-    if (!('error' in result)) {
-      expect(result).toEqual(f);
-    }
-  });
+  // Polish pass: 'custom' round-trip test removed — schema no longer accepts it.
 });
 
 describe('ExplorerFiltersSchema — moon field (Phase 7, MOON-01)', () => {
@@ -602,5 +353,54 @@ describe('ExplorerFiltersSchema — moon field (Phase 7, MOON-01)', () => {
     const parsed = parseExplorerFilters(sp);
     expect('error' in parsed).toBe(false);
     if (!('error' in parsed)) expect(parsed.moon).toBe(false);
+  });
+
+  // Phase 8 Plan 04 (GRN-01 / D-39).
+  describe('granularity field integration', () => {
+    it('parse: ticker + range + moon + granularity all populate together', () => {
+      const sp = new URLSearchParams(
+        'ticker=boat&slug=premier&range=3m&moon=1&granularity=weekly'
+      );
+      const r = parseExplorerFilters(sp);
+      expect('error' in r).toBe(false);
+      if (!('error' in r)) {
+        expect(r.ticker).toBe('boat');
+        expect(r.range).toBe('3m');
+        expect(r.moon).toBe(true);
+        expect(r.granularity).toBe('weekly');
+      }
+    });
+
+    it('serialize: emits granularity alongside moon', () => {
+      const f: ExplorerFilters = {
+        ticker: 'boat',
+        slug: 'premier',
+        range: '3m',
+        moon: true,
+        granularity: 'monthly'
+      };
+      const sp = serializeExplorerFilters(f);
+      expect(sp.get('granularity')).toBe('monthly');
+      expect(sp.get('moon')).toBe('1');
+    });
+
+    it('serialize: omits both when undefined/false (clean URL)', () => {
+      const f: ExplorerFilters = {
+        ticker: 'boat',
+        slug: 'premier',
+        range: '1y',
+        moon: false,
+        granularity: undefined
+      };
+      const sp = serializeExplorerFilters(f);
+      expect(sp.has('moon')).toBe(false);
+      expect(sp.has('granularity')).toBe(false);
+    });
+
+    it('parse: rejects invalid granularity', () => {
+      const sp = new URLSearchParams('ticker=boat&slug=premier&granularity=garbage');
+      const r = parseExplorerFilters(sp);
+      expect('error' in r).toBe(true);
+    });
   });
 });

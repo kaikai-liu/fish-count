@@ -8,8 +8,9 @@
 //   BRW-01: getRowsForDate — JOIN catch_reports × boats × landings
 //   BRW-05: getDateBounds — dataset min/max source_date for /date/[d] clamp
 //   BRW-06: distinctTripTypes / distinctLandings / distinctSpecies (filter-bar options)
-//   D-10:   mostCommonTripType (default for /picker trip-type select)
+//   D-10:   mostCommonTripType (Phase 2 helper; consumer retired in Phase 8 Plan 03 with /picker)
 import type Database from 'better-sqlite3';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export interface BrowseRow {
   boat_id: number;
@@ -64,10 +65,59 @@ export function distinctTripTypes(db: Database.Database): string[] {
   return rows.map((r) => r.trip_type);
 }
 
+/**
+ * Polish pass: trip types that are *currently active* — used by /compare so the
+ * trip-type select isn't a 34-option dump including historical anomalies like
+ * "1.75 Day", "Lobster", "Reverse Overnight". Filters to:
+ *   - canonical (alias-aware) trip type
+ *   - at least `minTrips` trips
+ *   - within the last `daysBack` days
+ *
+ * Sorted by trip count desc so the most familiar types surface first.
+ */
+export function activeTripTypes(
+  db: Database.Database,
+  daysBack = 365,
+  minTrips = 5
+): string[] {
+  const rows = db
+    .prepare(
+      `SELECT
+         COALESCE(
+           CASE WHEN tta.status = 'aliased' THEN tta.canonical_label ELSE NULL END,
+           cr.trip_type
+         ) AS canonical,
+         COUNT(*) AS cnt
+       FROM catch_reports cr
+       LEFT JOIN trip_type_aliases tta ON tta.source_label = cr.trip_type
+       WHERE cr.source_date >= date('now', ?)
+       GROUP BY canonical
+       HAVING cnt >= ?
+       ORDER BY cnt DESC, canonical ASC`
+    )
+    .all(`-${daysBack} days`, minTrips) as { canonical: string; cnt: number }[];
+  return rows.map((r) => r.canonical);
+}
+
 export interface LandingOption {
   id: number;
   display_name: string;
   source_url: string | null;
+}
+
+/**
+ * Polish pass: lookup a landing's id by its display_name. Returns null when
+ * the name doesn't match any landing. Used by /explorer to resolve the
+ * Landing pre-filter param into a numeric id for the boats.landing_id filter.
+ */
+export function landingIdByDisplayName(
+  db: Database.Database,
+  displayName: string
+): number | null {
+  const row = db
+    .prepare('SELECT id FROM landings WHERE display_name = ?')
+    .get(displayName) as { id?: number } | undefined;
+  return row?.id ?? null;
 }
 
 /**
@@ -91,14 +141,46 @@ export function distinctLandings(db: Database.Database): LandingOption[] {
  */
 export function distinctSpecies(db: Database.Database): string[] {
   const rows = db
-    .prepare(`SELECT DISTINCT species FROM catch_reports ORDER BY species`)
+    .prepare(
+      `SELECT DISTINCT ${CANONICAL_SPECIES_EXPR} AS species FROM catch_reports cr ORDER BY species`
+    )
     .all() as { species: string }[];
   return rows.map((r) => r.species);
 }
 
 /**
+ * Polish pass: top species by total catch count, then re-sorted
+ * alphabetically. /explorer's species ticker had 310 options because every
+ * size-class variant ("bluefin tuna (up to 100 pounds)") and release flavor
+ * ("calico bass released") was its own option — overwhelming.
+ *
+ * Rolls up to a canonical species name (strips the " (up to N pounds)"
+ * suffix) before counting, picks the top `topN` by total catch_count,
+ * then sorts alphabetically for the dropdown.
+ *
+ * Release-status variants stay as their own canonical (e.g. "calico bass"
+ * and "calico bass released" are separate) — that's a meaningful angler
+ * distinction (kept-and-released signals different behavior).
+ */
+export function topSpecies(db: Database.Database, topN = 20): string[] {
+  const rows = db
+    .prepare(
+      `SELECT ${CANONICAL_SPECIES_EXPR} AS canonical_species, SUM(cr.species_count) AS total
+       FROM catch_reports cr
+       GROUP BY ${CANONICAL_SPECIES_EXPR}
+       ORDER BY total DESC
+       LIMIT ?`
+    )
+    .all(topN) as { canonical_species: string; total: number }[];
+  // Re-sort alphabetically for the dropdown — most-caught is implied by inclusion
+  // in the top-N set; ordering A→Z is easier to scan.
+  return rows.map((r) => r.canonical_species).sort((a, b) => a.localeCompare(b));
+}
+
+/**
  * D-10: The trip_type with the highest row count across catch_reports.
- * Used as the default pre-selection for the /picker trip-type filter.
+ * Phase 2 helper; the /picker filter that consumed this default retired
+ * in Phase 8 Plan 03. Function preserved as a reusable cross-table query.
  * Returns null when catch_reports is empty.
  */
 export function mostCommonTripType(db: Database.Database): string | null {

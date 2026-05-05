@@ -28,27 +28,12 @@ describe('migrations — canonical Phase 1 schema (D-01..D-06)', () => {
     }
   });
 
-  it('creates the Phase 3 forecasts table (D-11)', () => {
+  it('does NOT create the forecasts table (Phase 8 RTR-03 / D-19 — retired)', () => {
     db = openTestDb();
     const rows = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='forecasts'`)
       .all() as Array<{ name: string }>;
-    expect(rows.map((r) => r.name)).toContain('forecasts');
-  });
-
-  it('forecasts has UNIQUE index on (forecast_date, species, trip_type) — the Phase 3 idempotent-upsert key (D-11)', () => {
-    db = openTestDb();
-    const indexes = db
-      .prepare(`PRAGMA index_list(forecasts)`)
-      .all() as Array<{ name: string; unique: number }>;
-    const uniqueIndex = indexes.find((i) => i.name === 'idx_forecasts_unique');
-    expect(uniqueIndex, 'no idx_forecasts_unique on forecasts').toBeDefined();
-    expect(uniqueIndex!.unique).toBe(1);
-    const idxCols = db
-      .prepare(`PRAGMA index_info(${uniqueIndex!.name})`)
-      .all() as Array<{ seqno: number; name: string }>;
-    const cols = idxCols.sort((a, b) => a.seqno - b.seqno).map((c) => c.name);
-    expect(cols).toEqual(['forecast_date', 'species', 'trip_type']);
+    expect(rows.length).toBe(0);
   });
 
   it('catch_reports has columns in canonical order (D-05)', () => {
@@ -128,10 +113,11 @@ describe('migrations — canonical Phase 1 schema (D-01..D-06)', () => {
     const rows = db
       .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
       .all() as Array<{ name: string }>;
-    // Phase 1 tables (5) + Phase 3 forecasts (1) — no duplicates.
+    // Phase 1 tables (5) + Phase 8 trip_type_aliases (1). Forecasts is retired
+    // (RTR-03 / D-19) so it must NOT appear here.
     const domain = rows.map((r) => r.name).filter((n) => !n.startsWith('sqlite_'));
     expect(domain.sort()).toEqual(
-      ['boats', 'catch_reports', 'forecasts', 'landings', 'parse_failures', 'scrape_runs'].sort()
+      ['boats', 'catch_reports', 'landings', 'parse_failures', 'scrape_runs', 'trip_type_aliases'].sort()
     );
   });
 });

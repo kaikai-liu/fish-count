@@ -5,8 +5,15 @@
   import ExplorerHeader from '$lib/components/ExplorerHeader.svelte';
   import Chart from '$lib/components/Chart.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
-  import SpeciesBreakdownTable from '$lib/components/SpeciesBreakdownTable.svelte';
-  import { serializeExplorerFilters, type ExplorerFilters } from '$lib/shared/urlState';
+  import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
+  import SupportingList from '$lib/components/SupportingList.svelte';
+  import { navigating } from '$app/state';
+  import {
+    serializeExplorerFilters,
+    defaultGranularityForRange,
+    type ExplorerFilters,
+    type Granularity
+  } from '$lib/shared/urlState';
   import { FISH_PER_ANGLER_TOOLTIP_UNIT } from '$lib/copy/metrics';
   import { MOON_ROW_ARIA } from '$lib/copy/moon';
   import type { EChartsOption } from 'echarts';
@@ -23,21 +30,11 @@
     filters.ticker === 'boat' ? filters.slug : (filters as { name: string }).name
   );
   const formMoon = $derived(filters.moon ?? false);
+  // Polish pass: Landing pre-filter on the Boat tab. Empty string = "All landings".
+  const formLanding = $derived(filters.landing ?? '');
+  const allLandings = $derived((data.allLandings as string[]) ?? []);
 
-  // Custom date inputs need writable state for the bind on CustomDateInputs.
-  // The $effect below seeds and re-syncs them from the loader on every navigation.
-  let formFromDate = $state('');
-  let formToDate = $state('');
-  $effect(() => {
-    if (filters.range === 'custom') {
-      formFromDate = filters.fromDate ?? '';
-      formToDate = filters.toDate ?? '';
-    } else {
-      formFromDate = '';
-      formToDate = '';
-    }
-  });
-
+  // Polish pass: removed Custom range — chart dataZoom replaces it.
   function navigate(next: ExplorerFilters) {
     const sp = serializeExplorerFilters(next);
     // T-06-28: URL built only from typed ExplorerFilters — no open redirect
@@ -47,46 +44,126 @@
   function onTickerChange(next: ExplorerFilters['ticker']) {
     // D-08: ticker switch — range stays, selection resolves cross-axis default loader-side.
     // Phase 7 (MOON-01): preserve moon flag across ticker switch.
+    // Phase 8 Plan 04 (GRN-01): also preserve a non-default granularity.
     const moonParam = filters.moon ? '&moon=1' : '';
-    goto(`/explorer?ticker=${next}&range=${formRange}${moonParam}`, { keepFocus: true, replaceState: true, noScroll: true });
+    const gran = preservedGranularity();
+    const granParam = gran ? `&granularity=${gran}` : '';
+    goto(`/explorer?ticker=${next}&range=${formRange}${moonParam}${granParam}`, { keepFocus: true, replaceState: true, noScroll: true });
   }
 
   function onRangeChange(next: ExplorerFilters['range']) {
-    if (next === 'custom') return; // wait for CustomDateInputs onSubmit
+    // Phase 8 Plan 04 (GRN-02 / D-38). Range switch resets granularity to the
+    // new range's default. Default-stripping happens in serialize: we leave
+    // filters.granularity undefined so the URL drops the param. The user can
+    // re-override via GranularitySelector after the navigation.
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: next, moon: filters.moon }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: next, moon: filters.moon };
+        ? {
+            ticker: 'boat',
+            slug: formSelection ?? '',
+            range: next,
+            moon: filters.moon,
+            granularity: undefined
+          }
+        : {
+            ticker: formTicker as 'species' | 'landing',
+            name: formSelection ?? '',
+            range: next,
+            moon: filters.moon,
+            granularity: undefined
+          };
     navigate(f);
+  }
+
+  function onGranularityChange(next: Granularity) {
+    // D-38 default-stripping: if user picks the default for the current range,
+    // omit the URL param so the URL stays clean.
+    const isDefault = next === defaultGranularityForRange(formRange);
+    const f: ExplorerFilters =
+      formTicker === 'boat'
+        ? {
+            ticker: 'boat',
+            slug: formSelection ?? '',
+            range: formRange,
+            moon: filters.moon,
+            granularity: isDefault ? undefined : next
+          }
+        : {
+            ticker: formTicker as 'species' | 'landing',
+            name: formSelection ?? '',
+            range: formRange,
+            moon: filters.moon,
+            granularity: isDefault ? undefined : next
+          };
+    navigate(f);
+  }
+
+  // Phase 8 Plan 04 (D-39): preserve URL granularity through unrelated
+  // navigations. Only export a non-undefined granularity if filters.granularity
+  // is set AND differs from the current default — same default-stripping
+  // policy as onGranularityChange.
+  function preservedGranularity(): Granularity | undefined {
+    if (!filters.granularity) return undefined;
+    if (filters.granularity === defaultGranularityForRange(formRange)) return undefined;
+    return filters.granularity;
   }
 
   function onMoonChange(next: boolean) {
-    // Phase 7 (MOON-01) — flip moon while preserving every other filter exactly.
-    // Custom-date filters carry through if range === 'custom'.
-    const customDates = formRange === 'custom' && formFromDate && formToDate
-      ? { fromDate: formFromDate, toDate: formToDate }
-      : {};
+    const granularity = preservedGranularity();
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: formRange, ...customDates, moon: next }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: formRange, ...customDates, moon: next };
-    navigate(f);
-  }
-
-  function onCustomDates(dates: { fromDate: string; toDate: string }) {
-    const f: ExplorerFilters =
-      formTicker === 'boat'
-        ? { ticker: 'boat', slug: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate, moon: filters.moon }
-        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: 'custom', fromDate: dates.fromDate, toDate: dates.toDate, moon: filters.moon };
+        ? { ticker: 'boat', slug: formSelection ?? '', range: formRange, moon: next, granularity }
+        : { ticker: formTicker as 'species' | 'landing', name: formSelection ?? '', range: formRange, moon: next, granularity };
     navigate(f);
   }
 
   function onSelectorChange(e: Event) {
     const val = (e.target as HTMLSelectElement).value;
+    const granularity = preservedGranularity();
+    // Polish pass: special "__landing__:Name" sentinel from the Boat tab
+    // means "show all boats at this landing" — pivot to the Landing ticker
+    // so the existing aggregate logic kicks in.
+    if (formTicker === 'boat' && val.startsWith('__landing__:')) {
+      const landingName = val.slice('__landing__:'.length);
+      navigate({
+        ticker: 'landing',
+        name: landingName,
+        range: formRange,
+        moon: filters.moon,
+        granularity
+      });
+      return;
+    }
     const f: ExplorerFilters =
       formTicker === 'boat'
-        ? { ticker: 'boat', slug: val, range: formRange, moon: filters.moon, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) }
-        : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, moon: filters.moon, ...(formRange === 'custom' && formFromDate && formToDate ? { fromDate: formFromDate, toDate: formToDate } : {}) };
+        ? {
+            ticker: 'boat',
+            slug: val,
+            range: formRange,
+            moon: filters.moon,
+            granularity,
+            // Polish pass: preserve the Landing pre-filter when picking a boat.
+            landing: filters.landing
+          }
+        : { ticker: formTicker as 'species' | 'landing', name: val, range: formRange, moon: filters.moon, granularity };
+    navigate(f);
+  }
+
+  // Polish pass: Landing pre-filter on the Boat tab. Empty string = "All
+  // landings" (omit param). Picking a different landing resets the boat to
+  // the first one in the new list (loader will pick a sensible default).
+  function onLandingChange(e: Event) {
+    const val = (e.target as HTMLSelectElement).value;
+    const granularity = preservedGranularity();
+    if (filters.ticker !== 'boat') return;
+    const f: ExplorerFilters = {
+      ticker: 'boat',
+      slug: filters.slug, // loader will recompute if the boat isn't in the new landing
+      range: formRange,
+      moon: filters.moon,
+      granularity,
+      landing: val || undefined
+    };
     navigate(f);
   }
 
@@ -101,20 +178,68 @@
       .replace(/'/g, '&#39;');
   }
 
+  // Phase 8 Plan 04 (AXS-01 / D-35). With xAxis.type='time', ECharts surfaces
+  // axisValue as a Date or ms-epoch. We normalize to YYYY-MM-DD in PT for
+  // both the header label and the lookup into the per-series trip-count map
+  // (which is keyed by ISO date — see loader nByBucketBySeries).
+  function toPtIsoDate(axisValue: unknown): string {
+    const d =
+      axisValue instanceof Date
+        ? axisValue
+        : typeof axisValue === 'number'
+          ? new Date(axisValue)
+          : new Date(String(axisValue));
+    if (Number.isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(d);
+  }
+
+  function toPtHumanDate(axisValue: unknown): string {
+    const d =
+      axisValue instanceof Date
+        ? axisValue
+        : typeof axisValue === 'number'
+          ? new Date(axisValue)
+          : new Date(String(axisValue));
+    if (Number.isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(d);
+  }
+
   function tooltipFormatter(params: unknown[]): string {
     const ps = params as Array<{
-      axisValue: string;
+      axisValue: unknown;
       seriesName: string;
-      value: number | null;
+      // value is [iso, number | null] under time-axis mode
+      value: unknown;
       marker: string;
     }>;
     if (!ps.length) return '';
-    const header = `<strong>${escapeHtml(ps[0]?.axisValue ?? '')}</strong>`;
+    const headerIso = toPtIsoDate(ps[0]?.axisValue);
+    const header = `<strong>${escapeHtml(toPtHumanDate(ps[0]?.axisValue))}</strong>`;
     const rows = ps.map((p) => {
       const nMap = data.nByBucketBySeries as Record<string, Record<string, number>>;
       const seriesNByBucket = (nMap ?? {})[p.seriesName] ?? {};
-      const n = seriesNByBucket[p.axisValue] ?? 0;
-      const v = p.value == null ? '—' : p.value < 10 ? p.value.toFixed(1) : Math.round(p.value).toString();
+      const n = seriesNByBucket[headerIso] ?? 0;
+      // Under time-axis, value can be [iso, n] or [Date, n]. We only need
+      // the number — index 1.
+      const numericValue: number | null = Array.isArray(p.value)
+        ? ((p.value[1] as number | null) ?? null)
+        : (p.value as number | null);
+      const v =
+        numericValue == null
+          ? '—'
+          : numericValue < 10
+            ? numericValue.toFixed(1)
+            : Math.round(numericValue).toString();
       const unit = v === '—' ? '' : ` ${FISH_PER_ANGLER_TOOLTIP_UNIT}`;
       const tripWord = n === 1 ? 'trip' : 'trips';
       return `${p.marker} ${escapeHtml(p.seriesName)}: ${v}${unit} (${n.toLocaleString()} ${tripWord})`;
@@ -122,22 +247,31 @@
     return `${header}<br/>${rows}`;
   }
 
-  // Responsive chart height (D-23: 280px mobile <768px, 360px ≥768px)
-  let chartHeight = $state('280px');
+  // Responsive chart height (D-23: 280px mobile <768px, 360px ≥768px).
+  // Polish pass: when moon is on, the bottom stack (legend, moon row, slider)
+  // reserves more pixels so the wrapped legend (worst case ~96px on mobile)
+  // clears the moon row.
+  // Polish pass: at range='all' the lunar cycle compresses into noise, so
+  // the server suppresses the overlay regardless of the toggle. Mirror the
+  // suppression here so chart-height math matches what the chart renders.
+  const moonOn = $derived((data.filters.moon ?? false) && data.filters.range !== 'all');
+  let isWide = $state(false);
   $effect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(min-width: 768px)');
-    chartHeight = mq.matches ? '360px' : '280px';
-    const handler = (e: MediaQueryListEvent) => {
-      chartHeight = e.matches ? '360px' : '280px';
-    };
+    isWide = mq.matches;
+    const handler = (e: MediaQueryListEvent) => { isWide = e.matches; };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  });
+  const chartHeight = $derived.by(() => {
+    const base = isWide ? 360 : 280;
+    return `${moonOn ? base + 92 : base}px`;
   });
 </script>
 
 <svelte:head>
-  <title>Explorer · FishCount</title>
+  <title>{data.pageTitle ?? 'Explorer'} — FishCount</title>
 </svelte:head>
 
 <PageHeader title="Explorer" lastScrapedLabel={data.lastScrapedLabel} />
@@ -145,56 +279,85 @@
 <ExplorerHeader
   ticker={formTicker}
   range={formRange}
-  bind:fromDate={formFromDate}
-  bind:toDate={formToDate}
   moon={formMoon}
   {onTickerChange}
   {onRangeChange}
-  {onCustomDates}
   {onMoonChange}
+  granularity={data.granularity ?? defaultGranularityForRange(formRange)}
+  {onGranularityChange}
   autoWidenNote={data.autoWidenNote}
-  clampNote={data.clampNote}
 >
   {#snippet selector()}
-    <label class="flex flex-col gap-1">
-      <span class="text-sm font-semibold text-(--color-text-muted)">
-        {formTicker === 'boat' ? 'Boat' : formTicker === 'species' ? 'Species' : 'Landing'}
-      </span>
-      <select
-        class="min-h-11 w-full rounded border border-(--color-border) bg-(--color-surface) px-2 text-base focus:border-(--color-border-strong)"
-        value={formSelection}
-        onchange={onSelectorChange}
-      >
-        {#each data.selectorOptions as opt (opt.value)}
-          <option value={opt.value}>{opt.label}</option>
-        {/each}
-      </select>
-    </label>
+    <div class="flex flex-col gap-2 md:flex-row md:items-end md:gap-3">
+      <!-- Polish pass: Landing pre-filter only on the Boat tab — narrows the
+           boat dropdown so anglers don't have to scan all 90 boats. -->
+      {#if formTicker === 'boat'}
+        <label class="flex flex-col gap-1 md:w-72">
+          <span class="text-sm font-semibold text-(--color-text-muted)">Landing</span>
+          <select
+            class="min-h-11 w-full rounded border border-(--color-border) bg-(--color-surface) px-2 text-base focus:border-(--color-border-strong)"
+            value={formLanding}
+            onchange={onLandingChange}
+          >
+            <option value="">All landings</option>
+            {#each allLandings as l (l)}
+              <option value={l}>{l}</option>
+            {/each}
+          </select>
+        </label>
+      {/if}
+      <label class="flex flex-col gap-1 md:flex-1">
+        <span class="text-sm font-semibold text-(--color-text-muted)">
+          {formTicker === 'boat' ? 'Boat' : formTicker === 'species' ? 'Species' : 'Landing'}
+        </span>
+        <select
+          class="min-h-11 w-full rounded border border-(--color-border) bg-(--color-surface) px-2 text-base focus:border-(--color-border-strong)"
+          value={formSelection}
+          onchange={onSelectorChange}
+        >
+          {#if formTicker === 'boat' && formLanding}
+            <!-- Polish pass: when a Landing pre-filter is active, offer
+                 "All boats at {landing}" as a shortcut to the Landing ticker
+                 (aggregates every boat at that landing). -->
+            <option value={`__landing__:${formLanding}`}>All boats at {formLanding}</option>
+          {/if}
+          {#each data.selectorOptions as opt (opt.value)}
+            <option value={opt.value}>{opt.label}</option>
+          {/each}
+        </select>
+      </label>
+    </div>
   {/snippet}
 </ExplorerHeader>
 
 <div class="px-4 md:px-8 py-6 md:py-12 max-w-6xl mx-auto">
-  {#if data.empty}
+  {#if navigating.to}
+    <!-- Phase 8 Plan 04 (POL-02 / D-32). Skeleton during navigation; shape
+         matches the chart so it doesn't reflow when data lands. Typeahead
+         waits use a small spinner, not this skeleton (D-32). -->
+    <section class="mt-4">
+      <LoadingSkeleton variant="chart" height={chartHeight} ariaLabel="Loading chart…" />
+    </section>
+  {:else if data.empty}
     <EmptyState heading={data.empty.heading} body={data.empty.body} />
   {:else if data.chartOption}
     <section class="mt-4">
+      <!-- Polish pass: moon overlay is now embedded as a 2nd grid inside
+           chartOption (right below the plot, above the legend) — no longer
+           a separate Chart instance. -->
       <Chart
         option={data.chartOption}
         height={chartHeight}
         ariaLabel={data.ariaLabel}
         {tooltipFormatter}
       />
-      {#if data.moonChartOption}
-        <Chart
-          option={data.moonChartOption as EChartsOption}
-          height="36px"
-          ariaLabel={MOON_ROW_ARIA}
-        />
+      {#if data.filters.moon}
+        <span class="sr-only" aria-label={MOON_ROW_ARIA} role="img"></span>
       {/if}
       <p class="mt-2 text-sm text-(--color-text-muted)">{data.caption}</p>
     </section>
-    {#if data.breakdownRows && data.breakdownRows.length > 0}
-      <SpeciesBreakdownTable rows={data.breakdownRows} />
+    {#if data.supportingList && data.supportingList.rows.length > 0}
+      <SupportingList heading={data.supportingList.heading} rows={data.supportingList.rows} />
     {/if}
   {/if}
 </div>

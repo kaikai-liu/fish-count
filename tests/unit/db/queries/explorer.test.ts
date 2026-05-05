@@ -155,6 +155,30 @@ describe('boatExplorerSeries', () => {
     expect(result.length).toBeGreaterThan(0);
     // Note: 300ms budget is logged not asserted (per plan spec)
   });
+
+  // Phase 8 D-03: trip_type values returned are the canonical-merged label.
+  it("merges aliased 'Full Day Coronado Islands' rows into 'Full Day' series", () => {
+    db = openTestDb();
+    const { boatId, landingId } = seedBoat(db, { boatName: 'Pacific Voyager', landingName: 'H&M Landing' });
+    // Both labels are present in the seed; 'Full Day Coronado Islands' is
+    // status='aliased' → 'Full Day', so the two should merge into ONE series.
+    seedTrip(db, { boatId, landingId, date: '2024-06-10', tripType: 'Full Day', species: 'yellowtail', anglers: 20, count: 10 });
+    seedTrip(db, { boatId, landingId, date: '2024-06-12', tripType: 'Full Day Coronado Islands', species: 'yellowtail', anglers: 15, count: 8 });
+
+    const rows = boatExplorerSeries(db, {
+      boatId,
+      fromDate: '2024-06-01',
+      toDate: '2024-06-30',
+      granularity: 'monthly'
+    });
+
+    // Exactly one merged 'Full Day' row — alias merge worked.
+    expect(rows.length).toBe(1);
+    expect(rows[0].trip_type).toBe('Full Day');
+    expect(rows[0].n_trips).toBe(2);
+    // Weighted yield: (10+8) / (20+15) = 18/35
+    expect(rows[0].value).toBeCloseTo(18 / 35, 3);
+  });
 });
 
 // ---------------------------------------------------------------------------

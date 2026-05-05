@@ -317,7 +317,9 @@ describe('/explorer +page.server.ts load()', () => {
     expect(result.empty).toBeNull();
     const seriesNames = result.chartOption.series.map((s: { name: string }) => s.name.replace(/ · [\d,]+ trips?$/, ''));
     expect(seriesNames).toContain('1/2 Day AM');
-    expect(seriesNames).toContain('Full Day Coronado Islands');
+    // Phase 8 alias seed maps "Full Day Coronado Islands" → canonical "Full Day"
+    // (D-06) so historical continuity holds across the 2026-04-27 source rename.
+    expect(seriesNames).toContain('Full Day');
     expect(seriesNames).toContain('Overnight');
     // None should be lowercased or normalized
     expect(seriesNames.some((n: string) => n.includes('1/2 day am'))).toBe(false);
@@ -349,24 +351,29 @@ describe('/explorer +page.server.ts load()', () => {
 
     expect(result.empty).toBeNull();
     for (const s of result.chartOption.series) {
-      expect(s.connectNulls).toBe(false);
+      expect(s.connectNulls).toBe(true);
     }
   });
 
-  it('10. bucket alignment: expectedKeys length matches date-fns interval for range', async () => {
+  it('10. bucket alignment: 1m preset produces ~30 daily buckets and time axis', async () => {
     const db = openTestDb();
     setTestDb(db);
 
     const { boatId, landingId } = seedBoat(db, { boatName: 'Pacific Voyager', landingName: 'Point Loma Sportfishing' });
     const slug = (db.prepare('SELECT slug FROM boats WHERE source_name = ?').get('Pacific Voyager') as { slug: string }).slug;
-    seedTrip(db, { boatId, landingId, date: '2026-04-01', tripType: 'Full Day', species: 'yellowtail', anglers: 10, count: 20 });
+    // Seed a trip inside the 1m window (today is 2026-04-30 in this fixture)
+    seedTrip(db, { boatId, landingId, date: '2026-04-15', tripType: 'Full Day', species: 'yellowtail', anglers: 10, count: 20 });
 
-    // Custom 30-day range → daily granularity → 30 keys
-    const result = await load(makeEvent(`ticker=boat&slug=${slug}&range=custom&fromDate=2026-04-01&toDate=2026-04-30`));
+    // Polish pass: replaced the obsolete 'custom' 30-day case with the
+    // equivalent 1m preset (also daily granularity, ~30 buckets).
+    const result = await load(makeEvent(`ticker=boat&slug=${slug}&range=1m`));
 
     expect(result.empty).toBeNull();
-    // xAxis.data should have 30 entries (April 1 to April 30 inclusive)
-    expect(result.chartOption.xAxis.data.length).toBe(30);
+    // 1m preset spans ~30 days at daily granularity.
+    expect(result.bucketStartIsos.length).toBeGreaterThanOrEqual(30);
+    expect(result.bucketStartIsos.length).toBeLessThanOrEqual(31);
+    // Polish pass: xAxis is now an array (multi-grid for embedded moon overlay).
+    expect(result.chartOption.xAxis[0].type).toBe('time');
   });
 
   it('11. empty branch: boat slug not found → empty state returned', async () => {
@@ -380,26 +387,7 @@ describe('/explorer +page.server.ts load()', () => {
     expect(result.chartOption).toBeNull();
   });
 
-  it('cache-control max-age=300 for purely historical custom range', async () => {
-    const db = openTestDb();
-    setTestDb(db);
-
-    const { boatId, landingId } = seedBoat(db, { boatName: 'Pacific Voyager', landingName: 'Point Loma Sportfishing' });
-    const slug = (db.prepare('SELECT slug FROM boats WHERE source_name = ?').get('Pacific Voyager') as { slug: string }).slug;
-    seedTrip(db, { boatId, landingId, date: '2025-01-15', tripType: 'Full Day', species: 'yellowtail', anglers: 10, count: 20 });
-
-    const setHeaders = vi.fn();
-    const event: LoadEvent = {
-      url: new URL(`http://localhost/explorer?ticker=boat&slug=${slug}&range=custom&fromDate=2025-01-01&toDate=2025-01-31`),
-      setHeaders,
-      locals: { logger: { info: vi.fn() } }
-    };
-
-    await load(event);
-
-    // Custom range ending in 2025, well before today (2026) → max-age=300
-    expect(setHeaders).toHaveBeenCalledWith(
-      expect.objectContaining({ 'cache-control': expect.stringContaining('max-age=300') })
-    );
-  });
+  // Polish pass: 'cache-control for historical custom range' obsolete —
+  // every preset that ends at today is short-cached by definition; there's
+  // no longer a user-controlled past-only window.
 });

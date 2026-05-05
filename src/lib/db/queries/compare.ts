@@ -3,6 +3,8 @@
 //
 // Sources:
 //   .planning/phases/02-browse-trip-picker-trends/02-CONTEXT.md §D-07, D-24, D-25
+//   .planning/phases/08-home-retire-polish/08-CONTEXT.md §D-03 (alias-aware filter)
+//   .planning/phases/08-home-retire-polish/08-RESEARCH.md §Pattern 1, §Pitfall 1
 //
 // Responsibilities:
 //   TRN-03: compareBoats — aggregate stats per boat in a shared window + trip type
@@ -13,9 +15,15 @@
 //   - Weighted yield: SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) (T-02-05).
 //   - Trip type enforced as a required filter (CLAUDE.md non-negotiable #4 —
 //     cross-trip-type comparison must be impossible in the UI).
+//   - Phase 8 D-03: trip_type filter is matched against the canonical expression,
+//     so passing 'Full Day' includes raw 'Full Day' AND any source_label aliased
+//     to 'Full Day' (e.g. 'Full Day Coronado Islands'). Read-time merge only —
+//     raw catch_reports.trip_type is never mutated.
 //   - Returns rows in the order requested; null-substituted for boats with no
 //     matching data in the window.
 import type Database from 'better-sqlite3';
+import { ALIAS_JOIN_SQL, CANONICAL_TRIP_TYPE_EXPR } from '$lib/db/aliases';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export interface CompareRow {
   boat_id: number;
@@ -54,20 +62,23 @@ export function compareBoats(db: Database.Database, args: CompareArgs): (Compare
   // already validated by Zod at the URL boundary (T-02-01 discipline).
   const placeholders = args.boatIds.map(() => '?').join(', ');
 
-  // Aggregate stats per boat in window
+  // Aggregate stats per boat in window. Phase 8 D-03: filter on canonical
+  // trip-type expression so an aliased label (e.g. 'Full Day Coronado Islands')
+  // is included when the operator filters by its canonical ('Full Day').
   const aggregateRows = db
     .prepare(
       `SELECT b.id           AS boat_id,
               b.display_name AS boat_name,
               l.display_name AS landing_name,
-              COUNT(DISTINCT cr.source_date || '|' || cr.trip_type) AS total_trips,
+              COUNT(DISTINCT cr.source_date || '|' || ${CANONICAL_TRIP_TYPE_EXPR}) AS total_trips,
               SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS avg_per_angler,
               MAX(cr.source_date) AS last_trip_date
          FROM catch_reports cr
+         ${ALIAS_JOIN_SQL}
          JOIN boats    b ON b.id = cr.boat_id
          JOIN landings l ON l.id = cr.landing_id
         WHERE cr.boat_id IN (${placeholders})
-          AND cr.trip_type   = ?
+          AND ${CANONICAL_TRIP_TYPE_EXPR} = ?
           AND cr.source_date BETWEEN ? AND ?
         GROUP BY b.id`
     )
@@ -79,17 +90,22 @@ export function compareBoats(db: Database.Database, args: CompareArgs): (Compare
   // Build a map for O(1) lookup
   const byBoatId = new Map(aggregateRows.map((r) => [r.boat_id, r]));
 
-  // Per-boat top species (separate query per boat — bounded by max 3)
+  // Per-boat top species (separate query per boat — bounded by max 3).
+  // Phase 8 D-03: trip_type filter uses the canonical expression so aliased
+  // rows are folded in.
   const topSpeciesMap = new Map<number, string | null>();
   for (const boatId of args.boatIds) {
+    // Polish pass: roll up size-class species variants so the displayed
+    // "top species" doesn't read as "bluefin tuna (up to 100 pounds)".
     const row = db
       .prepare(
-        `SELECT species, SUM(species_count) AS total
-           FROM catch_reports
-          WHERE boat_id    = ?
-            AND trip_type  = ?
-            AND source_date BETWEEN ? AND ?
-          GROUP BY species
+        `SELECT ${CANONICAL_SPECIES_EXPR} AS species, SUM(cr.species_count) AS total
+           FROM catch_reports cr
+           ${ALIAS_JOIN_SQL}
+          WHERE cr.boat_id = ?
+            AND ${CANONICAL_TRIP_TYPE_EXPR} = ?
+            AND cr.source_date BETWEEN ? AND ?
+          GROUP BY ${CANONICAL_SPECIES_EXPR}
           ORDER BY total DESC
           LIMIT 1`
       )

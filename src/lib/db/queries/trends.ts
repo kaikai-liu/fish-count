@@ -3,6 +3,8 @@
 //
 // Sources:
 //   .planning/phases/02-browse-trip-picker-trends/02-CONTEXT.md §D-06, D-07, D-27
+//   .planning/phases/08-home-retire-polish/08-CONTEXT.md §D-03 (alias-aware filter)
+//   .planning/phases/08-home-retire-polish/08-RESEARCH.md §Pattern 1, §Pitfall 1
 //
 // Responsibilities:
 //   TRN-01/02: speciesTrend — per-species bucket aggregate across all boats
@@ -21,7 +23,12 @@
 //   - T-02-06: strftime('%G-W%V', ...) — verified ISO week, NOT %W.
 //   - boatTrend template: two prepared statements (per-species vs all-species)
 //     to avoid user-input concatenation (T-02-01 SQL injection discipline).
+//   - Phase 8 D-03: trip_type filter is matched against the canonical expression,
+//     so passing 'Full Day' includes raw 'Full Day' AND any source_label aliased
+//     to 'Full Day' (e.g. 'Full Day Coronado Islands').
 import type Database from 'better-sqlite3';
+import { ALIAS_JOIN_SQL, CANONICAL_TRIP_TYPE_EXPR } from '$lib/db/aliases';
+import { CANONICAL_SPECIES_EXPR } from '$lib/db/speciesCanonical';
 
 export interface TrendBucket {
   bucket_key: string;
@@ -40,24 +47,28 @@ export interface SpeciesTrendArgs {
 /**
  * TRN-01/02: Per-species trend buckets across all boats.
  * Returns only buckets with matching rows (gap-fill is loader responsibility).
+ *
+ * Phase 8 D-03: trip_type filter matched against CANONICAL_TRIP_TYPE_EXPR so
+ * an aliased label folds into its canonical at filter time.
  */
 export function speciesTrend(db: Database.Database, args: SpeciesTrendArgs): TrendBucket[] {
   const bucketExpr =
     args.granularity === 'daily'
-      ? "strftime('%Y-%m-%d', source_date)"
+      ? "strftime('%Y-%m-%d', cr.source_date)"
       : args.granularity === 'weekly'
-        ? "strftime('%G-W%V', source_date)"
-        : "strftime('%Y-%m', source_date)";
+        ? "strftime('%G-W%V', cr.source_date)"
+        : "strftime('%Y-%m', cr.source_date)";
 
   return db
     .prepare(
       `SELECT ${bucketExpr} AS bucket_key,
-              SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) AS value,
-              COUNT(DISTINCT source_date || '|' || trip_type)           AS n_trips
-         FROM catch_reports
-        WHERE species    = @species
-          AND trip_type  = @tripType
-          AND source_date BETWEEN @fromDate AND @toDate
+              SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
+              COUNT(DISTINCT cr.source_date || '|' || ${CANONICAL_TRIP_TYPE_EXPR}) AS n_trips
+         FROM catch_reports cr
+         ${ALIAS_JOIN_SQL}
+        WHERE ${CANONICAL_SPECIES_EXPR} = @species
+          AND ${CANONICAL_TRIP_TYPE_EXPR} = @tripType
+          AND cr.source_date BETWEEN @fromDate AND @toDate
         GROUP BY bucket_key
         ORDER BY bucket_key ASC`
     )
@@ -95,23 +106,24 @@ export interface BoatTrendArgs {
 export function boatTrend(db: Database.Database, args: BoatTrendArgs): TrendBucket[] {
   const bucketExpr =
     args.granularity === 'daily'
-      ? "strftime('%Y-%m-%d', source_date)"
+      ? "strftime('%Y-%m-%d', cr.source_date)"
       : args.granularity === 'weekly'
-        ? "strftime('%G-W%V', source_date)"
-        : "strftime('%Y-%m', source_date)";
+        ? "strftime('%G-W%V', cr.source_date)"
+        : "strftime('%Y-%m', cr.source_date)";
 
   if (args.species !== undefined) {
-    // Per-species bucket
+    // Per-species bucket. Phase 8 D-03: filter trip_type via canonical expression.
     return db
       .prepare(
         `SELECT ${bucketExpr} AS bucket_key,
-                SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) AS value,
-                COUNT(DISTINCT source_date || '|' || trip_type)           AS n_trips
-           FROM catch_reports
-          WHERE boat_id    = @boatId
-            AND trip_type  = @tripType
-            AND species    = @species
-            AND source_date BETWEEN @fromDate AND @toDate
+                SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
+                COUNT(DISTINCT cr.source_date || '|' || ${CANONICAL_TRIP_TYPE_EXPR}) AS n_trips
+           FROM catch_reports cr
+           ${ALIAS_JOIN_SQL}
+          WHERE cr.boat_id = @boatId
+            AND ${CANONICAL_TRIP_TYPE_EXPR} = @tripType
+            AND ${CANONICAL_SPECIES_EXPR} = @species
+            AND cr.source_date BETWEEN @fromDate AND @toDate
           GROUP BY bucket_key
           ORDER BY bucket_key ASC`
       )
@@ -124,16 +136,17 @@ export function boatTrend(db: Database.Database, args: BoatTrendArgs): TrendBuck
       }) as TrendBucket[];
   }
 
-  // All-species bucket aggregate (species filter omitted)
+  // All-species bucket aggregate (species filter omitted).
   return db
     .prepare(
       `SELECT ${bucketExpr} AS bucket_key,
-              SUM(species_count) * 1.0 / NULLIF(SUM(angler_count), 0) AS value,
-              COUNT(DISTINCT source_date || '|' || trip_type)           AS n_trips
-         FROM catch_reports
-        WHERE boat_id    = @boatId
-          AND trip_type  = @tripType
-          AND source_date BETWEEN @fromDate AND @toDate
+              SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS value,
+              COUNT(DISTINCT cr.source_date || '|' || ${CANONICAL_TRIP_TYPE_EXPR}) AS n_trips
+         FROM catch_reports cr
+         ${ALIAS_JOIN_SQL}
+        WHERE cr.boat_id = @boatId
+          AND ${CANONICAL_TRIP_TYPE_EXPR} = @tripType
+          AND cr.source_date BETWEEN @fromDate AND @toDate
         GROUP BY bucket_key
         ORDER BY bucket_key ASC`
     )

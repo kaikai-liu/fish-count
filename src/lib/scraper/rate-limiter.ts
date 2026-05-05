@@ -11,8 +11,19 @@
 // tier-1 of D-13's two-tier polite-scraping mechanism.
 import PQueue from 'p-queue';
 
+// Default 5000ms (5s) for production politeness. Override via env var for
+// trusted, attended bulk backfills only — never lower this in production.
+// The unit-test invariant (tests/unit/scraper/rate-limiter.test.ts) asserts
+// ≥ 5000ms between fetches when no override is set.
+const intervalMs = (() => {
+  const raw = process.env.SOURCE_FETCH_INTERVAL_MS;
+  if (!raw) return 5000;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 5000;
+})();
+
 export const sourceQueue = new PQueue({
   concurrency: 1, // only one in-flight request at a time
   intervalCap: 1, // at most 1 request per interval...
-  interval: 5000 // ...where interval = 5000ms (5s floor between start times)
+  interval: intervalMs // floor between start times (default 5000ms)
 });

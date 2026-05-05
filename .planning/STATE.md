@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Phase 07 shipped — PR #3"
-stopped_at: Phase 7 UI-SPEC approved
-last_updated: "2026-05-02T04:15:00.000Z"
-last_activity: "2026-05-02 -- shipped Phase 8 prep work via PR #4 (spike, roadmap restructure, backfill addenda). DB now 50,297 rows spanning 2022-08-26 → 2026-04-30 (~3.7 years)."
+status: "Phase 8 shipped — PR #6 (https://github.com/kaikai-liu/fish-count/pull/6); 56 commits, 614/614 tests"
+stopped_at: "Phase 8 in PR review"
+last_updated: "2026-05-04T05:30:00.000Z"
+last_activity: "2026-05-04 -- Phase 08 shipped via PR #6 (Home, Retire, Polish + operator-driven UX iteration). 4 plans complete, 6/6 ROADMAP success criteria verified, 614/614 tests green. HUMAN-UAT items pending operator confirmation post-merge."
 progress:
-  total_phases: 4
-  completed_phases: 2
-  total_plans: 8
+  total_phases: 5
+  completed_phases: 3
+  total_plans: 12
   completed_plans: 8
-  percent: 50
+  percent: 60
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-30)
 
 **Core value (v2):** Pick a boat, species, or landing as a "ticker" and see SD charter boat catch history with comparison overlays across a chosen time range — like exploring a stock-market chart.
-**Current focus:** Phase 07 — moon-phase-overlay
+**Current focus:** Phase 08 — Home, Retire, Polish
 
 ## Current Position
 
 Milestone: v2 Multi-Axis Trend Explorer
-Phase: 8 (Home, Retire, Polish — absorbed old Phases 10 + 11)
-Plan: Not started — data spike complete (`.planning/spikes/001-phase-7.5-data-exploration/`); awaiting `/gsd:plan-phase 8`
-Status: Phase 8 prep work shipped — PR #4 (https://github.com/kaikai-liu/fish-count/pull/4); ready for /gsd:plan-phase 8 once #4 merges
-Last activity: 2026-05-02 -- PR #4 opened with 6 commits (spike, roadmap restructure, backfill addenda, STATE update); DB at 50,297 rows / 3.7 years of history
+Phase: 9
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-05-02
 
 Progress: [█████░░░░░] 50% (2 of 4 v2 phases complete — Phases 6 + 7 shipped; v2 collapsed to 4 phases on 2026-05-01)
 
@@ -99,7 +99,7 @@ Reason for deferral: v1.0 closed early at 4 of 6 phases due to deliberate scope 
 ## Session Continuity
 
 Last session: --stopped-at
-Stopped at: Phase 7 UI-SPEC approved
+Stopped at: Phase 8 context gathered
 Resume file: --resume-file
 
-**Planned Phase:** 07 (moon-phase-overlay) — 3 plans — 2026-05-01T19:28:58.214Z
+**Planned Phase:** 08 (Home, Retire, Polish) — 4 plans — 2026-05-02T18:48:39.161Z

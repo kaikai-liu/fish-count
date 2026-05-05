@@ -8,10 +8,12 @@
     onChange: (next: Ticker) => void;
   } = $props();
 
+  // Polish pass: Landing-first ordering. Anglers think landing → boat → fish,
+  // so the picker mirrors that mental model.
   const items: Array<{ id: Ticker; label: string }> = [
+    { id: 'landing', label: 'Landing' },
     { id: 'boat', label: 'Boat' },
-    { id: 'species', label: 'Species' },
-    { id: 'landing', label: 'Landing' }
+    { id: 'species', label: 'Species' }
   ];
 </script>
 

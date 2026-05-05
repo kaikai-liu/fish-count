@@ -7,28 +7,59 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import PerAnglerMetric from '$lib/components/PerAnglerMetric.svelte';
   import PerAnglerFramingProvider from '$lib/components/PerAnglerFramingProvider.svelte';
-  import { serializeCompareFilters, type CompareFilters } from '$lib/shared/urlState';
+  import RangeStrip from '$lib/components/RangeStrip.svelte';
+  import { serializeCompareFilters, type CompareFilters, type CompareRange } from '$lib/shared/urlState';
   import { WEEKLY_FISH_PER_ANGLER_HEADING, FISH_PER_ANGLER_ARIA } from '$lib/copy/metrics';
 
   let { data }: { data: PageData } = $props();
 
   let formTripType = $state(data.filters?.tripType ?? '');
-  let formFromDate = $state(data.filters?.fromDate ?? data.filterOptions.defaultFromDate);
-  let formToDate = $state(data.filters?.toDate ?? data.filterOptions.defaultToDate);
-  // boatIds stored as a comma-separated string for the text input
-  let formBoatIdsRaw = $state(data.filters?.boatIds.join(',') ?? '');
+  // Polish pass: range presets replace From/To inputs (mirrors Explorer's
+  // 1M / 3M / 6M / 1Y / All). 1M is the default — anglers planning the
+  // next trip want recent context, not full-history.
+  let formRange = $state<CompareRange>((data.filters?.range as CompareRange | undefined) ?? '1m');
+
+  // Phase 8 Plan 04 (CMP-01 / D-24). Boat picker: 3 typeahead inputs feeding
+  // an HTML <datalist>. Each input holds a typed/picked display_name; we
+  // resolve to id via a small JS lookup against data.allBoats before
+  // submitting. Keeping the inputs separate (vs comma-paste) makes the UX
+  // match the explorer's boat-pill experience and removes the need to know
+  // boat IDs at all.
+  function preselectedNames(): [string, string, string] {
+    const ids = data.filters?.boatIds ?? [];
+    const byId = new Map(data.allBoats.map((b) => [b.id, b.display_name]));
+    return [
+      byId.get(ids[0] ?? -1) ?? '',
+      byId.get(ids[1] ?? -1) ?? '',
+      byId.get(ids[2] ?? -1) ?? ''
+    ];
+  }
+  const initialNames = preselectedNames();
+  let boatName1 = $state(initialNames[0]);
+  let boatName2 = $state(initialNames[1]);
+  let boatName3 = $state(initialNames[2]);
+
+  function resolveBoatId(name: string): number | null {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    // Exact-match first; case-insensitive fallback.
+    const exact = data.allBoats.find((b) => b.display_name === trimmed);
+    if (exact) return exact.id;
+    const ci = data.allBoats.find(
+      (b) => b.display_name.toLowerCase() === trimmed.toLowerCase()
+    );
+    return ci?.id ?? null;
+  }
 
   function submit() {
-    const parsedIds = formBoatIdsRaw
-      .split(',')
-      .map((s) => Number(s.trim()))
-      .filter((n) => Number.isFinite(n) && n > 0);
-    if (parsedIds.length < 2 || parsedIds.length > 3 || !formTripType) return;
+    const ids = [boatName1, boatName2, boatName3]
+      .map(resolveBoatId)
+      .filter((n): n is number => n !== null);
+    if (ids.length < 2 || ids.length > 3 || !formTripType) return;
     const filters: CompareFilters = {
       tripType: formTripType,
-      fromDate: formFromDate,
-      toDate: formToDate,
-      boatIds: parsedIds
+      range: formRange,
+      boatIds: ids
     };
     const sp = serializeCompareFilters(filters);
     goto(`/compare?${sp.toString()}`, { keepFocus: true, replaceState: true, noScroll: true });
@@ -61,38 +92,59 @@
       </select>
     </label>
 
-    <label class="flex flex-col gap-1">
-      <span class="text-sm font-semibold">From</span>
-      <input
-        type="date"
-        class="min-h-11 rounded border border-(--color-border) px-2"
-        bind:value={formFromDate}
-      />
-    </label>
-
-    <label class="flex flex-col gap-1">
-      <span class="text-sm font-semibold">To</span>
-      <input
-        type="date"
-        class="min-h-11 rounded border border-(--color-border) px-2"
-        bind:value={formToDate}
-      />
-    </label>
-
-    <label class="flex min-w-48 flex-col gap-1">
+    <label class="flex min-w-44 flex-col gap-1">
       <span class="text-sm font-semibold">
-        Boat IDs (comma-separated, 2–3) <span aria-hidden="true">*</span>
+        Boat 1 <span aria-hidden="true">*</span>
       </span>
       <input
         type="text"
-        class="min-h-11 rounded border border-(--color-border) px-2"
-        placeholder="e.g. 12,15,23"
-        bind:value={formBoatIdsRaw}
+        list="boats-list"
+        autocomplete="off"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
+        placeholder="Type a boat name…"
+        bind:value={boatName1}
       />
-      <span class="text-xs text-(--color-text-muted)">
-        Find boat IDs on each boat's detail page URL.
-      </span>
     </label>
+
+    <label class="flex min-w-44 flex-col gap-1">
+      <span class="text-sm font-semibold">
+        Boat 2 <span aria-hidden="true">*</span>
+      </span>
+      <input
+        type="text"
+        list="boats-list"
+        autocomplete="off"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
+        placeholder="Type a boat name…"
+        bind:value={boatName2}
+      />
+    </label>
+
+    <label class="flex min-w-44 flex-col gap-1">
+      <span class="text-sm font-semibold">Boat 3 (optional)</span>
+      <input
+        type="text"
+        list="boats-list"
+        autocomplete="off"
+        class="min-h-11 rounded border border-(--color-border) bg-(--color-surface) px-2"
+        placeholder="Type a boat name…"
+        bind:value={boatName3}
+      />
+    </label>
+
+    <!-- Phase 8 Plan 04 (CMP-01). Single datalist shared by all three inputs.
+         T-08-04-09: Svelte auto-escapes display_name in option value; no raw
+         HTML render. T-08-04-05: boat names are public data. -->
+    <datalist id="boats-list">
+      {#each data.allBoats as b (b.id)}
+        <option value={b.display_name}></option>
+      {/each}
+    </datalist>
+
+    <div class="flex flex-col gap-1">
+      <span class="text-sm font-semibold">Range</span>
+      <RangeStrip value={formRange} onChange={(next) => (formRange = next)} />
+    </div>
   {/snippet}
 
   {#snippet actions()}
@@ -115,11 +167,14 @@
   </p>
 {:else if data.rows && data.chartOption}
   <PerAnglerFramingProvider>
-    <section class="mb-8 grid gap-4 md:grid-cols-3">
+    <section class="mb-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {#each data.rows as r, i (i)}
         {#if r === null}
           <article class="rounded border border-(--color-border) p-4 text-sm text-(--color-text-muted)">
-            <h3 class="text-lg font-semibold">Boat {data.filters?.boatIds[i]}</h3>
+            <h3 class="text-lg font-semibold">
+              {data.allBoats.find((b) => b.id === data.filters?.boatIds[i])?.display_name ??
+                `Boat ${data.filters?.boatIds[i]}`}
+            </h3>
             <p>No trips in window for this boat on {data.filters?.tripType}.</p>
           </article>
         {:else}

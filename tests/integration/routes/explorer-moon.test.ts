@@ -194,7 +194,13 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
     expect(data.filters.moon).toBe(false);
   });
 
-  it('moonChartOption is present when ?moon=1 (alignment guaranteed)', async () => {
+  // Polish pass: moon overlay is now an embedded grid inside chartOption
+  // (named series `__moon__` with xAxisIndex=1). moonChartOption is always null.
+  function getMoonSeries(data: { chartOption: { series: Array<{ name?: string; data?: unknown[] }> } }) {
+    return data.chartOption.series.find((s) => s.name === '__moon__');
+  }
+
+  it('moon series is embedded in chartOption when ?moon=1 (daily resolution)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
@@ -202,17 +208,16 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
 
     const data = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=1`));
 
-    expect(data.moonChartOption).not.toBeNull();
     expect(data.filters.moon).toBe(true);
-    // Alignment guarantee: moon series length === catch chart x-axis bucket count
-    const catchBuckets = (data.chartOption as { xAxis: { data: unknown[] } }).xAxis.data.length;
-    const moonValues = (
-      data.moonChartOption as { series: { data: unknown[] }[] }
-    ).series[0].data.length;
-    expect(moonValues).toBe(catchBuckets);
+    const moon = getMoonSeries(data);
+    expect(moon).toBeDefined();
+    // Polish pass: moon overlay renders at DAILY resolution regardless of
+    // the catch chart's bucket granularity. For 1y → ~365-366 daily samples.
+    expect(moon!.data!.length).toBeGreaterThanOrEqual(365);
+    expect(moon!.data!.length).toBeLessThanOrEqual(367);
   });
 
-  it('moonChartOption is present when ?moon=true (alternate literal)', async () => {
+  it('moon series is embedded when ?moon=true (alternate literal)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
@@ -220,34 +225,26 @@ describe('GET /explorer — moon overlay (Phase 7)', () => {
 
     const data = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=true`));
 
-    expect(data.moonChartOption).not.toBeNull();
     expect(data.filters.moon).toBe(true);
+    expect(getMoonSeries(data)).toBeDefined();
   });
 
-  it('moon series re-aligns when range changes (no re-fetch needed by client)', async () => {
+  it('moon series re-samples when range changes (daily resolution)', async () => {
     const db = openTestDb();
     setTestDb(db);
     const { boats } = populateDb(db);
     const boat = boats[0];
 
     const oneYear = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=1y&moon=1`));
-    // Need a fresh DB / module per call? No — load() is a pure function over the in-memory DB
-    // and URL params; calling twice in sequence is fine.
     const sixMonth = await load(makeEvent(`ticker=boat&slug=${boat.slug}&range=6m&moon=1`));
 
-    const oneYearMoon = (oneYear.moonChartOption as { series: { data: unknown[] }[] }).series[0]
-      .data.length;
-    const sixMonthMoon = (sixMonth.moonChartOption as { series: { data: unknown[] }[] }).series[0]
-      .data.length;
-    // Different ranges → different bucket counts. The loader recomputes; client did not refetch.
-    expect(oneYearMoon).not.toBe(sixMonthMoon);
-    // And both still align with their catch charts (no drift either way).
-    expect(oneYearMoon).toBe(
-      (oneYear.chartOption as { xAxis: { data: unknown[] } }).xAxis.data.length
-    );
-    expect(sixMonthMoon).toBe(
-      (sixMonth.chartOption as { xAxis: { data: unknown[] } }).xAxis.data.length
-    );
+    const oneYearMoon = getMoonSeries(oneYear)!.data!.length;
+    const sixMonthMoon = getMoonSeries(sixMonth)!.data!.length;
+    // Polish pass: moon is daily-only, so the day count differs by date range.
+    // 1y has ~365 daily samples, 6m has ~180. Strict greater-than holds.
+    expect(oneYearMoon).toBeGreaterThan(sixMonthMoon);
+    expect(oneYearMoon).toBeGreaterThanOrEqual(365);
+    expect(sixMonthMoon).toBeGreaterThanOrEqual(180);
   });
 
   it('moon flag persists when ticker changes', async () => {

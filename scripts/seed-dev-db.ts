@@ -2,8 +2,11 @@
 // scripts/seed-dev-db.ts — Phase 2 D-33 dev fixture replay.
 //
 // Replays committed HTML fixtures from tests/fixtures/scraper/*.html through
-// parsePage + DAL upsert across synthetic dates so /trends, /heatmap, /picker
-// have data to render in dev. Idempotent (Phase 1 ING-04 upsert invariant).
+// parsePage + DAL upsert across synthetic dates so the home page, /explorer,
+// /compare, /boats, and /date routes have data to render in dev. Idempotent
+// (Phase 1 ING-04 upsert invariant). Seeds catch_reports / boats / landings
+// only — the v1 /trends, /heatmap, /picker surfaces were retired in Phase 8
+// Plan 03 and seed never inserted forecast rows.
 //
 // NON-PRODUCTION ONLY: hard-gates on NODE_ENV !== 'production' AND
 // DB_PATH !== production default unless ALLOW_SEED_ON_PROD_PATH=1.

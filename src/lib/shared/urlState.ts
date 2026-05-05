@@ -30,33 +30,6 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const dateField = z.string().regex(dateRegex, 'Must be YYYY-MM-DD');
 
 // ---------------------------------------------------------------------------
-// Home filters ( / )
-// All fields optional — no required filters on the home page.
-// ---------------------------------------------------------------------------
-
-export const HomeFiltersSchema = z.object({
-  tripType: z.string().optional(),
-  landing: z.string().optional(),
-  species: z.string().optional()
-});
-
-export type HomeFilters = z.infer<typeof HomeFiltersSchema>;
-
-export function parseHomeFilters(sp: URLSearchParams): HomeFilters | { error: ZodError } {
-  const result = HomeFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
-  if (!result.success) return { error: result.error };
-  return result.data;
-}
-
-export function serializeHomeFilters(filters: HomeFilters): URLSearchParams {
-  const sp = new URLSearchParams();
-  if (filters.tripType) sp.set('tripType', filters.tripType);
-  if (filters.landing) sp.set('landing', filters.landing);
-  if (filters.species) sp.set('species', filters.species);
-  return sp;
-}
-
-// ---------------------------------------------------------------------------
 // Date-view filters ( /date/[YYYY-MM-DD] )
 // The date itself is the route param; optional filter-bar filters.
 // ---------------------------------------------------------------------------
@@ -84,59 +57,29 @@ export function serializeDateFilters(filters: DateFilters): URLSearchParams {
 }
 
 // ---------------------------------------------------------------------------
-// Picker filters ( /picker )
-// Required: date (or fromDate+toDate in range mode), species, tripType.
-// windowDays: default 3, clamped [0, 14] (D-11, T-02-03).
-// ---------------------------------------------------------------------------
-
-// String "false" coerces to boolean true under z.coerce.boolean — must parse
-// the literal "true"/"false" strings produced by serializePickerFilters.
-const boolStringField = z
-  .enum(['true', 'false'])
-  .transform((s) => s === 'true');
-
-export const PickerFiltersSchema = z.object({
-  date: dateField,
-  species: z.string().min(1, 'species is required'),
-  tripType: z.string().min(1, 'tripType is required'),
-  windowDays: z.coerce.number().int().min(0).max(14).default(3),
-  rangeMode: boolStringField.default('false'),
-  fromDate: dateField.optional(),
-  toDate: dateField.optional()
-});
-
-export type PickerFilters = z.infer<typeof PickerFiltersSchema>;
-
-export function parsePickerFilters(sp: URLSearchParams): PickerFilters | { error: ZodError } {
-  const result = PickerFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
-  if (!result.success) return { error: result.error };
-  return result.data;
-}
-
-export function serializePickerFilters(filters: PickerFilters): URLSearchParams {
-  const sp = new URLSearchParams();
-  sp.set('date', filters.date);
-  sp.set('species', filters.species);
-  sp.set('tripType', filters.tripType);
-  sp.set('windowDays', String(filters.windowDays));
-  sp.set('rangeMode', String(filters.rangeMode));
-  if (filters.fromDate) sp.set('fromDate', filters.fromDate);
-  if (filters.toDate) sp.set('toDate', filters.toDate);
-  return sp;
-}
-
-// ---------------------------------------------------------------------------
 // Compare filters ( /compare )
-// Required: tripType, fromDate, toDate, boatIds[] (2–3 boats).
+// Required: tripType, boatIds[] (2–3 boats), and a window expressed as either
+// the canonical `range` preset (matching Explorer's 1m/3m/6m/1y/2y/5y/all) or
+// explicit fromDate/toDate (back-compat with pre-polish URLs and tests). The
+// loader translates `range` to dates downstream.
 // boatIds uses getAll() because URLSearchParams repeats the key.
 // ---------------------------------------------------------------------------
 
-export const CompareFiltersSchema = z.object({
-  tripType: z.string().min(1, 'tripType is required'),
-  fromDate: dateField,
-  toDate: dateField,
-  boatIds: z.array(z.coerce.number().int().positive()).min(2).max(3)
-});
+const compareRangeField = z.enum(['1m', '3m', '6m', '1y', '2y', '5y', 'all']);
+export type CompareRange = z.infer<typeof compareRangeField>;
+
+export const CompareFiltersSchema = z
+  .object({
+    tripType: z.string().min(1, 'tripType is required'),
+    range: compareRangeField.optional(),
+    fromDate: dateField.optional(),
+    toDate: dateField.optional(),
+    boatIds: z.array(z.coerce.number().int().positive()).min(2).max(3)
+  })
+  .refine(
+    (v) => v.range != null || (v.fromDate != null && v.toDate != null),
+    'either range or fromDate/toDate is required'
+  );
 
 export type CompareFilters = z.infer<typeof CompareFiltersSchema>;
 
@@ -153,6 +96,7 @@ export function parseCompareFilters(sp: URLSearchParams): CompareFilters | { err
     .map(Number);
   const raw = {
     tripType: sp.get('tripType') ?? undefined,
+    range: sp.get('range') ?? undefined,
     fromDate: sp.get('fromDate') ?? undefined,
     toDate: sp.get('toDate') ?? undefined,
     boatIds
@@ -165,43 +109,17 @@ export function parseCompareFilters(sp: URLSearchParams): CompareFilters | { err
 export function serializeCompareFilters(filters: CompareFilters): URLSearchParams {
   const sp = new URLSearchParams();
   sp.set('tripType', filters.tripType);
-  sp.set('fromDate', filters.fromDate);
-  sp.set('toDate', filters.toDate);
+  // Polish pass: prefer `range` for friendlier URLs; fall back to explicit
+  // dates only when the caller passes them (tests, legacy share-links).
+  if (filters.range) {
+    sp.set('range', filters.range);
+  } else if (filters.fromDate && filters.toDate) {
+    sp.set('fromDate', filters.fromDate);
+    sp.set('toDate', filters.toDate);
+  }
   for (const id of filters.boatIds) {
     sp.append('boatIds', String(id));
   }
-  return sp;
-}
-
-// ---------------------------------------------------------------------------
-// Trends filters ( /trends )
-// Required: species, tripType.
-// Optional: boatId (single boat overlay), range, granularity.
-// ---------------------------------------------------------------------------
-
-export const TrendsFiltersSchema = z.object({
-  species: z.string().min(1, 'species is required'),
-  tripType: z.string().min(1, 'tripType is required'),
-  boatId: z.coerce.number().int().positive().optional(),
-  range: z.enum(['3mo', '6mo', '1y', 'all']).default('1y'),
-  granularity: z.enum(['weekly', 'monthly']).optional()
-});
-
-export type TrendsFilters = z.infer<typeof TrendsFiltersSchema>;
-
-export function parseTrendsFilters(sp: URLSearchParams): TrendsFilters | { error: ZodError } {
-  const result = TrendsFiltersSchema.safeParse(Object.fromEntries(sp.entries()));
-  if (!result.success) return { error: result.error };
-  return result.data;
-}
-
-export function serializeTrendsFilters(filters: TrendsFilters): URLSearchParams {
-  const sp = new URLSearchParams();
-  sp.set('species', filters.species);
-  sp.set('tripType', filters.tripType);
-  if (filters.boatId !== undefined) sp.set('boatId', String(filters.boatId));
-  sp.set('range', filters.range);
-  if (filters.granularity) sp.set('granularity', filters.granularity);
   return sp;
 }
 
@@ -242,9 +160,8 @@ const TickerVariant = z.discriminatedUnion('ticker', [
 ]);
 
 // boolFlagField — accepts URL-style boolean flags `1|0|true|false`. Used by Phase 7
-// `moon` field on ExplorerFiltersSchema. Distinct from boolStringField (which only
-// accepts `true|false`) because UI-SPEC §URL State Contract requires `?moon=1`
-// shorthand to be valid in addition to `?moon=true`.
+// `moon` field on ExplorerFiltersSchema. UI-SPEC §URL State Contract requires
+// the `?moon=1` shorthand to be valid in addition to `?moon=true`.
 //
 // Note: `.default('false')` is applied BEFORE `.transform()` so that the default
 // value flows through the transform (yielding `false`). Putting `.default()`
@@ -254,33 +171,41 @@ const boolFlagField = z
   .default('false')
   .transform((s) => s === 'true' || s === '1');
 
+// Polish pass: dropped fromDate/toDate from RangeBase — chart dataZoom
+// replaces the 'custom' range. (Compare's date filters live in their own
+// schema, untouched.)
 const RangeBase = z.object({
   range: z.enum(RANGE_PRESETS).default('1y'),
-  fromDate: dateField.optional(),
-  toDate: dateField.optional(),
-  moon: boolFlagField // Phase 7 (MOON-01) — default off; URL omits param when off (D-04 clean-URL)
+  moon: boolFlagField, // Phase 7 (MOON-01) — default off; URL omits param when off (D-04 clean-URL)
+  // Phase 8 Plan 04 (GRN-01 / D-39). Optional override; loader resolves the
+  // default per range (defaultGranularityForRange). Default-stripping at
+  // serialize time keeps the URL clean (RESEARCH §Pitfall 3).
+  granularity: z.enum(['daily', 'weekly', 'monthly']).optional(),
+  // Polish pass: optional Landing pre-filter on the boat ticker. When set,
+  // the boat dropdown narrows to just that landing's boats. Stored as the
+  // landing display_name (matches LandingTicker.name shape — no slug for
+  // landings yet).
+  landing: z.string().min(1).max(120).optional()
 });
 
-// D-19: custom range requires both dates; fromDate <= toDate (T-06-10).
-export const ExplorerFiltersSchema = z
-  .intersection(TickerVariant, RangeBase)
-  .superRefine((v, ctx) => {
-    if (v.range === 'custom') {
-      if (!v.fromDate || !v.toDate) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'fromDate and toDate required when range=custom'
-        });
-        return;
-      }
-      if (v.fromDate > v.toDate) {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'fromDate must be <= toDate'
-        });
-      }
-    }
-  });
+export type Granularity = 'daily' | 'weekly' | 'monthly';
+
+/**
+ * Phase 8 Plan 04 (D-39 / GRN-01). Default granularity for each range
+ * preset. Short ranges default to Daily; long ranges to Weekly. The loader
+ * applies this when filters.granularity is undefined.
+ */
+export function defaultGranularityForRange(
+  range: ExplorerFilters['range']
+): Granularity {
+  if (range === '1m' || range === '3m' || range === '6m') return 'daily';
+  // 1y / 2y / 5y / all → weekly.
+  return 'weekly';
+}
+
+// Polish pass: dropped the 'custom'-only superRefine — schema is now a
+// straight intersection.
+export const ExplorerFiltersSchema = z.intersection(TickerVariant, RangeBase);
 
 export type ExplorerFilters = z.infer<typeof ExplorerFiltersSchema>;
 
@@ -299,13 +224,16 @@ export function serializeExplorerFilters(filters: ExplorerFilters): URLSearchPar
     sp.set('name', filters.name);
   }
   sp.set('range', filters.range);
-  if (filters.range === 'custom') {
-    if (filters.fromDate) sp.set('fromDate', filters.fromDate);
-    if (filters.toDate) sp.set('toDate', filters.toDate);
-  }
   // Phase 7 (MOON-01) — emit moon=1 ONLY when on. UI-SPEC §URL State Contract
   // "Serialization rule": "When moon is off, the param is omitted entirely. This
   // preserves D-04 (clean URL on default landing) and the off-state guarantee."
   if (filters.moon) sp.set('moon', '1');
+  // Phase 8 Plan 04 (GRN-01 / D-39). Emit `granularity` ONLY when set.
+  // Default-stripping (omit when filters.granularity == defaultForRange) is
+  // the page-component's job (range-change handler); see /explorer/+page.svelte
+  // onRangeChange. Here we just round-trip the field as-is.
+  if (filters.granularity) sp.set('granularity', filters.granularity);
+  // Polish pass: emit `landing` pre-filter only when set (defaults to all).
+  if (filters.landing) sp.set('landing', filters.landing);
   return sp;
 }

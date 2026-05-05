@@ -16,3 +16,7 @@ vite.config.ts.timestamp-*
 *.sqlite3-wal
 *.sqlite3-shm
 .billing-alerts-state.local.json
+
+# Claude Code agent worktrees + scratch state — never committed
+.claude/worktrees/
+.claude/scheduled_tasks.lock

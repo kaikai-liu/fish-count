@@ -1,5 +1,6 @@
 <script lang="ts">
-  type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all' | 'custom';
+  // Polish pass: dropped 'custom' — chart dataZoom slider replaces it.
+  type Range = '1m' | '3m' | '6m' | '1y' | '2y' | '5y' | 'all';
   let {
     value,
     onChange
@@ -15,8 +16,7 @@
     { id: '1y', label: '1Y' },
     { id: '2y', label: '2Y' },
     { id: '5y', label: '5Y' },
-    { id: 'all', label: 'All' },
-    { id: 'custom', label: 'Custom' }
+    { id: 'all', label: 'All' }
   ];
 </script>
 
@@ -25,7 +25,7 @@
     <button
       type="button"
       aria-pressed={value === item.id}
-      class="min-h-11 shrink-0 rounded border px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors {value === item.id
+      class="min-h-11 shrink-0 rounded border px-2.5 py-2 text-sm font-semibold whitespace-nowrap transition-colors md:px-3 {value === item.id
         ? 'bg-(--color-accent) text-white border-(--color-accent) hover:bg-(--color-accent-hover) hover:border-(--color-accent-hover)'
         : 'bg-(--color-surface) text-(--color-text-muted) border-(--color-border) hover:bg-(--color-accent-bg) hover:text-(--color-accent) hover:border-(--color-accent)'}"
       onclick={() => onChange(item.id)}

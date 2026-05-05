@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+/* Phase 8 Plan 04 (THM-02 / D-26..D-30). Tailwind 4 three-mode dark variant:
+   data-theme="dark" force-flips, data-theme="auto" follows
+   prefers-color-scheme, data-theme="light" pins light. The @custom-variant
+   makes Tailwind's `dark:` utility match [data-theme=dark] and its
+   descendants. The @media block below handles auto-mode fall-through. */
+@custom-variant dark (
+  &:where([data-theme="dark"], [data-theme="dark"] *)
+);
+
 @theme {
   /* Neutrals — slate */
   --color-surface: #ffffff;
@@ -27,15 +36,73 @@
   /* Destructive — Phase 5 only */
   --color-destructive: #b91c1c;
 
-  /* Heatmap viridis (5 stops, colorblind-safe) */
-  --heatmap-0: #440154;
-  --heatmap-1: #3b528b;
-  --heatmap-2: #21918c;
-  --heatmap-3: #5ec962;
-  --heatmap-4: #fde725;
+  /* Phase 8 Plan 03 (D-19, RTR-04): viridis --heatmap-* palette removed along
+     with the calendar heatmap surface. Re-introduce if future sequential-color
+     visualizations need a colorblind-safe ramp. */
 
   /* Font stack: system-ui only — no web-font fetch */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   Phase 8 Plan 04 (THM-02 / D-29). Dark token overrides.
+   Every named token in @theme above has a parallel value here. The dark
+   palette is hand-tuned slate-900 surfaces with slate-100/300 text and a
+   lighter blue accent that meets WCAG contrast on the dark surfaces. The
+   amber provisional + gray low-data tokens shift to dark-bg-friendly
+   counterparts. --color-destructive is unchanged — destructive surfaces
+   appear only in the admin login (Phase 5) which doesn't need a separate
+   dark hue.
+--------------------------------------------------------------------------- */
+[data-theme="dark"] {
+  --color-surface: #0f172a;
+  --color-surface-muted: #1e293b;
+  --color-surface-sunken: #111827;
+  --color-border: #334155;
+  --color-border-strong: #475569;
+  --color-text: #f1f5f9;
+  --color-text-muted: #cbd5e1;
+  --color-text-subtle: #94a3b8;
+
+  --color-accent: #60a5fa;
+  --color-accent-hover: #93c5fd;
+  --color-accent-bg: #1e3a8a;
+
+  --color-provisional: #fbbf24;
+  --color-provisional-bg: #78350f;
+
+  --color-lowdata: #9ca3af;
+  --color-lowdata-bg: #374151;
+
+  --color-destructive: #f87171;
+}
+
+/* Auto mode (data-theme="auto") follows the OS preference. Mirrors the
+   [data-theme="dark"] block above so a single source-of-truth palette change
+   only touches values, not selectors. RESEARCH §Pattern 2 lines 480-511. */
+@media (prefers-color-scheme: dark) {
+  :where([data-theme="auto"]) {
+    --color-surface: #0f172a;
+    --color-surface-muted: #1e293b;
+    --color-surface-sunken: #111827;
+    --color-border: #334155;
+    --color-border-strong: #475569;
+    --color-text: #f1f5f9;
+    --color-text-muted: #cbd5e1;
+    --color-text-subtle: #94a3b8;
+
+    --color-accent: #60a5fa;
+    --color-accent-hover: #93c5fd;
+    --color-accent-bg: #1e3a8a;
+
+    --color-provisional: #fbbf24;
+    --color-provisional-bg: #78350f;
+
+    --color-lowdata: #9ca3af;
+    --color-lowdata-bg: #374151;
+
+    --color-destructive: #f87171;
+  }
 }
 
 /* Phase 2 base styles */
@@ -79,3 +146,15 @@
   border-radius: 0.25rem;
 }
 .skip-to-main:focus { left: 0.5rem; top: 0.5rem; }
+
+/* Phase 8 Plan 04 (POL-02). Loading skeleton shimmer animation — used by
+   <LoadingSkeleton>. Respects prefers-reduced-motion via the global block
+   above (animation-duration becomes 0.01ms). */
+@keyframes fc-skeleton-shimmer {
+  0% { opacity: 0.55; }
+  50% { opacity: 1; }
+  100% { opacity: 0.55; }
+}
+.fc-skeleton {
+  animation: fc-skeleton-shimmer 1.6s ease-in-out infinite;
+}
