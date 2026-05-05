@@ -10,10 +10,13 @@
   import { ROW_FPA_LINE, ROW_TOTALS_LINE } from '$lib/copy/home';
   import { barWidthPct } from '$lib/shared/normalize';
   import NewLabelBadge from './NewLabelBadge.svelte';
+  import LowDataBadge from './LowDataBadge.svelte';
 
   let { row, sectionMax }: { row: HomeRow; sectionMax: number } = $props();
 
   const widthPct = $derived(barWidthPct(row.fpa, sectionMax));
+  // About-page contract: n<5 trips → flag as 'low data'. Mirrors PerAnglerMetric.
+  const showLowData = $derived(row.trip_count > 0 && row.trip_count < 5);
 </script>
 
 <div class="relative border-b border-(--color-border) last:border-b-0 min-h-11">
@@ -34,6 +37,9 @@
       </a>
       {#if row.pending}
         <NewLabelBadge />
+      {/if}
+      {#if showLowData}
+        <LowDataBadge />
       {/if}
     </div>
     <div class="text-right text-sm tabular-nums">

@@ -85,9 +85,10 @@
 
   <h2 class="mb-2 mt-6 text-xl font-semibold">How fresh is the data</h2>
   <p class="mb-4">
-    The "Last scraped at" indicator at the top of every data page tells you when
-    the most recent scrape finished. Today's data is labeled "provisional" until
-    the day rolls over — boats are still reporting.
+    The "Last scraped at" indicator at the top of every page tells you when
+    the most recent scrape finished. The home page's past-7-days window
+    rolls forward as new days settle — most rows reflect closed days, with
+    today still mid-reporting until boats finish their dock totals.
   </p>
 
 </article>

@@ -3,6 +3,7 @@
   // either a "Species caught" list (boat ticker) or a "Boats at this …"
   // list (landing/species ticker). Rows are clickable links so anglers can
   // jump from a boat's species list into that species' ticker, etc.
+  import LowDataBadge from './LowDataBadge.svelte';
 
   type Row = {
     label: string;
@@ -35,7 +36,12 @@
           href={row.href}
           class="flex items-baseline justify-between gap-3 rounded border border-(--color-border) bg-(--color-surface-muted) px-3 py-2 text-sm transition-colors hover:border-(--color-accent) hover:bg-(--color-accent-bg)"
         >
-          <span class="text-(--color-text)">{row.label}</span>
+          <span class="flex items-center gap-2 text-(--color-text)">
+            {row.label}
+            {#if row.n_trips > 0 && row.n_trips < 5}
+              <LowDataBadge />
+            {/if}
+          </span>
           <span class="tabular-nums text-(--color-text-muted)">
             <span class="text-(--color-text)">{fmtFpa(row.fish_per_angler)}</span>
             fish/angler
