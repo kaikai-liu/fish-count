@@ -757,8 +757,13 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // ordering (plot → moon → legend → slider) and gives us native dataZoom
   // sync via xAxisIndex: [0, 1].
   // -------------------------------------------------------------------------
+  // Polish pass: above the 5Y range (i.e. range='all' covering 13+ years),
+  // the 29.5-day lunar cycle compresses into a noise band that adds nothing
+  // an angler can read. Suppress the overlay for that range and let the
+  // moon toggle remember the preference for narrower ranges.
+  const effectiveMoon = filters.moon && filters.range !== 'all';
   let moonData: Array<[string, number]> = [];
-  if (filters.moon) {
+  if (effectiveMoon) {
     // Polish pass: daily moon resolution regardless of catch granularity
     // (Weekly/Monthly bucketing was distorting the 29.5-day cycle into a
     // jagged stairstep). lttb sampling keeps render perf reasonable.
@@ -785,14 +790,14 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // moon row so they don't visually overlap on dense ranges.
   // Mobile-fix: bottom-stack reserves 216px so the wrapped legend (up to ~96px
   // on 375px viewports) clears the moon row at bottom=140.
-  const grid = filters.moon
+  const grid = effectiveMoon
     ? [
         { left: 56, right: 24, top: 36, bottom: 216 }, // catch plot
         { left: 56, right: 24, bottom: 140, height: 24 } // moon row, above the wrap-prone legend
       ]
     : [{ left: 56, right: 24, top: 36, bottom: 132 }];
 
-  const xAxis = filters.moon
+  const xAxis = effectiveMoon
     ? [
         { type: 'time' as const, gridIndex: 0 },
         {
@@ -806,7 +811,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       ]
     : [{ type: 'time' as const }];
 
-  const yAxis = filters.moon
+  const yAxis = effectiveMoon
     ? [
         { type: 'value' as const, name: FISH_PER_ANGLER_AXIS, gridIndex: 0 },
         {
@@ -820,7 +825,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       ]
     : [{ type: 'value' as const, name: FISH_PER_ANGLER_AXIS }];
 
-  const moonSeries = filters.moon
+  const moonSeries = effectiveMoon
     ? [
         {
           name: '__moon__', // hidden from the legend via legend.data whitelist
@@ -867,11 +872,11 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     dataZoom: [
       {
         type: 'slider' as const,
-        xAxisIndex: filters.moon ? [0, 1] : 0,
+        xAxisIndex: effectiveMoon ? [0, 1] : 0,
         bottom: 4,
         height: 22
       },
-      { type: 'inside' as const, xAxisIndex: filters.moon ? [0, 1] : 0 }
+      { type: 'inside' as const, xAxisIndex: effectiveMoon ? [0, 1] : 0 }
     ],
     xAxis,
     yAxis,

@@ -251,7 +251,10 @@
   // Polish pass: when moon is on, the bottom stack (legend, moon row, slider)
   // reserves more pixels so the wrapped legend (worst case ~96px on mobile)
   // clears the moon row.
-  const moonOn = $derived(data.filters.moon ?? false);
+  // Polish pass: at range='all' the lunar cycle compresses into noise, so
+  // the server suppresses the overlay regardless of the toggle. Mirror the
+  // suppression here so chart-height math matches what the chart renders.
+  const moonOn = $derived((data.filters.moon ?? false) && data.filters.range !== 'all');
   let isWide = $state(false);
   $effect(() => {
     if (typeof window === 'undefined') return;

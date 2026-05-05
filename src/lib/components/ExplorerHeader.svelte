@@ -69,20 +69,25 @@
             <GranularitySelector value={granularity} onChange={onGranularityChange} />
           </div>
         {/if}
-        <div class="mt-2 md:mt-0 inline-flex">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={moon}
-            aria-label={MOON_TOGGLE_ARIA}
-            onclick={() => onMoonChange(!moon)}
-            class="min-h-11 shrink-0 rounded border px-3 py-2 text-sm font-semibold transition-colors {moon
-              ? 'bg-(--color-accent) text-white border-(--color-accent) hover:bg-(--color-accent-hover) hover:border-(--color-accent-hover)'
-              : 'bg-(--color-surface) text-(--color-text-muted) border-(--color-border) hover:bg-(--color-accent-bg) hover:text-(--color-accent) hover:border-(--color-accent)'}"
-          >
-            {MOON_TOGGLE_LABEL}
-          </button>
-        </div>
+        {#if range !== 'all'}
+          <!-- Polish pass: moon overlay is suppressed at range='all' (29.5-day
+               cycle compresses into noise across 13+ years). Hide the toggle
+               so the affordance matches the rendered chart. -->
+          <div class="mt-2 md:mt-0 inline-flex">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={moon}
+              aria-label={MOON_TOGGLE_ARIA}
+              onclick={() => onMoonChange(!moon)}
+              class="min-h-11 shrink-0 rounded border px-3 py-2 text-sm font-semibold transition-colors {moon
+                ? 'bg-(--color-accent) text-white border-(--color-accent) hover:bg-(--color-accent-hover) hover:border-(--color-accent-hover)'
+                : 'bg-(--color-surface) text-(--color-text-muted) border-(--color-border) hover:bg-(--color-accent-bg) hover:text-(--color-accent) hover:border-(--color-accent)'}"
+            >
+              {MOON_TOGGLE_LABEL}
+            </button>
+          </div>
+        {/if}
       </div>
     </div>
 
