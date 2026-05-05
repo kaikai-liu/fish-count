@@ -90,8 +90,4 @@
     the day rolls over — boats are still reporting.
   </p>
 
-  <h2 class="mb-2 mt-6 text-xl font-semibold">Contact</h2>
-  <p class="mb-4">
-    Reach out: [contact pointer — populated in Phase 5].
-  </p>
 </article>
