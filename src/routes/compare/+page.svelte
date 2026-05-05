@@ -182,7 +182,10 @@
       {#each data.rows as r, i (i)}
         {#if r === null}
           <article class="rounded border border-(--color-border) p-4 text-sm text-(--color-text-muted)">
-            <h3 class="text-lg font-semibold">Boat {data.filters?.boatIds[i]}</h3>
+            <h3 class="text-lg font-semibold">
+              {data.allBoats.find((b) => b.id === data.filters?.boatIds[i])?.display_name ??
+                `Boat ${data.filters?.boatIds[i]}`}
+            </h3>
             <p>No trips in window for this boat on {data.filters?.tripType}.</p>
           </article>
         {:else}
