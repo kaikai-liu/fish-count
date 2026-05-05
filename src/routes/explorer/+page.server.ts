@@ -705,10 +705,12 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   // single-grid otherwise.
   // Polish pass: leave ~28px between the catch x-axis tick labels and the
   // moon row so they don't visually overlap on dense ranges.
+  // Mobile-fix: bottom-stack reserves 216px so the wrapped legend (up to ~96px
+  // on 375px viewports) clears the moon row at bottom=140.
   const grid = filters.moon
     ? [
-        { left: 56, right: 24, top: 36, bottom: 176 }, // catch plot
-        { left: 56, right: 24, bottom: 100, height: 24 } // moon row, ~28px below catch axis labels
+        { left: 56, right: 24, top: 36, bottom: 216 }, // catch plot
+        { left: 56, right: 24, bottom: 140, height: 24 } // moon row, above the wrap-prone legend
       ]
     : [{ left: 56, right: 24, top: 36, bottom: 132 }];
 

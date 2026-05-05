@@ -248,8 +248,9 @@
   }
 
   // Responsive chart height (D-23: 280px mobile <768px, 360px ≥768px).
-  // Polish pass: the moon row is now embedded in the same chart, so we add
-  // ~52px when moon is on to keep the catch plot from squeezing.
+  // Polish pass: when moon is on, the bottom stack (legend, moon row, slider)
+  // reserves more pixels so the wrapped legend (worst case ~96px on mobile)
+  // clears the moon row.
   const moonOn = $derived(data.filters.moon ?? false);
   let isWide = $state(false);
   $effect(() => {
@@ -262,7 +263,7 @@
   });
   const chartHeight = $derived.by(() => {
     const base = isWide ? 360 : 280;
-    return `${moonOn ? base + 52 : base}px`;
+    return `${moonOn ? base + 92 : base}px`;
   });
 </script>
 
