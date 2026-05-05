@@ -7,14 +7,17 @@
   import EmptyState from '$lib/components/EmptyState.svelte';
   import PerAnglerMetric from '$lib/components/PerAnglerMetric.svelte';
   import PerAnglerFramingProvider from '$lib/components/PerAnglerFramingProvider.svelte';
-  import { serializeCompareFilters, type CompareFilters } from '$lib/shared/urlState';
+  import RangeStrip from '$lib/components/RangeStrip.svelte';
+  import { serializeCompareFilters, type CompareFilters, type CompareRange } from '$lib/shared/urlState';
   import { WEEKLY_FISH_PER_ANGLER_HEADING, FISH_PER_ANGLER_ARIA } from '$lib/copy/metrics';
 
   let { data }: { data: PageData } = $props();
 
   let formTripType = $state(data.filters?.tripType ?? '');
-  let formFromDate = $state(data.filters?.fromDate ?? data.filterOptions.defaultFromDate);
-  let formToDate = $state(data.filters?.toDate ?? data.filterOptions.defaultToDate);
+  // Polish pass: range presets replace From/To inputs (mirrors Explorer's
+  // 1M / 3M / 6M / 1Y / All). 1M is the default — anglers planning the
+  // next trip want recent context, not full-history.
+  let formRange = $state<CompareRange>((data.filters?.range as CompareRange | undefined) ?? '1m');
 
   // Phase 8 Plan 04 (CMP-01 / D-24). Boat picker: 3 typeahead inputs feeding
   // an HTML <datalist>. Each input holds a typed/picked display_name; we
@@ -55,8 +58,7 @@
     if (ids.length < 2 || ids.length > 3 || !formTripType) return;
     const filters: CompareFilters = {
       tripType: formTripType,
-      fromDate: formFromDate,
-      toDate: formToDate,
+      range: formRange,
       boatIds: ids
     };
     const sp = serializeCompareFilters(filters);
@@ -88,24 +90,6 @@
           <option value={t}>{t}</option>
         {/each}
       </select>
-    </label>
-
-    <label class="flex flex-col gap-1">
-      <span class="text-sm font-semibold">From</span>
-      <input
-        type="date"
-        class="min-h-11 rounded border border-(--color-border) px-2"
-        bind:value={formFromDate}
-      />
-    </label>
-
-    <label class="flex flex-col gap-1">
-      <span class="text-sm font-semibold">To</span>
-      <input
-        type="date"
-        class="min-h-11 rounded border border-(--color-border) px-2"
-        bind:value={formToDate}
-      />
     </label>
 
     <label class="flex min-w-44 flex-col gap-1">
@@ -156,6 +140,11 @@
         <option value={b.display_name}></option>
       {/each}
     </datalist>
+
+    <div class="flex flex-col gap-1">
+      <span class="text-sm font-semibold">Range</span>
+      <RangeStrip value={formRange} onChange={(next) => (formRange = next)} />
+    </div>
   {/snippet}
 
   {#snippet actions()}
@@ -178,7 +167,7 @@
   </p>
 {:else if data.rows && data.chartOption}
   <PerAnglerFramingProvider>
-    <section class="mb-8 grid gap-4 md:grid-cols-3">
+    <section class="mb-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {#each data.rows as r, i (i)}
         {#if r === null}
           <article class="rounded border border-(--color-border) p-4 text-sm text-(--color-text-muted)">

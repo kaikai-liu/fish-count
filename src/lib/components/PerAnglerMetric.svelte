@@ -51,7 +51,7 @@
       <LowDataBadge />
     {/if}
     <span class="text-text-muted">·</span>
-    <span class="text-text-muted text-sm tabular-nums">n={nTrips} {tripLabel}</span>
+    <span class="text-text-muted text-sm tabular-nums">{tripLabel}</span>
   {/if}
 </span>
 {#if renderFraming && !isUnknown}

@@ -58,16 +58,28 @@ export function serializeDateFilters(filters: DateFilters): URLSearchParams {
 
 // ---------------------------------------------------------------------------
 // Compare filters ( /compare )
-// Required: tripType, fromDate, toDate, boatIds[] (2–3 boats).
+// Required: tripType, boatIds[] (2–3 boats), and a window expressed as either
+// the canonical `range` preset (matching Explorer's 1m/3m/6m/1y/2y/5y/all) or
+// explicit fromDate/toDate (back-compat with pre-polish URLs and tests). The
+// loader translates `range` to dates downstream.
 // boatIds uses getAll() because URLSearchParams repeats the key.
 // ---------------------------------------------------------------------------
 
-export const CompareFiltersSchema = z.object({
-  tripType: z.string().min(1, 'tripType is required'),
-  fromDate: dateField,
-  toDate: dateField,
-  boatIds: z.array(z.coerce.number().int().positive()).min(2).max(3)
-});
+const compareRangeField = z.enum(['1m', '3m', '6m', '1y', '2y', '5y', 'all']);
+export type CompareRange = z.infer<typeof compareRangeField>;
+
+export const CompareFiltersSchema = z
+  .object({
+    tripType: z.string().min(1, 'tripType is required'),
+    range: compareRangeField.optional(),
+    fromDate: dateField.optional(),
+    toDate: dateField.optional(),
+    boatIds: z.array(z.coerce.number().int().positive()).min(2).max(3)
+  })
+  .refine(
+    (v) => v.range != null || (v.fromDate != null && v.toDate != null),
+    'either range or fromDate/toDate is required'
+  );
 
 export type CompareFilters = z.infer<typeof CompareFiltersSchema>;
 
@@ -84,6 +96,7 @@ export function parseCompareFilters(sp: URLSearchParams): CompareFilters | { err
     .map(Number);
   const raw = {
     tripType: sp.get('tripType') ?? undefined,
+    range: sp.get('range') ?? undefined,
     fromDate: sp.get('fromDate') ?? undefined,
     toDate: sp.get('toDate') ?? undefined,
     boatIds
@@ -96,8 +109,14 @@ export function parseCompareFilters(sp: URLSearchParams): CompareFilters | { err
 export function serializeCompareFilters(filters: CompareFilters): URLSearchParams {
   const sp = new URLSearchParams();
   sp.set('tripType', filters.tripType);
-  sp.set('fromDate', filters.fromDate);
-  sp.set('toDate', filters.toDate);
+  // Polish pass: prefer `range` for friendlier URLs; fall back to explicit
+  // dates only when the caller passes them (tests, legacy share-links).
+  if (filters.range) {
+    sp.set('range', filters.range);
+  } else if (filters.fromDate && filters.toDate) {
+    sp.set('fromDate', filters.fromDate);
+    sp.set('toDate', filters.toDate);
+  }
   for (const id of filters.boatIds) {
     sp.append('boatIds', String(id));
   }

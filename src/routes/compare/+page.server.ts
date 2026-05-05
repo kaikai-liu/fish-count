@@ -19,6 +19,7 @@ import { listBoatsByActivity } from '$lib/db/boats';
 import { latestSuccessOrEmpty } from '$lib/db/scrapeRuns';
 import { today, toPtTimeLabel, addDays, isoWeekStartFromKey } from '$lib/shared/dates';
 import { parseCompareFilters, type CompareFilters } from '$lib/shared/urlState';
+import { rangeToDates } from '$lib/shared/range';
 import { FISH_PER_ANGLER_AXIS } from '$lib/copy/metrics';
 import { eachWeekOfInterval, format } from 'date-fns';
 
@@ -66,12 +67,18 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     };
   }
   const filters = parseResult as CompareFilters;
+  // Polish pass: resolve the window once. range= takes precedence over the
+  // legacy fromDate/toDate pair (kept for back-compat). Downstream code uses
+  // the resolved strings without caring which form the URL used.
+  const { fromDate: resolvedFromDate, toDate: resolvedToDate } = filters.range
+    ? { fromDate: rangeToDates(filters.range).fromDate, toDate: rangeToDates(filters.range).toDate }
+    : { fromDate: filters.fromDate!, toDate: filters.toDate! };
 
   // Per-boat aggregates within the selected window and trip type.
   const rows = compareBoats(db, {
     boatIds: filters.boatIds,
-    fromDate: filters.fromDate,
-    toDate: filters.toDate,
+    fromDate: resolvedFromDate,
+    toDate: resolvedToDate,
     tripType: filters.tripType
   });
 
@@ -87,16 +94,16 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       boatId,
       species: undefined, // per D-25 + Plan 02-01 contract — all-species aggregate
       tripType: filters.tripType,
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
+      fromDate: resolvedFromDate,
+      toDate: resolvedToDate,
       granularity: 'weekly'
     });
   }
 
   // Build aligned weekly bucket axis.
   // date-fns eachWeekOfInterval produces weeks starting Monday (ISO).
-  const fromDateObj = new Date(filters.fromDate + 'T00:00:00Z');
-  const toDateObj = new Date(filters.toDate + 'T00:00:00Z');
+  const fromDateObj = new Date(resolvedFromDate + 'T00:00:00Z');
+  const toDateObj = new Date(resolvedToDate + 'T00:00:00Z');
   const expectedBuckets = eachWeekOfInterval(
     { start: fromDateObj, end: toDateObj },
     { weekStartsOn: 1 }
@@ -155,6 +162,8 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
 
   return {
     filters,
+    resolvedFromDate,
+    resolvedToDate,
     guidance: null,
     rows,
     chartOption,
