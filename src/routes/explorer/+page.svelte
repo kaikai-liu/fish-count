@@ -6,7 +6,7 @@
   import Chart from '$lib/components/Chart.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
   import LoadingSkeleton from '$lib/components/LoadingSkeleton.svelte';
-  import SpeciesBreakdownTable from '$lib/components/SpeciesBreakdownTable.svelte';
+  import SupportingList from '$lib/components/SupportingList.svelte';
   import { navigating } from '$app/state';
   import {
     serializeExplorerFilters,
@@ -353,8 +353,8 @@
       {/if}
       <p class="mt-2 text-sm text-(--color-text-muted)">{data.caption}</p>
     </section>
-    {#if data.breakdownRows && data.breakdownRows.length > 0}
-      <SpeciesBreakdownTable rows={data.breakdownRows} />
+    {#if data.supportingList && data.supportingList.rows.length > 0}
+      <SupportingList heading={data.supportingList.heading} rows={data.supportingList.rows} />
     {/if}
   {/if}
 </div>

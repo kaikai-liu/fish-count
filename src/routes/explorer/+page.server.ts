@@ -22,6 +22,8 @@ import {
   speciesAcrossBoats,
   landingAcrossSpecies,
   speciesBreakdownForBoat,
+  boatsForLandingInRange,
+  boatsForSpeciesInRange,
   countCatchRowsForBoatInRange,
   countCatchRowsForBoatEver,
   countCatchRowsForSpeciesEver,
@@ -146,6 +148,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         caption: '',
         ariaLabel: '',
         breakdownRows: null,
+            supportingList: null,
         selectorOptions: [],
         lastScrapedLabel,
         empty: {
@@ -220,6 +223,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             caption: '',
             ariaLabel: '',
             breakdownRows: null,
+            supportingList: null,
             selectorOptions: [],
             lastScrapedLabel,
             empty: { heading: 'No data yet', body: 'No catch data available.' },
@@ -250,6 +254,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             caption: '',
             ariaLabel: '',
             breakdownRows: null,
+            supportingList: null,
             selectorOptions: [],
             lastScrapedLabel,
             empty: { heading: 'No data yet', body: 'No species data available.' },
@@ -278,6 +283,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
             caption: '',
             ariaLabel: '',
             breakdownRows: null,
+            supportingList: null,
             selectorOptions: [],
             lastScrapedLabel,
             empty: { heading: 'No data yet', body: 'No landing data available.' },
@@ -304,6 +310,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
           caption: '',
           ariaLabel: '',
           breakdownRows: null,
+            supportingList: null,
           selectorOptions: [],
           lastScrapedLabel,
           empty: {
@@ -403,6 +410,21 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
   };
   let seriesList: SeriesData[] = [];
   let breakdownRows: SpeciesBreakdownRow[] | null = null;
+  // Polish pass: unified supporting list for cross-axis info under the chart.
+  // Populated for every ticker (species caught for boat, boats at landing
+  // for landing, boats catching species for species). Each row carries a
+  // ready-to-navigate href so the component stays a dumb renderer.
+  let supportingList: {
+    kind: 'species' | 'boat';
+    heading: string;
+    rows: Array<{
+      label: string;
+      href: string;
+      fish_per_angler: number | null;
+      total_catch: number;
+      n_trips: number;
+    }>;
+  } | null = null;
   let totalTrips = 0;
   let emptyResult: { heading: string; body: string } | null = null;
   let selectionLabel = '';
@@ -466,6 +488,17 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         fromDate,
         toDate
       });
+      supportingList = {
+        kind: 'species',
+        heading: 'Species caught',
+        rows: breakdownRows.map((r) => ({
+          label: r.species,
+          href: `/explorer?ticker=species&name=${encodeURIComponent(r.species)}&range=${filters.range}`,
+          fish_per_angler: r.fish_per_angler,
+          total_catch: r.total_catch,
+          n_trips: r.n_trips
+        }))
+      };
 
       if (seriesList.length === 0) {
         // Phase 8 Plan 04 (POL-03 / D-33): split copy on whether the boat has
@@ -497,6 +530,23 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       noHistoryEver = countCatchRowsForSpeciesEver(db, { species: filters.name }) === 0;
       emptyResult = EMPTY_STATES.speciesNoHistoryInRange(filters.name);
     } else {
+      // Polish pass: supporting list for species view — boats catching this species
+      const boatRows = boatsForSpeciesInRange(db, {
+        species: filters.name,
+        fromDate,
+        toDate
+      });
+      supportingList = {
+        kind: 'boat',
+        heading: 'Boats catching this species',
+        rows: boatRows.map((r) => ({
+          label: r.boat_name,
+          href: `/explorer?ticker=boat&slug=${encodeURIComponent(r.boat_slug)}&range=${filters.range}`,
+          fish_per_angler: r.fish_per_angler,
+          total_catch: r.total_catch,
+          n_trips: r.n_trips
+        }))
+      };
       // Map bucket data per boat
       const byBoatId = new Map<number, typeof result.series>();
       for (const b of result.series) {
@@ -544,6 +594,23 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
         noHistoryEver = countCatchRowsForLandingEver(db, { landingId: landingRow.id }) === 0;
         emptyResult = EMPTY_STATES.landingNoHistoryInRange(landingRow.display_name);
       } else {
+        // Polish pass: supporting list for landing view — boats at this landing
+        const boatRows = boatsForLandingInRange(db, {
+          landingId: landingRow.id,
+          fromDate,
+          toDate
+        });
+        supportingList = {
+          kind: 'boat',
+          heading: 'Boats at this landing',
+          rows: boatRows.map((r) => ({
+            label: r.boat_name,
+            href: `/explorer?ticker=boat&slug=${encodeURIComponent(r.boat_slug)}&range=${filters.range}`,
+            fish_per_angler: r.fish_per_angler,
+            total_catch: r.total_catch,
+            n_trips: r.n_trips
+          }))
+        };
         // Map bucket data per species
         const bySpecies = new Map<string, typeof result.series>();
         for (const b of result.series) {
@@ -610,6 +677,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
       caption: '',
       ariaLabel: '',
       breakdownRows: null,
+            supportingList: null,
       selectorOptions,
       lastScrapedLabel,
       empty: emptyResult,
@@ -841,6 +909,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     caption: captionText,
     ariaLabel,
     breakdownRows,
+    supportingList,
     selectorOptions,
     lastScrapedLabel,
     empty: null,

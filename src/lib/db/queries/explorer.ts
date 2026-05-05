@@ -247,20 +247,23 @@ export interface SpeciesBreakdownArgs {
 
 export interface SpeciesBreakdownRow {
   species: string;
+  fish_per_angler: number | null;
   total_catch: number;
   n_trips: number;
 }
 
 /**
  * D-15 secondary (boat ticker): Species breakdown table below the chart.
- * Returns total catch + n_trips per species for the window, ordered by total_catch DESC.
- * No bucketing — this feeds the breakdown table, not the chart.
+ * Returns fish/angler + total catch + n_trips per species for the window,
+ * ordered by total_catch DESC. No bucketing — this feeds the breakdown
+ * table, not the chart.
  */
 export function speciesBreakdownForBoat(db: Database.Database, args: SpeciesBreakdownArgs): SpeciesBreakdownRow[] {
   // Polish pass: roll up size-class variants so the breakdown table shows
   // one "bluefin tuna" row instead of 100+ weight bins.
   return db.prepare(
     `SELECT ${CANONICAL_SPECIES_EXPR} AS species,
+            SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS fish_per_angler,
             SUM(cr.species_count) AS total_catch,
             COUNT(DISTINCT cr.source_date) AS n_trips
        FROM catch_reports cr
@@ -269,6 +272,78 @@ export function speciesBreakdownForBoat(db: Database.Database, args: SpeciesBrea
       GROUP BY ${CANONICAL_SPECIES_EXPR}
       ORDER BY total_catch DESC, species ASC`
   ).all(args) as SpeciesBreakdownRow[];
+}
+
+// ============ Boats-at-landing breakdown (landing ticker) ============
+
+export interface BoatsAtLandingArgs {
+  landingId: number;
+  fromDate: string;
+  toDate: string;
+}
+
+export interface BoatBreakdownRow {
+  boat_slug: string;
+  boat_name: string;
+  fish_per_angler: number | null;
+  total_catch: number;
+  n_trips: number;
+}
+
+/**
+ * Landing ticker supporting list: top boats at this landing in the
+ * window — fish/angler + total catch + trip count, ordered by total_catch DESC.
+ */
+export function boatsForLandingInRange(
+  db: Database.Database,
+  args: BoatsAtLandingArgs
+): BoatBreakdownRow[] {
+  return db.prepare(
+    `SELECT b.slug AS boat_slug,
+            b.display_name AS boat_name,
+            SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS fish_per_angler,
+            SUM(cr.species_count) AS total_catch,
+            COUNT(DISTINCT cr.source_date) AS n_trips
+       FROM catch_reports cr
+       JOIN boats b ON b.id = cr.boat_id
+      WHERE b.landing_id = @landingId
+        AND cr.source_date BETWEEN @fromDate AND @toDate
+      GROUP BY b.id
+      ORDER BY total_catch DESC, b.display_name ASC`
+  ).all(args) as BoatBreakdownRow[];
+}
+
+// ============ Boats-catching-species breakdown (species ticker) ============
+
+export interface BoatsForSpeciesArgs {
+  species: string;
+  fromDate: string;
+  toDate: string;
+}
+
+/**
+ * Species ticker supporting list: top boats catching this species in the
+ * window — fish/angler + total catch + trip count, ordered by total_catch DESC.
+ * Filters on canonical species so size-class and released variants roll
+ * into one row per parent species.
+ */
+export function boatsForSpeciesInRange(
+  db: Database.Database,
+  args: BoatsForSpeciesArgs
+): BoatBreakdownRow[] {
+  return db.prepare(
+    `SELECT b.slug AS boat_slug,
+            b.display_name AS boat_name,
+            SUM(cr.species_count) * 1.0 / NULLIF(SUM(cr.angler_count), 0) AS fish_per_angler,
+            SUM(cr.species_count) AS total_catch,
+            COUNT(DISTINCT cr.source_date) AS n_trips
+       FROM catch_reports cr
+       JOIN boats b ON b.id = cr.boat_id
+      WHERE ${CANONICAL_SPECIES_EXPR} = @species
+        AND cr.source_date BETWEEN @fromDate AND @toDate
+      GROUP BY b.id
+      ORDER BY total_catch DESC, b.display_name ASC`
+  ).all(args) as BoatBreakdownRow[];
 }
 
 // ============ Auto-widen check (D-03) ============
