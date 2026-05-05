@@ -25,7 +25,7 @@
     <button
       type="button"
       aria-pressed={value === item.id}
-      class="min-h-11 shrink-0 rounded border px-3 py-2 text-sm font-semibold whitespace-nowrap transition-colors {value === item.id
+      class="min-h-11 shrink-0 rounded border px-2.5 py-2 text-sm font-semibold whitespace-nowrap transition-colors md:px-3 {value === item.id
         ? 'bg-(--color-accent) text-white border-(--color-accent) hover:bg-(--color-accent-hover) hover:border-(--color-accent-hover)'
         : 'bg-(--color-surface) text-(--color-text-muted) border-(--color-border) hover:bg-(--color-accent-bg) hover:text-(--color-accent) hover:border-(--color-accent)'}"
       onclick={() => onChange(item.id)}
