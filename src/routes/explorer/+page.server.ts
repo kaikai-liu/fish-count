@@ -58,12 +58,12 @@ import {
 // ---------------------------------------------------------------------------
 function rangeLabel(filters: ExplorerFilters, _fromDate: string, _toDate: string): string {
   const labels: Record<string, string> = {
-    '1m': 'past month',
-    '3m': 'past 3 months',
-    '6m': 'past 6 months',
-    '1y': 'past year',
-    '2y': 'past 2 years',
-    '5y': 'past 5 years',
+    '1m': 'the past month',
+    '3m': 'the past 3 months',
+    '6m': 'the past 6 months',
+    '1y': 'the past year',
+    '2y': 'the past 2 years',
+    '5y': 'the past 5 years',
     'all': 'all available data'
   };
   return labels[filters.range] ?? filters.range;
@@ -667,7 +667,7 @@ export const load: PageServerLoad = async ({ url, setHeaders, locals }) => {
     nByBucketBySeries[legendNameFor(s)] = byIso;
   }
 
-  const captionText = `Based on ${totalTrips.toLocaleString()} trips across the ${rangeLabel(filters, fromDate, toDate)}. ${granularityLabel(granularity)} buckets, PT.`;
+  const captionText = `Based on ${totalTrips.toLocaleString()} trips across ${rangeLabel(filters, fromDate, toDate)}. ${granularityLabel(granularity)} buckets, PT.`;
 
   const ariaLabel = `${granularityLabel(granularity)} ${FISH_PER_ANGLER_ARIA} for ${selectionLabel} — ${rangeLabel(filters, fromDate, toDate)}`;
 
